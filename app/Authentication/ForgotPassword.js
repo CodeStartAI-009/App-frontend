@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { forgotPassword } from "../../services/authService";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -17,7 +18,6 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Resend timer state (optional UI)
   const [secondsLeft, setSecondsLeft] = useState(0);
 
   useEffect(() => {
@@ -33,55 +33,46 @@ export default function ForgotPassword() {
 
   const sendOtp = async () => {
     if (!email.trim()) {
-      Alert.alert("Validation", "Please enter your email address.");
-      return;
+      return Alert.alert("Validation", "Please enter your email address.");
     }
+
     if (!isValidEmail(email.trim())) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
-      return;
+      return Alert.alert("Invalid Email", "Please enter a valid email.");
     }
 
     try {
       setLoading(true);
 
-      // ===== Replace this block with your real API call =====
-      // Example:
-      // const res = await fetch("https://api.yoursite.com/auth/send-reset-otp", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ email: email.trim() }),
-      // });
-      // const data = await res.json();
-      // if (!res.ok) throw new Error(data?.message || "Failed");
-      // ======================================================
+      // ⭐ REAL API CALL ⭐
+      const res = await forgotPassword({ email: email.trim() });
 
-      // Simulated network/API delay
-      await new Promise((r) => setTimeout(r, 900));
+      console.log("OTP API Response:", res.data);
 
-      // Simulated success response
-      setSecondsLeft(45); // user must wait 45s to resend
+      setSecondsLeft(45);
       Alert.alert("OTP Sent", "A verification code has been sent to your email.");
 
-      // navigate to OTP verification screen and pass email as query param
-      router.push(`/Authentication/ResetPasswordOTP?email=${encodeURIComponent(email.trim())}`);
+      // Navigate to OTP screen
+      router.push(
+        `/Authentication/ResetPasswordOTP?email=${encodeURIComponent(
+          email.trim()
+        )}`
+      );
     } catch (err) {
-      console.warn(err);
-      Alert.alert("Error", "Failed to send OTP. Please try again.");
+      console.log("Forgot password error:", err);
+      Alert.alert(
+        "Error",
+        err.response?.data?.error || "Failed to send OTP. Try again."
+      );
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleResend = () => {
-    if (secondsLeft > 0) return;
-    sendOtp();
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Reset Password</Text>
       <Text style={styles.subtitle}>
-        Enter the email associated with your account and we'll send a verification code.
+        Enter your email and we will send you a verification code.
       </Text>
 
       <View style={styles.inputRow}>
@@ -110,8 +101,17 @@ export default function ForgotPassword() {
 
       <View style={styles.row}>
         <Text style={styles.hintText}>Didn't receive the email?</Text>
-        <TouchableOpacity onPress={handleResend} disabled={secondsLeft > 0}>
-          <Text style={[styles.resendText, secondsLeft > 0 && styles.resendDisabled]}>
+
+        <TouchableOpacity
+          onPress={sendOtp}
+          disabled={secondsLeft > 0}
+        >
+          <Text
+            style={[
+              styles.resendText,
+              secondsLeft > 0 && styles.resendDisabled,
+            ]}
+          >
             {secondsLeft > 0 ? `Resend in ${secondsLeft}s` : "Resend"}
           </Text>
         </TouchableOpacity>
@@ -119,7 +119,7 @@ export default function ForgotPassword() {
 
       <TouchableOpacity
         style={styles.backLink}
-        onPress={() => router.replace("/Login")}
+        onPress={() => router.replace("/Authentication/Login")}
       >
         <Text style={styles.backText}>Back to Login</Text>
       </TouchableOpacity>
@@ -129,7 +129,7 @@ export default function ForgotPassword() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, paddingTop: 80, backgroundColor: "#fff" },
-  title: { fontSize: 28, fontWeight: "700", color: "#111", marginBottom: 8 },
+  title: { fontSize: 28, fontWeight: "700", marginBottom: 8 },
   subtitle: { color: "#6b7280", marginBottom: 24 },
   inputRow: {
     backgroundColor: "#f3f4f6",
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.7 },
   btnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 6 },
+  row: { marginTop: 6, flexDirection: "row", justifyContent: "space-between" },
   hintText: { color: "#6b7280" },
   resendText: { color: "#4c6ef5", fontWeight: "700" },
   resendDisabled: { color: "#94a3b8" },

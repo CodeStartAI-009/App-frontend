@@ -15,7 +15,6 @@ import { useUserAuthStore } from "../../store/useAuthStore";
 export default function Signup() {
   const router = useRouter();
 
-  // Zustand store actions
   const signupUser = useUserAuthStore((s) => s.signupUser);
   const loginUser = useUserAuthStore((s) => s.loginUser);
 
@@ -26,38 +25,31 @@ export default function Signup() {
   const [showPwd, setShowPwd] = useState(false);
 
   const handleSignup = async () => {
-    if (!name.trim() || !email.trim() || !password.trim() || !confirmPwd.trim()) {
-      Alert.alert("Error", "Please fill all fields");
-      return;
+    if (!name || !email || !password || !confirmPwd) {
+      return Alert.alert("Error", "Fill all fields");
     }
-
     if (password.length < 8) {
-      Alert.alert("Error", "Password must be at least 8 characters");
-      return;
+      return Alert.alert("Error", "Password must be 8+ characters");
     }
-
     if (password !== confirmPwd) {
-      Alert.alert("Error", "Passwords do not match");
-      return;
+      return Alert.alert("Error", "Passwords do not match");
     }
 
-    // 🚀 STEP 1 — SIGNUP USER
+    // SIGNUP
     const res = await signupUser({ name, email, password });
+    console.log("SIGNUP RESULT", res);
 
     if (!res.ok) {
-      Alert.alert("Signup Failed", res.error || "Try again");
-      return;
+      return Alert.alert("Signup Failed", res.error || "Try again later");
     }
 
-    // 🚀 STEP 2 — AUTO LOGIN USER
+    // AUTO LOGIN
     const loginRes = await loginUser({ emailOrPhone: email, password });
 
     if (!loginRes.ok) {
-      Alert.alert("Error", "Account created but login failed");
-      return;
+      return Alert.alert("Error", "Account created, login failed");
     }
 
-    // 🚀 STEP 3 — MOVE TO PROFILE SETUP WITH TOKEN READY
     router.replace("/Authentication/ProfileSetup");
   };
 
@@ -81,8 +73,8 @@ export default function Signup() {
           style={styles.input}
           placeholder="Email"
           keyboardType="email-address"
-          value={email}
           autoCapitalize="none"
+          value={email}
           onChangeText={setEmail}
         />
       </View>
@@ -125,13 +117,13 @@ export default function Signup() {
       <TouchableOpacity
         onPress={() => router.replace("/Authentication/Login")}
       >
-        <Text style={styles.loginLink}>
-          Already have an account? Login
-        </Text>
+        <Text style={styles.loginLink}>Already have an account? Login</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
+// styles same as before…
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 28, paddingTop: 70, backgroundColor: "#fff" },
