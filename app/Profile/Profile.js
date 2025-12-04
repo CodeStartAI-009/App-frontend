@@ -11,7 +11,7 @@ export default function Profile() {
     { label: "Profile Details", icon: "person-circle-outline", route: "/Profile/Details" },
     { label: "Account Settings", icon: "settings-outline", route: "/Profile/Account" },
     { label: "Goal Creation", icon: "flag-outline", route: "/Profile/Goals" },
-    { label: "Financial Calculator", icon: "calculator-outline", route: "/Profile/Calculator" },
+    { label: "Financial Calculator", icon: "calculator-outline", route: "/Calculator/Calculator" },
     { label: "Notification Settings", icon: "notifications-outline", route: "/Profile/Notifications" },
     { label: "Help Desk", icon: "help-circle-outline", route: "/Profile/Help" },
     
