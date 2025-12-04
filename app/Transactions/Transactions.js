@@ -36,7 +36,7 @@ function getCategoryIcon(category, color) {
     case "income":
       return <Ionicons name="arrow-up-circle" size={26} color={color} />;
     default:
-      return <Ionicons name="ellipse" size={22} color={color} />;
+      return <Ionicons name="albums-outline" size={22} color={color} />;
   }
 }
 
@@ -137,45 +137,50 @@ export default function TransactionsScreen() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
 
-        {/* HEADER WITH BACK BUTTON */}
-        <View style={styles.headerRow}>
+        {/* HEADER */}
+        <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={26} color="#18493F" />
           </TouchableOpacity>
-
-          <Text style={styles.heading}>Transactions</Text>
-
-          <View style={{ width: 30 }} /> 
+          <Text style={styles.title}>Transactions</Text>
+          <View style={{ width: 30 }} />
         </View>
 
-        {/* SORT BAR */}
-        <View style={styles.sortBar}>
+        {/* SPLIT BUTTON SECTION */}
+        <TouchableOpacity
+          style={styles.splitBtn}
+          onPress={() => router.push("/Group/Create")}
+        >
+          <Ionicons name="git-branch-outline" size={22} color="#fff" />
+          <Text style={styles.splitText}>Create Split</Text>
+        </TouchableOpacity>
+
+        {/* FILTER SECTION */}
+        <View style={styles.filterBar}>
           <TouchableOpacity
-            style={styles.dropdown}
+            style={styles.filterBtn}
             onPress={() => setSortMode(sortMode === "mode" ? "" : "mode")}
           >
-            <Text style={styles.dropdownText}>
-              {selectedMonth || selectedCategory ? "Filtered" : "Sort By"}
-            </Text>
-            <Ionicons name="chevron-down" size={18} color="#18493F" />
+            <Ionicons name="filter-outline" size={18} color="#18493F" />
+            <Text style={styles.filterLabel}>Filters</Text>
           </TouchableOpacity>
         </View>
 
-        {/* SORT OPTIONS */}
+        {/* DROPDOWNS */}
         {sortMode === "mode" && (
-          <View style={styles.sortOptions}>
+          <View style={styles.filterOptions}>
             <TouchableOpacity
-              style={styles.sortBtn}
+              style={styles.filterOption}
               onPress={() => setSortMode("month")}
             >
-              <Text style={styles.sortBtnText}>Sort by Month</Text>
+              <Text style={styles.filterOptionText}>Sort by Month</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.sortBtn}
+              style={styles.filterOption}
               onPress={() => setSortMode("category")}
             >
-              <Text style={styles.sortBtnText}>Sort by Category</Text>
+              <Text style={styles.filterOptionText}>Sort by Category</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -234,7 +239,7 @@ export default function TransactionsScreen() {
         <FlatList
           data={filteredData}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 120 }}
           renderItem={({ item }) => (
             <Swipeable
               renderRightActions={() => renderRightActions(item)}
@@ -258,12 +263,15 @@ function TransactionItem({ item, onPress }) {
 
   return (
     <TouchableOpacity
-      style={styles.row}
+      style={styles.itemRow}
       onPress={() => onPress(item)}
     >
-      <View style={styles.left}>
+      <View style={styles.itemLeft}>
         {getCategoryIcon(item.category, color)}
-        <Text style={styles.title}>{item.title}</Text>
+        <View>
+          <Text style={styles.itemTitle}>{item.title}</Text>
+          <Text style={styles.itemCat}>{item.category}</Text>
+        </View>
       </View>
 
       <Text style={[styles.amount, { color }]}>
@@ -275,51 +283,82 @@ function TransactionItem({ item, onPress }) {
 
 /* STYLES */
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff", paddingTop: 55 },
+  container: { flex: 1, backgroundColor: "#fff", paddingTop: 50 },
+
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  /* HEADER */
-  headerRow: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 15,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#18493F",
+    marginLeft: 12,
   },
 
-  heading: {
-    fontSize: 22,
+  /* SPLIT BUTTON */
+  splitBtn: {
+    flexDirection: "row",
+    backgroundColor: "#196F63",
+    marginHorizontal: 20,
+    padding: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  splitText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    marginLeft: 10,
+  },
+
+  /* FILTER BAR */
+  filterBar: {
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  filterBtn: {
+    flexDirection: "row",
+    padding: 10,
+    borderColor: "#CDE7E1",
+    borderWidth: 1,
+    borderRadius: 12,
+    backgroundColor: "#F8FFFD",
+    alignItems: "center",
+    gap: 8,
+    width: 120,
+  },
+  filterLabel: {
+    fontWeight: "600",
+    color: "#18493F",
+  },
+
+  filterOptions: {
+    backgroundColor: "#F3FAF8",
+    padding: 12,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  filterOption: {
+    paddingVertical: 10,
+  },
+  filterOptionText: {
     fontWeight: "700",
     color: "#18493F",
   },
 
-  /* SORT */
-  sortBar: { flexDirection: "row", marginBottom: 10 },
-  dropdown: {
-    flexDirection: "row",
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 12,
-    borderColor: "#CDE7E1",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: 150,
-    backgroundColor: "#F8FFFD",
-  },
-  dropdownText: { fontWeight: "600", color: "#18493F" },
-
-  sortOptions: {
-    backgroundColor: "#F3FAF8",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  sortBtn: { padding: 10 },
-  sortBtnText: { fontWeight: "700", color: "#18493F" },
-
+  /* SELECT BOX */
   selectBox: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 12,
+    marginHorizontal: 20,
+    marginBottom: 10,
   },
   option: {
     paddingVertical: 6,
@@ -328,23 +367,46 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     margin: 4,
   },
-  activeOption: { backgroundColor: "#196F63" },
-  optionText: { fontWeight: "600", color: "#18493F" },
-  activeOptionText: { color: "#fff" },
+  activeOption: {
+    backgroundColor: "#196F63",
+  },
+  optionText: {
+    fontWeight: "600",
+    color: "#18493F",
+  },
+  activeOptionText: {
+    color: "#fff",
+  },
 
-  /* ROW CARD */
-  row: {
+  /* LIST ITEM */
+  itemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 14,
-    paddingHorizontal: 6,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderColor: "#E5E5E5",
+    borderColor: "#EEE",
+    backgroundColor: "#fff",
+  },
+  itemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#18493F",
+  },
+  itemCat: {
+    fontSize: 13,
+    color: "#789",
   },
 
-  left: { flexDirection: "row", alignItems: "center", gap: 12 },
-  title: { fontSize: 16, fontWeight: "600", color: "#18493F" },
-  amount: { fontSize: 18, fontWeight: "700" },
+  amount: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
 
   deleteBtn: {
     width: 80,
