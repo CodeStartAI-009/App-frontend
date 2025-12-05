@@ -15,7 +15,7 @@ export default function Account() {
 
   const options = [
     {
-      label: "Edit Bank Balance",
+      label: "Edit Bank Details",
       icon: "wallet-outline",
       route: "/Profile/EditBank",
     },

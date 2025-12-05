@@ -13,7 +13,7 @@ export default function Profile() {
     { label: "Goal Creation", icon: "flag-outline", route: "/Profile/Goals" },
     { label: "Financial Calculator", icon: "calculator-outline", route: "/Calculator/Calculator" },
     { label: "Notification Settings", icon: "notifications-outline", route: "/Profile/Notifications" },
-    { label: "Help Desk", icon: "help-circle-outline", route: "/Profile/Help" },
+    { label: "Help Desk", icon: "help-circle-outline", route: "/Profile/Helps" },
     
   ];
 
