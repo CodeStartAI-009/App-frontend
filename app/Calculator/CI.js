@@ -14,6 +14,7 @@ import { useRouter } from "expo-router";
 
 export default function CI() {
   const router = useRouter();
+
   const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("");
   const [time, setTime] = useState("");
@@ -26,7 +27,10 @@ export default function CI() {
     const t = parseFloat(time);
     const nn = parseFloat(n);
 
-    if (!p || !r || !t || !nn) return;
+    if (isNaN(p) || isNaN(r) || isNaN(t) || isNaN(nn) || p <= 0 || r <= 0 || t <= 0 || nn <= 0) {
+      setResult(null);
+      return;
+    }
 
     const amount = p * Math.pow(1 + r / nn, nn * t);
     const ci = amount - p;
@@ -36,17 +40,22 @@ export default function CI() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <LinearGradient
-        colors={["#1FA084", "#16795A"]}
-        style={styles.header}
-      >
+      {/* Header */}
+      <LinearGradient colors={["#1FA084", "#16795A"]} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.headerText}>Compound Interest</Text>
       </LinearGradient>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 }}>
+      {/* Content */}
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        {/* Input Card */}
         <View style={styles.card}>
           <Text style={styles.label}>Principal Amount (₹)</Text>
           <TextInput
@@ -89,12 +98,15 @@ export default function CI() {
           </TouchableOpacity>
         </View>
 
+        {/* Result Card */}
         {result && (
           <View style={styles.resultCard}>
             <Text style={styles.resultLabel}>Compound Interest</Text>
             <Text style={styles.resultValue}>₹{result.ci.toFixed(2)}</Text>
 
-            <Text style={[styles.resultLabel, { marginTop: 12 }]}>Total Amount</Text>
+            <Text style={[styles.resultLabel, { marginTop: 12 }]}>
+              Total Amount
+            </Text>
             <Text style={[styles.resultValue, { color: "#16795A" }]}>
               ₹{result.amount.toFixed(2)}
             </Text>
@@ -116,6 +128,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
+    elevation: 6,
   },
   headerText: {
     fontSize: 26,
@@ -130,6 +143,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: "#D7F3EA",
+    elevation: 2,
   },
   label: {
     fontSize: 15,
@@ -139,17 +153,20 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: "#fff",
-    elevation: 1,
     padding: 12,
     marginTop: 6,
     borderRadius: 10,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#DCEFE8",
   },
+
   btn: {
     backgroundColor: "#1FA084",
     padding: 16,
     borderRadius: 14,
     marginTop: 20,
+    elevation: 2,
   },
   btnText: {
     textAlign: "center",
@@ -165,6 +182,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#C9F2E4",
+    elevation: 2,
   },
   resultLabel: {
     fontSize: 16,
@@ -172,7 +190,7 @@ const styles = StyleSheet.create({
     color: "#18493F",
   },
   resultValue: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
     color: "#1FA084",
     marginTop: 4,

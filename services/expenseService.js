@@ -14,7 +14,7 @@ export const addIncome  = (data) => api.post("/income/add", data);
 // 🔹 THIS MONTH SUMMARY
 export const getSummary = () => api.get("/summary");
 
-// 🔹 TRENDS SUMMARY (corrected!)
+// 🔹 TRENDS SUMMARY 
 export const getTrendBreakdown = () => api.get("/summary/trends");
 
 // 🔹 ALL MONTHS SUMMARY
@@ -39,3 +39,12 @@ export const deleteTransaction = (id, type) =>
 
 export const getSingleTransaction = (id) =>
   api.get(`/transactions/single/${id}`);
+
+/***********************
+ *  USER PROFILE (NEW)
+ ************************/
+
+// 🔹 Fetch User Profile
+export const fetchUserProfile = () => api.get("/user/profile");
+export const updateUserProfile = (data) => api.put("/user/update", data);
+

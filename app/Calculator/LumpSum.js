@@ -1,4 +1,4 @@
-// app/Calculator/SIP.js
+// app/Calculator/LumpSum.js
 import React, { useState } from "react";
 import {
   View,
@@ -11,28 +11,29 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNav";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-export default function SIP() {
-  const [monthly, setMonthly] = useState("");
+export default function LumpSum() {
+  const router = useRouter();
+
+  const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("");
   const [years, setYears] = useState("");
   const [result, setResult] = useState(null);
 
-  const calculateSIP = () => {
-    if (!monthly || !rate || !years) return;
+  const calculateLumpSum = () => {
+    if (!principal || !rate || !years) return;
 
-    const P = Number(monthly);
-    const r = Number(rate) / 100 / 12;
-    const n = Number(years) * 12;
+    const P = parseFloat(principal);
+    const r = parseFloat(rate) / 100;
+    const n = parseFloat(years);
 
-    // SIP Formula
-    const amount = P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
-
-    const invested = P * n;
-    const profit = amount - invested;
+    // Lumpsum Formula → A = P(1+r)^n
+    const amount = P * Math.pow(1 + r, n);
+    const profit = amount - P;
 
     setResult({
-      invested: invested.toFixed(0),
+      invested: P.toFixed(0),
       amount: amount.toFixed(0),
       profit: profit.toFixed(0),
     });
@@ -40,6 +41,7 @@ export default function SIP() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      {/* HEADER */}
       <LinearGradient
         colors={["#196F63", "#0F3F36"]}
         style={styles.header}
@@ -47,18 +49,19 @@ export default function SIP() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>SIP Calculator</Text>
+
+        <Text style={styles.headerTitle}>Lumpsum Calculator</Text>
       </LinearGradient>
 
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* INPUT CARD */}
         <View style={styles.card}>
-          <Text style={styles.label}>Monthly Investment (₹)</Text>
+          <Text style={styles.label}>Investment Amount (₹)</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            value={monthly}
-            onChangeText={setMonthly}
+            value={principal}
+            onChangeText={setPrincipal}
             placeholder="Enter amount"
           />
 
@@ -68,7 +71,7 @@ export default function SIP() {
             keyboardType="numeric"
             value={rate}
             onChangeText={setRate}
-            placeholder="Enter rate"
+            placeholder="Enter annual return %"
           />
 
           <Text style={styles.label}>Time Period (Years)</Text>
@@ -77,10 +80,10 @@ export default function SIP() {
             keyboardType="numeric"
             value={years}
             onChangeText={setYears}
-            placeholder="Enter years"
+            placeholder="Enter duration"
           />
 
-          <TouchableOpacity style={styles.calcBtn} onPress={calculateSIP}>
+          <TouchableOpacity style={styles.calcBtn} onPress={calculateLumpSum}>
             <Text style={styles.calcBtnText}>Calculate</Text>
           </TouchableOpacity>
         </View>
@@ -96,12 +99,12 @@ export default function SIP() {
             </View>
 
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>Total Value</Text>
+              <Text style={styles.resultLabel}>Future Value</Text>
               <Text style={styles.resultValue}>₹{result.amount}</Text>
             </View>
 
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>Wealth Gain</Text>
+              <Text style={[styles.resultLabel]}>Wealth Gain</Text>
               <Text style={[styles.resultValue, { color: "#198754" }]}>
                 ₹{result.profit}
               </Text>
@@ -109,7 +112,7 @@ export default function SIP() {
           </View>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
 
       <BottomNav active="calculator" />
@@ -117,16 +120,21 @@ export default function SIP() {
   );
 }
 
+/* ---------------------- STYLES ---------------------- */
+
 const styles = StyleSheet.create({
   header: {
     paddingTop: 70,
     paddingBottom: 30,
     paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "800",
     color: "#fff",
+    marginTop: 10,
   },
 
   container: { padding: 20 },
@@ -135,9 +143,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FFFD",
     padding: 20,
     borderRadius: 16,
-    marginBottom: 20,
     borderWidth: 1,
     borderColor: "#DDEEEA",
+    marginBottom: 20,
+    elevation: 2,
   },
 
   label: {
@@ -154,13 +163,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 6,
     backgroundColor: "#fff",
+    fontSize: 16,
   },
 
   calcBtn: {
     backgroundColor: "#196F63",
-    padding: 14,
+    padding: 16,
     borderRadius: 12,
-    marginTop: 20,
+    marginTop: 22,
     alignItems: "center",
   },
   calcBtnText: {
@@ -177,12 +187,7 @@ const styles = StyleSheet.create({
     borderColor: "#DDEEEA",
   },
 
-  resultTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 15,
-    color: "#18493F",
-  },
+  resultTitle: { fontSize: 20, fontWeight: "700", marginBottom: 15, color: "#18493F" },
 
   resultRow: {
     flexDirection: "row",
@@ -193,3 +198,5 @@ const styles = StyleSheet.create({
   resultLabel: { fontSize: 16, color: "#18493F" },
   resultValue: { fontSize: 18, fontWeight: "700" },
 });
+
+ 

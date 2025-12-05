@@ -1,3 +1,4 @@
+// app/Calculator/Inflation.js
 import React, { useState } from "react";
 import {
   View,
@@ -10,8 +11,11 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNav";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 export default function Inflation() {
+  const router = useRouter();
+
   const [currentValue, setCurrentValue] = useState("");
   const [inflation, setInflation] = useState("");
   const [years, setYears] = useState("");
@@ -25,25 +29,25 @@ export default function Inflation() {
     const n = parseFloat(years);
 
     const FV = P * Math.pow(1 + r, n);
-
     setFutureValue(FV.toFixed(2));
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        
         {/* HEADER */}
         <LinearGradient
           colors={["#1c7c6e", "#0f4f45"]}
           style={styles.header}
         >
-           <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#fff" />
-        </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={26} color="#fff" />
+          </TouchableOpacity>
 
           <Text style={styles.headerText}>Inflation Impact</Text>
           <Text style={styles.subText}>
-            Understand how inflation reduces value over time.
+            See how inflation reduces purchasing power over time.
           </Text>
         </LinearGradient>
 
@@ -52,7 +56,7 @@ export default function Inflation() {
           <Text style={styles.label}>Current Amount (₹)</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter current value"
+            placeholder="Enter amount"
             keyboardType="numeric"
             value={currentValue}
             onChangeText={setCurrentValue}
@@ -76,7 +80,6 @@ export default function Inflation() {
             onChangeText={setYears}
           />
 
-          {/* BUTTON */}
           <TouchableOpacity style={styles.button} onPress={calculateInflation}>
             <Text style={styles.buttonText}>Calculate</Text>
           </TouchableOpacity>
@@ -85,11 +88,11 @@ export default function Inflation() {
         {/* RESULT CARD */}
         {futureValue && (
           <View style={styles.resultCard}>
-            <Text style={styles.resultLabel}>Future Value After Inflation</Text>
+            <Text style={styles.resultLabel}>Future Value (Adjusted for Inflation)</Text>
             <Text style={styles.resultValue}>₹ {futureValue}</Text>
 
             <Text style={styles.note}>
-              This is how much the current amount will be worth after inflation.
+              This is how much your money will be worth after inflation.
             </Text>
           </View>
         )}
@@ -97,7 +100,7 @@ export default function Inflation() {
         <View style={{ height: 90 }} />
       </ScrollView>
 
-      {/* Bottom Nav */}
+      {/* Bottom Navigation */}
       <BottomNav active="calculator" />
     </View>
   );
@@ -113,9 +116,19 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
-  backBtn: { paddingBottom: 20 },
-  headerText: { fontSize: 28, fontWeight: "800", color: "#fff" },
-  subText: { color: "#d6f5ef", marginTop: 5, fontSize: 14 },
+
+  headerText: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#fff",
+    marginTop: 10,
+  },
+
+  subText: {
+    color: "#d6f5ef",
+    marginTop: 5,
+    fontSize: 14,
+  },
 
   card: {
     backgroundColor: "#f8fffd",
@@ -169,8 +182,8 @@ const styles = StyleSheet.create({
 
   resultLabel: {
     fontSize: 16,
-    color: "#0f4f45",
     fontWeight: "700",
+    color: "#0f4f45",
   },
 
   resultValue: {

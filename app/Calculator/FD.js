@@ -16,10 +16,10 @@ import { useRouter } from "expo-router";
 export default function FD_RD() {
   const router = useRouter();
 
-  const [mode, setMode] = useState("FD"); // FD / RD
+  const [mode, setMode] = useState("FD"); // FD or RD
   const [amount, setAmount] = useState("");
   const [rate, setRate] = useState("");
-  const [time, setTime] = useState(""); // in years
+  const [time, setTime] = useState("");
   const [result, setResult] = useState(null);
 
   const calculate = () => {
@@ -27,29 +27,26 @@ export default function FD_RD() {
     const R = parseFloat(rate);
     const T = parseFloat(time);
 
-    if (!P || !R || !T) {
-      setResult(null);
-      return;
-    }
+    if (!P || !R || !T) return setResult(null);
 
     let maturity = 0;
     let interest = 0;
 
     if (mode === "FD") {
-      // FD compound interest annually
+      // FD — compounded annually
       maturity = P * Math.pow(1 + R / 100, T);
       interest = maturity - P;
     } else {
-      // RD monthly deposit compounded quarterly
+      // RD — corrected and proper formula
+      const monthlyDeposit = P;
+      const monthlyRate = R / 100 / 12;
       const n = T * 12; // number of months
-      const monthlyRate = R / (4 * 100);
-      const quarters = T * 4;
 
       maturity =
-        P *
-        (((1 + monthlyRate) ** quarters - 1) / (1 - (1 + monthlyRate) ** -1));
+        monthlyDeposit *
+        (((Math.pow(1 + monthlyRate, n) - 1) / monthlyRate) * (1 + monthlyRate));
 
-      interest = maturity - P * n;
+      interest = maturity - monthlyDeposit * n;
     }
 
     setResult({
@@ -61,20 +58,16 @@ export default function FD_RD() {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       {/* HEADER */}
-      <LinearGradient
-        colors={["#1A726A", "#0F4C45"]}
-        style={styles.header}
-      >
+      <LinearGradient colors={["#1A726A", "#0F4C45"]} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-
         <Text style={styles.headerText}>FD / RD Calculator</Text>
       </LinearGradient>
 
       {/* CONTENT */}
-      <ScrollView style={styles.container}>
-        {/* Mode Switch */}
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* MODE SWITCH */}
         <View style={styles.modeRow}>
           <TouchableOpacity
             onPress={() => setMode("FD")}
@@ -112,7 +105,7 @@ export default function FD_RD() {
             keyboardType="numeric"
             value={rate}
             onChangeText={setRate}
-            placeholder="Enter rate"
+            placeholder="Enter interest rate"
           />
 
           <Text style={styles.label}>Time (Years)</Text>
@@ -121,11 +114,11 @@ export default function FD_RD() {
             keyboardType="numeric"
             value={time}
             onChangeText={setTime}
-            placeholder="Enter time"
+            placeholder="Enter duration"
           />
         </View>
 
-        {/* Calculate Button */}
+        {/* CALCULATE BUTTON */}
         <TouchableOpacity onPress={calculate} style={styles.calcBtn}>
           <Text style={styles.calcText}>Calculate</Text>
         </TouchableOpacity>
@@ -141,13 +134,11 @@ export default function FD_RD() {
             </View>
 
             <View style={styles.resultRow}>
-              <Text style={styles.rLabel}>Total Interest</Text>
+              <Text style={styles.rLabel}>Total Interest Earned</Text>
               <Text style={styles.rValue}>₹{result.interest}</Text>
             </View>
           </View>
         )}
-
-        <View style={{ height: 80 }} />
       </ScrollView>
 
       <BottomNav active="calculator" />
@@ -160,83 +151,77 @@ export default function FD_RD() {
 const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 25,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
   },
   headerText: {
-    color: "#fff",
     fontSize: 26,
     fontWeight: "800",
+    color: "#fff",
     marginTop: 10,
   },
 
   container: { padding: 20 },
 
-  /* Mode Switch */
   modeRow: {
     flexDirection: "row",
     marginBottom: 20,
-    justifyContent: "space-between",
   },
   modeBtn: {
     flex: 1,
     paddingVertical: 12,
-    marginHorizontal: 4,
+    borderRadius: 12,
     backgroundColor: "#E8F6F3",
-    borderRadius: 10,
     alignItems: "center",
+    marginHorizontal: 5,
   },
   modeText: {
     fontSize: 16,
-    color: "#18493F",
     fontWeight: "600",
+    color: "#18493F",
   },
   activeMode: { backgroundColor: "#196F63" },
   activeModeText: { color: "#fff" },
 
-  /* Card */
   card: {
     backgroundColor: "#F8FFFD",
-    borderRadius: 16,
     padding: 18,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#DCEFEA",
-    marginBottom: 20,
   },
 
   label: {
     fontSize: 15,
     fontWeight: "600",
     color: "#18493F",
-    marginBottom: 6,
-    marginTop: 10,
+    marginTop: 12,
   },
 
   input: {
     padding: 12,
-    backgroundColor: "#fff",
+    marginTop: 6,
     borderRadius: 10,
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#D9E8E4",
-    fontSize: 16,
+    borderColor: "#D8EDE6",
   },
 
   calcBtn: {
     backgroundColor: "#1A726A",
-    padding: 16,
+    paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
-    marginBottom: 20,
+    marginVertical: 20,
   },
   calcText: { color: "#fff", fontSize: 18, fontWeight: "700" },
 
-  /* Result Card */
   resultCard: {
     backgroundColor: "#F1FBF8",
+    padding: 20,
     borderRadius: 16,
-    padding: 18,
     borderWidth: 1,
     borderColor: "#CDEFE6",
   },
@@ -251,14 +236,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: 8,
   },
-  rLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#18493F",
-  },
-  rValue: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#196F63",
-  },
+  rLabel: { fontSize: 16, fontWeight: "600", color: "#18493F" },
+  rValue: { fontSize: 18, fontWeight: "700", color: "#196F63" },
 });

@@ -1,10 +1,11 @@
+// app/Calculator/SIP.js
 import React, { useState } from "react";
 import {
   View,
   Text,
+  StyleSheet,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,38 +21,43 @@ export default function SIP() {
   const [years, setYears] = useState("");
   const [result, setResult] = useState(null);
 
-  const calculateSip = () => {
+  const calculateSIP = () => {
     if (!monthly || !rate || !years) return;
 
     const P = Number(monthly);
     const r = Number(rate) / 100 / 12;
     const n = Number(years) * 12;
 
-    const maturity = P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
+    // SIP Formula
+    const amount = P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
+
     const invested = P * n;
-    const gain = maturity - invested;
+    const profit = amount - invested;
 
     setResult({
       invested: invested.toFixed(0),
-      gain: gain.toFixed(0),
-      total: maturity.toFixed(0),
+      amount: amount.toFixed(0),
+      profit: profit.toFixed(0),
     });
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      
       {/* HEADER */}
       <LinearGradient
-        colors={["#0c9488", "#0f5f54"]}
+        colors={["#1FA084", "#16795A"]}
         style={styles.header}
       >
-         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#fff" />
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>SIP Calculator</Text>
+        <Text style={styles.headerTitle}>SIP Calculator</Text>
       </LinearGradient>
 
-      <ScrollView style={{ padding: 20 }}>
+      {/* CONTENT */}
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        
         {/* INPUT CARD */}
         <View style={styles.card}>
           <Text style={styles.label}>Monthly Investment (₹)</Text>
@@ -60,16 +66,16 @@ export default function SIP() {
             keyboardType="numeric"
             value={monthly}
             onChangeText={setMonthly}
-            placeholder="e.g. 5000"
+            placeholder="Enter amount"
           />
 
-          <Text style={styles.label}>Expected Return (% per year)</Text>
+          <Text style={styles.label}>Expected Return (%)</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
             value={rate}
             onChangeText={setRate}
-            placeholder="e.g. 12"
+            placeholder="Enter rate"
           />
 
           <Text style={styles.label}>Time Period (Years)</Text>
@@ -78,111 +84,129 @@ export default function SIP() {
             keyboardType="numeric"
             value={years}
             onChangeText={setYears}
-            placeholder="e.g. 10"
+            placeholder="Enter years"
           />
 
-          <TouchableOpacity style={styles.calcBtn} onPress={calculateSip}>
-            <Text style={styles.calcText}>CALCULATE</Text>
+          {/* BUTTON */}
+          <TouchableOpacity style={styles.calcBtn} onPress={calculateSIP}>
+            <Text style={styles.calcBtnText}>Calculate</Text>
           </TouchableOpacity>
         </View>
 
         {/* RESULT CARD */}
         {result && (
           <View style={styles.resultCard}>
-            <Text style={styles.resultTitle}>Results</Text>
+            <Text style={styles.resultHeader}>Results</Text>
 
-            <View style={styles.row}>
+            <View style={styles.resultRow}>
               <Text style={styles.resultLabel}>Total Invested</Text>
               <Text style={styles.resultValue}>₹{result.invested}</Text>
             </View>
-            <View style={styles.row}>
-              <Text style={styles.resultLabel}>Total Gain</Text>
-              <Text style={styles.resultValueGreen}>₹{result.gain}</Text>
+
+            <View style={styles.resultRow}>
+              <Text style={styles.resultLabel}>Total Value</Text>
+              <Text style={styles.resultValue}>₹{result.amount}</Text>
             </View>
-            <View style={styles.row}>
-              <Text style={styles.resultLabel}>Maturity Amount</Text>
-              <Text style={styles.resultValueBlue}>₹{result.total}</Text>
+
+            <View style={styles.resultRow}>
+              <Text style={[styles.resultLabel]}>Wealth Gain</Text>
+              <Text style={[styles.resultValue, { color: "#1FA084" }]}>
+                ₹{result.profit}
+              </Text>
             </View>
           </View>
         )}
 
-        <View style={{ height: 80 }} />
+        <View style={{ height: 90 }} />
       </ScrollView>
 
+      {/* BOTTOM NAV */}
       <BottomNav active="calculator" />
     </View>
   );
 }
 
+/* -------------------- STYLES -------------------- */
+
 const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
-    paddingBottom: 25,
+    paddingBottom: 30,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-  headerText: {
-    fontSize: 26,
-    fontWeight: "800",
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "900",
     color: "#fff",
-    marginTop: 8,
-  },
-  card: {
-    backgroundColor: "#F1F8F6",
-    padding: 18,
-    borderRadius: 16,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: "#D6EDE7",
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
     marginTop: 10,
-    color: "#18493F",
   },
+
+  container: { padding: 20 },
+
+  card: {
+    backgroundColor: "#F8FFFD",
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#DDEEEA",
+    marginBottom: 20,
+    elevation: 2,
+  },
+
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#18493F",
+    marginTop: 12,
+  },
+
   input: {
-    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#CFE8E2",
     padding: 12,
     borderRadius: 10,
     marginTop: 6,
-    borderWidth: 1,
-    borderColor: "#E2E8E5",
+    backgroundColor: "#fff",
     fontSize: 16,
   },
+
   calcBtn: {
-    marginTop: 18,
-    backgroundColor: "#0C7C70",
+    backgroundColor: "#1FA084",
     padding: 14,
     borderRadius: 12,
+    marginTop: 22,
     alignItems: "center",
   },
-  calcText: {
+  calcBtnText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "700",
   },
+
   resultCard: {
     backgroundColor: "#FFFFFF",
-    padding: 18,
+    padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#DDEDEA",
+    borderColor: "#DDEEEA",
+    elevation: 2,
   },
-  resultTitle: {
+
+  resultHeader: {
     fontSize: 20,
     fontWeight: "800",
-    marginBottom: 12,
+    marginBottom: 16,
     color: "#18493F",
   },
-  row: {
+
+  resultRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 6,
+    marginBottom: 12,
   },
+
   resultLabel: { fontSize: 16, color: "#18493F" },
-  resultValue: { fontSize: 18, fontWeight: "700", color: "#18493F" },
-  resultValueGreen: { fontSize: 18, fontWeight: "700", color: "#0C7C70" },
-  resultValueBlue: { fontSize: 18, fontWeight: "700", color: "#0C62A1" },
+  resultValue: { fontSize: 18, fontWeight: "800", color: "#18493F" },
 });

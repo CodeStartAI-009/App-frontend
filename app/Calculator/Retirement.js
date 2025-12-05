@@ -1,3 +1,4 @@
+// app/Calculator/Retirement.js
 import React, { useState } from "react";
 import {
   View,
@@ -9,17 +10,13 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
-
-// Retirement Formula:
-// Required Monthly SIP = [ FV × r ] / [ (1+r)^n – 1 ]
-// FV = Final Retirement Corpus
-// r = Monthly Interest Rate
-// n = Number of months investing
+import { useRouter } from "expo-router";
 
 export default function Retirement() {
+  const router = useRouter();            // ✅ FIXED (router missing)
   const [corpus, setCorpus] = useState("");
   const [years, setYears] = useState("");
-  const [rate, setRate] = useState("12"); // default return like equity MF
+  const [rate, setRate] = useState("12");
   const [result, setResult] = useState(null);
 
   const calculate = () => {
@@ -28,24 +25,24 @@ export default function Retirement() {
     const N = Number(years) * 12;
 
     if (!FV || !R || !N) {
-      setResult("Please fill all fields correctly.");
+      setResult(null);
       return;
     }
 
     const SIP = (FV * R) / (Math.pow(1 + R, N) - 1);
-
     setResult(SIP.toFixed(2));
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-
+        
         {/* HEADER */}
         <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#fff" />
-        </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={26} color="#fff" />
+          </TouchableOpacity>
+
           <Text style={styles.headerTitle}>Retirement Planner</Text>
           <Text style={styles.headerSub}>Plan your future wealth</Text>
         </View>
@@ -56,43 +53,43 @@ export default function Retirement() {
           <TextInput
             style={styles.input}
             keyboardType="numeric"
+            placeholder="e.g., 20000000"
             value={corpus}
             onChangeText={setCorpus}
-            placeholder="e.g., 2,00,00,000"
           />
 
           <Text style={styles.label}>Years to Invest</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
+            placeholder="e.g., 25"
             value={years}
             onChangeText={setYears}
-            placeholder="e.g., 25"
           />
 
-          <Text style={styles.label}>Expected Return (% per year)</Text>
+          <Text style={styles.label}>Expected Return per year (%)</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
+            placeholder="e.g., 12"
             value={rate}
             onChangeText={setRate}
-            placeholder="e.g., 12"
           />
 
-          {/* CALCULATE BUTTON */}
+          {/* BUTTON */}
           <TouchableOpacity style={styles.calcBtn} onPress={calculate}>
             <Text style={styles.calcBtnText}>Calculate</Text>
           </TouchableOpacity>
         </View>
 
-        {/* RESULT */}
+        {/* RESULT SECTION */}
         {result && (
           <View style={styles.resultCard}>
-            <Ionicons name="trending-up-outline" size={32} color="#196F63" />
+            <Ionicons name="trending-up-outline" size={40} color="#196F63" />
             <Text style={styles.resultTitle}>Monthly SIP Required</Text>
             <Text style={styles.resultValue}>₹{result}</Text>
             <Text style={styles.resultNote}>
-              Invest this amount monthly to reach your goal 🎯
+              Invest this amount monthly to reach your retirement goal 🎯
             </Text>
           </View>
         )}
@@ -105,8 +102,7 @@ export default function Retirement() {
   );
 }
 
-/* -------------------------- STYLES -------------------------- */
-
+/* ---------------------- STYLES ---------------------- */
 const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
@@ -120,11 +116,12 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "800",
     color: "#fff",
+    marginTop: 10,
   },
   headerSub: {
     fontSize: 15,
     color: "#E5FFFA",
-    marginTop: 4,
+    marginTop: 5,
   },
 
   card: {
@@ -132,15 +129,15 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 20,
     borderRadius: 20,
-    borderColor: "#D1F0E8",
     borderWidth: 1,
+    borderColor: "#D1F0E8",
   },
 
   label: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#18493F",
-    marginTop: 10,
+    marginTop: 12,
   },
 
   input: {
@@ -156,7 +153,7 @@ const styles = StyleSheet.create({
   calcBtn: {
     marginTop: 20,
     backgroundColor: "#196F63",
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
   },
@@ -178,18 +175,18 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 18,
     fontWeight: "700",
+    marginTop: 10,
     color: "#18493F",
-    marginTop: 8,
   },
   resultValue: {
-    fontSize: 30,
-    fontWeight: "800",
+    fontSize: 32,
+    fontWeight: "900",
     color: "#196F63",
     marginVertical: 8,
   },
   resultNote: {
     fontSize: 14,
     color: "#4B6F68",
-    marginTop: 4,
+    textAlign: "center",
   },
 });
