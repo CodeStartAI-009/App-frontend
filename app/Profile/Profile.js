@@ -10,7 +10,7 @@ export default function Profile() {
   const menu = [
     { label: "Profile Details", icon: "person-circle-outline", route: "/Profile/Info" },
     { label: "Account Settings", icon: "settings-outline", route: "/Profile/Accounts" },
-    { label: "Goal Creation", icon: "flag-outline", route: "/Profile/Goals" },
+    { label: "Goal Creation", icon: "flag-outline", route: "/Goals/Overview" },
     { label: "Financial Calculator", icon: "calculator-outline", route: "/Calculator/Calculator" },
     { label: "Notification Settings", icon: "notifications-outline", route: "/Profile/Notifications" },
     { label: "Help Desk", icon: "help-circle-outline", route: "/Profile/Helps" },
