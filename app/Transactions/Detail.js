@@ -46,95 +46,136 @@ export default function DetailScreen() {
 
   return (
     <View style={styles.container}>
-      {/* TOP BAR */}
-      <View style={styles.topRow}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color="#18493F" />
+      {/* HEADER */}
+      <View style={styles.headerWrapper}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={26} color="#FFFFFF" />
         </TouchableOpacity>
-
-        <Text style={styles.header}>Transaction Detail</Text>
+        <Text style={styles.headerText}>Transaction Details</Text>
       </View>
 
-      {/* CONTENT */}
-      <View style={styles.box}>
+      {/* DETAILS CARD */}
+      <View style={styles.card}>
         <Text style={styles.title}>{item.title}</Text>
 
         <Text style={[styles.amount, { color }]}>
-          {isIncome ? "+" : "-"}₹{item.amount}
+          {isIncome ? "+" : "-"}₹{item.amount.toLocaleString()}
         </Text>
 
-        <View style={styles.line} />
+        <View style={styles.divider} />
 
-        <Text style={styles.label}>Category</Text>
-        <Text style={styles.value}>{item.category}</Text>
+        {/* CATEGORY */}
+        <View style={styles.row}>
+          <Ionicons name="pricetag-outline" size={20} color="#196F63" />
+          <View style={{ marginLeft: 10 }}>
+            <Text style={styles.label}>Category</Text>
+            <Text style={styles.value}>{item.category}</Text>
+          </View>
+        </View>
 
-        <Text style={styles.label}>Type</Text>
-        <Text style={styles.value}>{item.type}</Text>
+        {/* TYPE */}
+        <View style={styles.row}>
+          <Ionicons
+            name={isIncome ? "arrow-up-circle" : "arrow-down-circle"}
+            size={22}
+            color={color}
+          />
+          <View style={{ marginLeft: 10 }}>
+            <Text style={styles.label}>Type</Text>
+            <Text style={[styles.value, { color }]}>{item.type}</Text>
+          </View>
+        </View>
 
-        <Text style={styles.label}>Date</Text>
-        <Text style={styles.value}>
-          {new Date(item.createdAt).toLocaleString("en-IN")}
-        </Text>
+        {/* DATE */}
+        <View style={styles.row}>
+          <Ionicons name="calendar-outline" size={20} color="#196F63" />
+          <View style={{ marginLeft: 10 }}>
+            <Text style={styles.label}>Date</Text>
+            <Text style={styles.value}>
+              {new Date(item.createdAt).toLocaleString("en-IN")}
+            </Text>
+          </View>
+        </View>
       </View>
     </View>
   );
 }
 
+/* -------------------- STYLES -------------------- */
+
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center"},
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  container: { flex: 1, padding: 20, backgroundColor: "#fff",paddingTop: 50},
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
 
-  topRow: {
+  /* HEADER */
+  headerWrapper: {
+    paddingTop: 55,
+    paddingBottom: 25,
+    paddingHorizontal: 20,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+  },
+  backBtn: {
+    padding: 6,
+    marginRight: 12,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
 
-  header: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#18493F",
-    marginLeft: 12,
-  },
-
-  box: {
+  /* CARD */
+  card: {
     backgroundColor: "#F8FFFD",
-    padding: 20,
-    borderRadius: 14,
+    padding: 22,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E6F3EE",
+    borderColor: "#DCEFEA",
+    marginTop: 20,
+    marginHorizontal: 20,
+    elevation: 3,
   },
 
   title: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#18493F",
   },
 
   amount: {
-    fontSize: 26,
-    fontWeight: "800",
+    fontSize: 30,
+    fontWeight: "900",
+    marginTop: 10,
+    marginBottom: 12,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#E6F3EE",
+    marginVertical: 14,
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 10,
   },
 
-  line: {
-    height: 1,
-    backgroundColor: "#E6F3EE",
-    marginVertical: 12,
-  },
-
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 6,
+    fontSize: 13,
     color: "#6F7E78",
+    fontWeight: "600",
   },
 
   value: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
     color: "#18493F",
-    marginBottom: 4,
+    marginTop: 2,
   },
 });

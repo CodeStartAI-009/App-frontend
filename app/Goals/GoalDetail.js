@@ -10,7 +10,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import BottomNav from "../components/BottomNav";
-
 import { getSingleGoal } from "../../services/goalService";
 
 export default function GoalDetails() {
@@ -18,6 +17,10 @@ export default function GoalDetails() {
   const { id } = useLocalSearchParams();
 
   const [goal, setGoal] = useState(null);
+
+  useEffect(() => {
+    loadGoal();
+  }, []);
 
   const loadGoal = async () => {
     try {
@@ -27,10 +30,6 @@ export default function GoalDetails() {
       console.log("GOAL DETAILS ERROR:", err);
     }
   };
-
-  useEffect(() => {
-    loadGoal();
-  }, []);
 
   if (!goal) {
     return (
@@ -43,62 +42,68 @@ export default function GoalDetails() {
   const progress = Math.min((goal.saved / goal.amount) * 100, 100);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      
+    <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
+
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#fff" />
+          <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>{goal.title}</Text>
+        <Text style={styles.headerTitle}>{goal.title}</Text>
       </View>
 
       {/* CONTENT */}
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-        
+      <ScrollView contentContainerStyle={styles.scroll}>
+
         {/* Goal Card */}
         <View style={styles.card}>
-          <Text style={styles.title}>{goal.title}</Text>
+          <Text style={styles.cardTitle}>{goal.title}</Text>
 
           <View style={styles.row}>
-            <Text style={styles.label}>Target Amount:</Text>
+            <Text style={styles.label}>Target Amount</Text>
             <Text style={styles.value}>₹{goal.amount}</Text>
           </View>
 
           <View style={styles.row}>
-            <Text style={styles.label}>Saved Till Now:</Text>
+            <Text style={styles.label}>Saved So Far</Text>
             <Text style={[styles.value, { color: "#196F63" }]}>
               ₹{goal.saved}
             </Text>
           </View>
 
-          {/* Progress Bar */}
-          <View style={styles.progressBarBackground}>
+          {/* Progress */}
+          <View style={styles.progressBackground}>
             <View
               style={[
-                styles.progressBarFill,
-                { width: `${progress}%` },
+                styles.progressFill,
+                {
+                  width: `${progress}%`,
+                  backgroundColor: progress === 100 ? "#22c55e" : "#196F63",
+                },
               ]}
             />
           </View>
 
-          <Text style={styles.progressText}>{progress.toFixed(1)}% Completed</Text>
+          <Text style={styles.progressText}>
+            {progress.toFixed(1)}% Completed
+          </Text>
 
-          {progress === 100 ? (
+          {/* Completed Badge */}
+          {progress === 100 && (
             <View style={styles.completedBox}>
-              <Ionicons name="checkmark-circle" size={40} color="#1A8A50" />
+              <Ionicons name="checkmark-circle" size={40} color="#22c55e" />
               <Text style={styles.completedText}>Goal Completed!</Text>
             </View>
-          ) : null}
+          )}
         </View>
 
-        {/* EDIT BUTTON */}
+        {/* CTA Button */}
         <TouchableOpacity
-          style={styles.editBtn}
+          style={styles.addBtn}
           onPress={() => router.push(`/Goals/GoalAdd?id=${goal._id}`)}
         >
-          <Ionicons name="create-outline" size={20} color="#fff" />
-          <Text style={styles.editBtnText}>Add Amount</Text>
+          <Ionicons name="add-circle-outline" size={22} color="#fff" />
+          <Text style={styles.addBtnText}>Add Amount</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -107,102 +112,123 @@ export default function GoalDetails() {
   );
 }
 
-/* -------------------------- STYLES -------------------------- */
+/* ------------------- GREEN PREMIUM UI ------------------- */
+
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
+  /* HEADER */
   header: {
     paddingTop: 60,
-    paddingBottom: 25,
-    backgroundColor: "#196F63",
+    paddingBottom: 28,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    backgroundColor: "#196F63",
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 6,
   },
-  headerText: {
-    color: "#fff",
-    fontSize: 26,
+  headerTitle: {
+    fontSize: 24,
     fontWeight: "800",
+    color: "#fff",
   },
 
-  card: {
-    backgroundColor: "#F8FFFD",
+  /* CONTENT */
+  scroll: {
     padding: 20,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#D8EDE6",
+    paddingBottom: 150,
   },
 
-  title: {
+  /* CARD */
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 22,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#DDEFE9",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
+
+  cardTitle: {
     fontSize: 22,
     fontWeight: "800",
     color: "#18493F",
-    marginBottom: 15,
+    marginBottom: 16,
   },
 
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
     color: "#47645A",
+    fontWeight: "600",
   },
   value: {
     fontSize: 16,
-    fontWeight: "800",
     color: "#18493F",
+    fontWeight: "800",
   },
 
-  /* Progress Bar */
-  progressBarBackground: {
-    height: 10,
+  /* Progress */
+  progressBackground: {
+    height: 12,
     backgroundColor: "#DCEFE6",
-    borderRadius: 10,
-    marginTop: 15,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 16,
   },
-  progressBarFill: {
-    height: 10,
-    backgroundColor: "#196F63",
-    borderRadius: 10,
+  progressFill: {
+    height: 12,
+    borderRadius: 12,
   },
   progressText: {
-    marginTop: 8,
+    marginTop: 10,
     fontSize: 15,
     fontWeight: "700",
     color: "#18493F",
   },
 
+  /* Completed Badge */
   completedBox: {
     marginTop: 20,
     backgroundColor: "#E8FFF1",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
+    padding: 18,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#C6F1D1",
+    alignItems: "center",
   },
   completedText: {
     marginTop: 10,
     fontSize: 18,
     fontWeight: "800",
-    color: "#1A8A50",
+    color: "#15803d",
   },
 
-  editBtn: {
+  /* CTA BUTTON */
+  addBtn: {
     backgroundColor: "#196F63",
-    marginTop: 20,
-    padding: 15,
+    paddingVertical: 16,
     borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    marginTop: 25,
+    elevation: 4,
   },
-  editBtnText: { color: "#fff", fontSize: 17, fontWeight: "700" },
+  addBtnText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
 });

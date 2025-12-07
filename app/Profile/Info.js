@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
@@ -17,32 +21,33 @@ export default function Details() {
 
   const loadProfile = async () => {
     const res = await fetchUserProfile();
-    if (res?.data?.profile) {
-      setUser(res.data.profile);
-    }
+    if (res?.data?.profile) setUser(res.data.profile);
   };
 
   if (!user) {
     return (
       <View style={styles.center}>
-        <Text>Loading profile...</Text>
+        <Text style={{ color: "#555" }}>Loading profile...</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={styles.page}>
       
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#fff" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Profile Details</Text>
       </View>
 
       {/* CONTENT */}
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.card}>
           <Text style={styles.title}>User Information</Text>
 
@@ -61,31 +66,45 @@ export default function Details() {
           {/* Phone */}
           <View style={styles.row}>
             <Text style={styles.label}>Phone</Text>
-            <Text style={styles.value}>{user.phone || "Add phone number"}</Text>
+            <Text style={[styles.value, !user.phone && styles.placeholder]}>
+              {user.phone || "Add phone number"}
+            </Text>
           </View>
 
           {/* UPI */}
           <View style={styles.row}>
             <Text style={styles.label}>UPI ID</Text>
-            <Text style={styles.value}>
-              {user.hasUPI ? "Linked ✔" : "Add your UPI ID"}
-            </Text>
+            {user.hasUPI ? (
+              <View style={styles.badgeSuccess}>
+                <Ionicons name="checkmark-circle" size={16} color="#1A7F63" />
+                <Text style={styles.badgeText}>Linked</Text>
+              </View>
+            ) : (
+              <Text style={[styles.value, styles.placeholder]}>
+                Add UPI ID
+              </Text>
+            )}
           </View>
 
-          {/* Bank Account */}
+          {/* Bank */}
           <View style={styles.row}>
             <Text style={styles.label}>Bank Account</Text>
-            <Text style={styles.value}>
-              {user.hasBank ? "Bank Linked ✔" : "Add bank account"}
-            </Text>
+            {user.hasBank ? (
+              <View style={styles.badgeSuccess}>
+                <Ionicons name="checkmark-circle" size={16} color="#1A7F63" />
+                <Text style={styles.badgeText}>Linked</Text>
+              </View>
+            ) : (
+              <Text style={[styles.value, styles.placeholder]}>
+                Add bank account
+              </Text>
+            )}
           </View>
 
           {/* Balance */}
           <View style={[styles.row, { borderBottomWidth: 0 }]}>
             <Text style={styles.label}>Current Balance</Text>
-            <Text style={[styles.value, { fontSize: 20, color: "#196F63" }]}>
-              ₹ {user.balance}
-            </Text>
+            <Text style={styles.balanceAmount}>₹ {user.balance}</Text>
           </View>
         </View>
       </ScrollView>
@@ -98,36 +117,58 @@ export default function Details() {
 /* -------------------- STYLES -------------------- */
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  page: {
+    flex: 1,
+    backgroundColor: "#F7FBFA",
+  },
 
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  /* HEADER */
   header: {
     paddingTop: 60,
     paddingBottom: 25,
     paddingHorizontal: 20,
     backgroundColor: "#196F63",
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-  },
-  headerText: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#fff",
+    gap: 14,
+    elevation: 4,
+    shadowColor: "#00000030",
   },
 
+  backBtn: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    padding: 8,
+    borderRadius: 10,
+  },
+
+  headerText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "800",
+  },
+
+  /* CARD */
   card: {
-    backgroundColor: "#F8FFFD",
-    padding: 20,
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    padding: 22,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "#D8EDE6",
+    elevation: 2,
+    shadowColor: "#00000015",
   },
 
   title: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#18493F",
     marginBottom: 16,
   },
@@ -135,9 +176,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderColor: "#E5F2EE",
+    alignItems: "center",
   },
 
   label: {
@@ -150,5 +192,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#18493F",
+  },
+
+  placeholder: {
+    color: "#9AA5A0",
+    fontWeight: "600",
+  },
+
+  /* SUCCESS BADGE */
+  badgeSuccess: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E7FFF7",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#B8E7D8",
+  },
+
+  badgeText: {
+    marginLeft: 4,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1A7F63",
+  },
+
+  /* BALANCE */
+  balanceAmount: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#196F63",
   },
 });

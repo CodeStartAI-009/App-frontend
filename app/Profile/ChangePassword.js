@@ -51,16 +51,19 @@ export default function ChangePassword() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#F7FBFA" }}>
+      
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.headerText}>Change Password</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
+      {/* CONTENT */}
+      <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
           <Text style={styles.label}>Current Password</Text>
           <TextInput
@@ -69,6 +72,7 @@ export default function ChangePassword() {
             placeholder="Enter your current password"
             value={currentPassword}
             onChangeText={setCurrentPassword}
+            placeholderTextColor="#9CA3AF"
           />
 
           <Text style={styles.label}>New Password</Text>
@@ -78,6 +82,7 @@ export default function ChangePassword() {
             placeholder="Enter new password"
             value={newPassword}
             onChangeText={setNewPassword}
+            placeholderTextColor="#9CA3AF"
           />
 
           <Text style={styles.label}>Confirm New Password</Text>
@@ -87,12 +92,30 @@ export default function ChangePassword() {
             placeholder="Re-enter new password"
             value={confirm}
             onChangeText={setConfirm}
+            placeholderTextColor="#9CA3AF"
           />
 
+          {/* MESSAGE */}
           {message ? (
-            <Text style={[styles.message, { color: message.includes("success") ? "green" : "red" }]}>
-              {message}
-            </Text>
+            <View
+              style={[
+                styles.messageBox,
+                message.includes("success")
+                  ? styles.successBox
+                  : styles.errorBox,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.messageText,
+                  message.includes("success")
+                    ? styles.successText
+                    : styles.errorText,
+                ]}
+              >
+                {message}
+              </Text>
+            </View>
           ) : null}
 
           <TouchableOpacity style={styles.btn} onPress={handleChange}>
@@ -111,57 +134,109 @@ export default function ChangePassword() {
 const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
-    paddingBottom: 25,
+    paddingBottom: 26,
     paddingHorizontal: 20,
     backgroundColor: "#196F63",
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    elevation: 4,
+    shadowColor: "#00000040",
   },
+
+  backBtn: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    padding: 6,
+    borderRadius: 8,
+  },
+
   headerText: {
     fontSize: 26,
     fontWeight: "800",
     color: "#fff",
+    marginLeft: 12,
+  },
+
+  scroll: {
+    padding: 20,
+    paddingBottom: 130,
   },
 
   card: {
-    backgroundColor: "#F8FFFD",
-    padding: 20,
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    padding: 22,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "#D8EDE6",
+    elevation: 2,
+    shadowColor: "#00000020",
   },
 
   label: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#18493F",
-    marginTop: 15,
+    marginTop: 14,
   },
 
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFFFD",
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#CDEFE6",
     marginTop: 6,
+    fontSize: 16,
+    color: "#0F172A",
   },
 
+  /* MESSAGE BOX */
+  messageBox: {
+    marginTop: 16,
+    padding: 10,
+    borderRadius: 10,
+  },
+
+  successBox: {
+    backgroundColor: "#E9FFF1",
+    borderColor: "#8DE9B1",
+    borderWidth: 1,
+  },
+
+  errorBox: {
+    backgroundColor: "#FFECEC",
+    borderColor: "#E39A9A",
+    borderWidth: 1,
+  },
+
+  messageText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  successText: {
+    color: "#15803D",
+  },
+
+  errorText: {
+    color: "#B91C1C",
+  },
+
+  /* BUTTON */
   btn: {
     backgroundColor: "#196F63",
-    paddingVertical: 15,
+    paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
-    marginTop: 25,
+    marginTop: 28,
+    elevation: 3,
+    shadowColor: "#00000030",
   },
-  btnText: { color: "#fff", fontSize: 17, fontWeight: "700" },
 
-  message: {
-    marginTop: 14,
-    fontSize: 15,
-    fontWeight: "600",
+  btnText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
   },
 });

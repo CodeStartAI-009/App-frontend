@@ -7,7 +7,7 @@ export default function Onboarding1() {
   const router = useRouter();
   return (
     <View style={styles.container}>
-      <Image source={{ uri: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80&auto=format&fit=crop" }} style={styles.image} />
+      <Image source={{ uri: " " }} style={styles.image} />
       <Text style={styles.title}>Smart Money Starts Here</Text>
       <Text style={styles.subtitle}>Track your expenses, save, and build smart habits.</Text>
 

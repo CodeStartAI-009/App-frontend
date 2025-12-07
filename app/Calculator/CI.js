@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -18,7 +17,7 @@ export default function CI() {
   const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("");
   const [time, setTime] = useState("");
-  const [n, setN] = useState("1"); // compounding frequency
+  const [n, setN] = useState("1");
   const [result, setResult] = useState(null);
 
   const calculateCI = () => {
@@ -34,28 +33,28 @@ export default function CI() {
 
     const amount = p * Math.pow(1 + r / nn, nn * t);
     const ci = amount - p;
-
     setResult({ amount, ci });
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      {/* Header */}
-      <LinearGradient colors={["#1FA084", "#16795A"]} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+
+      {/* HEADER */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
 
         <Text style={styles.headerText}>Compound Interest</Text>
-      </LinearGradient>
+      </View>
 
-      {/* Content */}
+      {/* CONTENT */}
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
       >
-        {/* Input Card */}
+        {/* INPUT CARD */}
         <View style={styles.card}>
           <Text style={styles.label}>Principal Amount (₹)</Text>
           <TextInput
@@ -94,105 +93,123 @@ export default function CI() {
           />
 
           <TouchableOpacity style={styles.btn} onPress={calculateCI}>
-            <Text style={styles.btnText}>CALCULATE</Text>
+            <Text style={styles.btnText}>Calculate</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Result Card */}
+        {/* RESULT CARD */}
         {result && (
           <View style={styles.resultCard}>
             <Text style={styles.resultLabel}>Compound Interest</Text>
             <Text style={styles.resultValue}>₹{result.ci.toFixed(2)}</Text>
 
-            <Text style={[styles.resultLabel, { marginTop: 12 }]}>
-              Total Amount
-            </Text>
-            <Text style={[styles.resultValue, { color: "#16795A" }]}>
+            <Text style={[styles.resultLabel, { marginTop: 14 }]}>Total Amount</Text>
+            <Text style={[styles.resultValue, { color: "#196F63" }]}>
               ₹{result.amount.toFixed(2)}
             </Text>
           </View>
         )}
       </ScrollView>
 
-      <BottomNav active="calculator" />
+      <BottomNav active="profile" />
     </View>
   );
 }
 
-/* ---- Styles ---- */
+/* ---------------------- WALLETWAVE THEMED STYLES ---------------------- */
 const styles = StyleSheet.create({
-  header: {
-    paddingTop: 55,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
+  /* HEADER */
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    elevation: 6,
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
+
+  backBtn: { paddingRight: 12 },
+
   headerText: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "800",
     color: "#fff",
   },
 
+  /* INPUT CARD */
   card: {
-    margin: 20,
-    backgroundColor: "#F6FFFB",
+    marginTop: 24,
+    marginHorizontal: 24,
+    backgroundColor: "#F8FFFD",
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#D7F3EA",
+    borderColor: "#E6F3EE",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
     elevation: 2,
   },
+
   label: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#18493F",
     marginTop: 10,
   },
+
   input: {
     backgroundColor: "#fff",
-    padding: 12,
+    padding: 14,
     marginTop: 6,
-    borderRadius: 10,
+    borderRadius: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: "#DCEFE8",
+    borderColor: "#DCEFEA",
   },
 
+  /* BUTTON */
   btn: {
-    backgroundColor: "#1FA084",
+    backgroundColor: "#196F63",
     padding: 16,
     borderRadius: 14,
-    marginTop: 20,
-    elevation: 2,
+    marginTop: 22,
   },
+
   btnText: {
     textAlign: "center",
     color: "#fff",
     fontWeight: "700",
-    fontSize: 18,
+    fontSize: 17,
   },
 
+  /* RESULT CARD */
   resultCard: {
-    marginHorizontal: 20,
-    backgroundColor: "#E9FFF6",
+    marginTop: 20,
+    marginHorizontal: 24,
+    backgroundColor: "#F8FFFD",
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#C9F2E4",
+    borderColor: "#E6F3EE",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
     elevation: 2,
   },
+
   resultLabel: {
     fontSize: 16,
     fontWeight: "600",
     color: "#18493F",
   },
+
   resultValue: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#1FA084",
+    color: "#196F63",
     marginTop: 4,
   },
 });

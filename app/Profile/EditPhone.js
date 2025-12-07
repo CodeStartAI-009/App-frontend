@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
@@ -46,23 +45,26 @@ export default function EditPhone() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={styles.page}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#fff" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.headerText}>Edit Phone Number</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+      {/* FORM CONTENT */}
+      <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
-          {/* New Phone */}
+          {/* Phone Field */}
           <Text style={styles.label}>New Phone Number</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
             placeholder="Enter new phone number"
+            placeholderTextColor="#9CA3AF"
             value={phone}
             onChangeText={setPhone}
           />
@@ -73,18 +75,24 @@ export default function EditPhone() {
             secureTextEntry
             style={styles.input}
             placeholder="Enter your password"
+            placeholderTextColor="#9CA3AF"
             value={password}
             onChangeText={setPassword}
           />
 
-          {/* MESSAGE */}
+          {/* Message */}
           {msg ? (
-            <Text style={[styles.msg, { color: msg.includes("✅") ? "green" : "red" }]}>
+            <Text
+              style={[
+                styles.msg,
+                { color: msg.includes("✅") ? "#15803D" : "#D92D20" },
+              ]}
+            >
               {msg}
             </Text>
           ) : null}
 
-          {/* BUTTON */}
+          {/* Button */}
           <TouchableOpacity style={styles.btn} onPress={handleUpdate}>
             <Text style={styles.btnText}>Update Phone</Text>
           </TouchableOpacity>
@@ -98,66 +106,94 @@ export default function EditPhone() {
   );
 }
 
-/* ------------------------- STYLES ------------------------- */
+/* ------------------------- PREMIUM UI STYLES ------------------------- */
+
 const styles = StyleSheet.create({
+  page: {
+    flex: 1,
+    backgroundColor: "#F7FBFA",
+  },
+
+  /* HEADER */
   header: {
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 28,
     paddingHorizontal: 20,
     backgroundColor: "#196F63",
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
     flexDirection: "row",
     alignItems: "center",
+    gap: 14,
+    elevation: 4,
+    shadowColor: "#00000040",
   },
+
+  backBtn: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    padding: 8,
+    borderRadius: 10,
+  },
+
   headerText: {
-    fontSize: 26,
-    color: "#fff",
+    fontSize: 24,
     fontWeight: "800",
-    marginLeft: 10,
+    color: "#fff",
   },
 
-  container: { padding: 20 },
-
-  card: {
-    backgroundColor: "#F8FFFD",
+  scroll: {
     padding: 20,
-    borderRadius: 16,
+    paddingBottom: 140,
+  },
+
+  /* CARD */
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 22,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "#D8EDE6",
+    elevation: 2,
+    shadowColor: "#00000020",
   },
 
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginTop: 12,
+    fontSize: 15,
+    fontWeight: "700",
     color: "#18493F",
+    marginTop: 14,
+    marginBottom: 6,
   },
 
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFFFD",
     borderWidth: 1,
     borderColor: "#CDE7E1",
     padding: 12,
-    borderRadius: 10,
-    marginTop: 6,
+    borderRadius: 12,
+    fontSize: 16,
+    color: "#0F172A",
   },
 
   msg: {
-    marginTop: 12,
+    marginTop: 14,
     fontSize: 15,
     fontWeight: "600",
   },
 
   btn: {
     backgroundColor: "#196F63",
-    padding: 14,
-    marginTop: 20,
-    borderRadius: 12,
+    paddingVertical: 15,
+    borderRadius: 14,
     alignItems: "center",
+    marginTop: 28,
+    elevation: 3,
+    shadowColor: "#00000035",
   },
 
   btnText: {
     color: "#fff",
-    fontWeight: "700",
     fontSize: 17,
+    fontWeight: "700",
   },
 });

@@ -23,7 +23,6 @@ export default function Currency() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch exchange rates
   const loadRates = async () => {
     try {
       setLoading(true);
@@ -61,16 +60,20 @@ export default function Currency() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView style={{ flex: 1 }}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={28} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Currency Converter</Text>
-        </View>
 
+      {/* HEADER */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={28} color="#fff" />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>Currency Converter</Text>
+      </View>
+
+      {/* CONTENT */}
+      <ScrollView style={{ flex: 1 }}>
         <View style={styles.container}>
+
           {/* AMOUNT */}
           <Text style={styles.label}>Amount</Text>
           <TextInput
@@ -84,10 +87,7 @@ export default function Currency() {
           {/* FROM */}
           <Text style={styles.label}>From Currency</Text>
           <View style={styles.pickerBox}>
-            <Picker
-              selectedValue={from}
-              onValueChange={(value) => setFrom(value)}
-            >
+            <Picker selectedValue={from} onValueChange={(v) => setFrom(v)}>
               {currencyList.map((item) => (
                 <Picker.Item label={item} value={item} key={item} />
               ))}
@@ -97,7 +97,7 @@ export default function Currency() {
           {/* TO */}
           <Text style={styles.label}>To Currency</Text>
           <View style={styles.pickerBox}>
-            <Picker selectedValue={to} onValueChange={(value) => setTo(value)}>
+            <Picker selectedValue={to} onValueChange={(v) => setTo(v)}>
               {currencyList.map((item) => (
                 <Picker.Item label={item} value={item} key={item} />
               ))}
@@ -105,87 +105,103 @@ export default function Currency() {
           </View>
 
           {/* BUTTON */}
-          <TouchableOpacity style={styles.button} onPress={convert}>
-            <Text style={styles.buttonText}>Convert</Text>
+          <TouchableOpacity style={styles.btn} onPress={convert}>
+            <Text style={styles.btnText}>Convert</Text>
           </TouchableOpacity>
 
           {/* RESULT */}
           {result !== null && (
             <View style={styles.resultCard}>
               <Text style={styles.resultLabel}>Converted Amount</Text>
-              <Text style={styles.resultValue}>
-                {to} {result}
-              </Text>
+              <Text style={styles.resultValue}>{to} {result}</Text>
             </View>
           )}
 
-          <View style={{ height: 80 }} />
+          <View style={{ height: 100 }} />
         </View>
       </ScrollView>
 
-      <BottomNav active="calculator" />
+      <BottomNav active="profile" />
     </View>
   );
 }
 
-/* ---------------- STYLES ---------------- */
+/* ---------------------- WALLETWAVE STYLES ---------------------- */
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: "#196F63",
+  /* HEADER */
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: 60,
-    paddingBottom: 30,
+    paddingBottom: 18,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 26,
-    fontWeight: "800",
-    marginTop: 10,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
 
-  container: { padding: 20 },
+  backBtn: { paddingRight: 12 },
+
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#fff",
+  },
+
+  /* CONTENT */
+  container: {
+    paddingTop: 20,
+    paddingHorizontal: 24,
+  },
 
   label: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#18493F",
     marginTop: 20,
   },
 
   input: {
-    borderWidth: 1,
-    borderColor: "#CDE7E1",
-    padding: 12,
+    backgroundColor: "#fff",
+    padding: 14,
     borderRadius: 12,
-    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#DCEFEA",
     fontSize: 16,
-    backgroundColor: "#F8FFFD",
+    marginTop: 8,
   },
 
   pickerBox: {
     backgroundColor: "#F8FFFD",
     borderWidth: 1,
-    borderColor: "#CDE7E1",
+    borderColor: "#E6F3EE",
     marginTop: 8,
     borderRadius: 12,
   },
 
-  button: {
+  /* BUTTON */
+  btn: {
     backgroundColor: "#196F63",
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
     marginTop: 28,
   },
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "700" },
 
+  btnText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+
+  /* RESULT CARD */
   resultCard: {
-    marginTop: 25,
-    backgroundColor: "#EAF6F3",
+    marginTop: 24,
+    backgroundColor: "#F8FFFD",
     padding: 20,
-    borderRadius: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E6F3EE",
     alignItems: "center",
   },
 
@@ -194,6 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#18493F",
   },
+
   resultValue: {
     fontSize: 28,
     fontWeight: "800",
@@ -201,5 +218,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
+  /* LOADING */
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

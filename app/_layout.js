@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useUserAuthStore } from "../store/useAuthStore";
+import { socket } from "../utils/socket";
 
 export default function RootLayout() {
   const restoreSession = useUserAuthStore((s) => s.restoreSession);
@@ -11,10 +12,18 @@ export default function RootLayout() {
     restoreSession();
   }, []);
 
-  if (!hydrated) {
-    console.log("⏳ Waiting for auth hydration...");
-    return null; // Or show splash screen
-  }
+  // 🔔 Listen for server notifications
+  useEffect(() => {
+    socket.on("notification", (data) => {
+      alert(`🔔 ${data.title}\n${data.message}`);
+    });
+
+    return () => {
+      socket.off("notification");
+    };
+  }, []);
+
+  if (!hydrated) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

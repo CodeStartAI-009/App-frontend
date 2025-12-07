@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -34,22 +33,23 @@ export default function Inflation() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-        
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 130 }}
+      >
+
         {/* HEADER */}
-        <LinearGradient
-          colors={["#1c7c6e", "#0f4f45"]}
-          style={styles.header}
-        >
-          <TouchableOpacity onPress={() => router.back()}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={26} color="#fff" />
           </TouchableOpacity>
 
           <Text style={styles.headerText}>Inflation Impact</Text>
-          <Text style={styles.subText}>
-            See how inflation reduces purchasing power over time.
-          </Text>
-        </LinearGradient>
+        </View>
+
+        <Text style={styles.subText}>
+          Understand how inflation reduces the value of your money over time.
+        </Text>
 
         {/* INPUT CARD */}
         <View style={styles.card}>
@@ -65,7 +65,7 @@ export default function Inflation() {
           <Text style={styles.label}>Annual Inflation Rate (%)</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g., 6"
+            placeholder="e.g. 6"
             keyboardType="numeric"
             value={inflation}
             onChangeText={setInflation}
@@ -74,7 +74,7 @@ export default function Inflation() {
           <Text style={styles.label}>Number of Years</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g., 10"
+            placeholder="e.g. 10"
             keyboardType="numeric"
             value={years}
             onChangeText={setYears}
@@ -88,114 +88,126 @@ export default function Inflation() {
         {/* RESULT CARD */}
         {futureValue && (
           <View style={styles.resultCard}>
-            <Text style={styles.resultLabel}>Future Value (Adjusted for Inflation)</Text>
+            <Text style={styles.resultLabel}>Future Value (After Inflation)</Text>
+
             <Text style={styles.resultValue}>₹ {futureValue}</Text>
 
             <Text style={styles.note}>
-              This is how much your money will be worth after inflation.
+              This is what your money will be worth after adjusting for inflation.
             </Text>
           </View>
         )}
-
-        <View style={{ height: 90 }} />
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <BottomNav active="calculator" />
+      <BottomNav active="profile" />
     </View>
   );
 }
 
-/* ------------------------------ STYLES ------------------------------ */
+/* -------------------------- WALLETWAVE THEME -------------------------- */
 
 const styles = StyleSheet.create({
-  header: {
+  /* HEADER */
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
+    elevation: 2,
   },
 
+  backBtn: { paddingRight: 12 },
+
   headerText: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
     color: "#fff",
-    marginTop: 10,
+    marginLeft: 6,
   },
 
   subText: {
-    color: "#d6f5ef",
-    marginTop: 5,
+    paddingHorizontal: 20,
+    marginTop: 12,
     fontSize: 14,
+    color: "#6F7E78",
+    fontWeight: "500",
   },
 
+  /* INPUT CARD */
   card: {
-    backgroundColor: "#f8fffd",
-    marginTop: -20,
+    backgroundColor: "#F8FFFD",
+    marginTop: 20,
     marginHorizontal: 20,
-    borderRadius: 16,
     padding: 20,
-    elevation: 4,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#d8ede6",
+    borderColor: "#E6F3EE",
   },
 
   label: {
     fontSize: 15,
     fontWeight: "700",
-    marginTop: 12,
     color: "#18493F",
+    marginTop: 14,
   },
 
   input: {
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#cfe8e2",
+    borderColor: "#DCEFEA",
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 6,
+    fontSize: 16,
   },
 
+  /* BUTTON */
   button: {
     backgroundColor: "#196F63",
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 20,
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: "center",
+    marginTop: 24,
   },
 
   buttonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
   },
 
+  /* RESULT CARD */
   resultCard: {
-    backgroundColor: "#E8FFF7",
-    padding: 20,
-    margin: 20,
-    borderRadius: 16,
+    backgroundColor: "#F8FFFD",
+    padding: 22,
+    marginHorizontal: 20,
+    marginTop: 26,
     borderWidth: 1,
-    borderColor: "#C4F1E6",
+    borderColor: "#E6F3EE",
+    borderRadius: 16,
   },
 
   resultLabel: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#0f4f45",
+    color: "#18493F",
   },
 
   resultValue: {
     fontSize: 32,
     fontWeight: "900",
-    marginTop: 10,
+    marginTop: 12,
     color: "#196F63",
   },
 
   note: {
     marginTop: 10,
-    color: "#5a837c",
     fontSize: 14,
+    color: "#6F7E78",
+    fontWeight: "500",
   },
 });

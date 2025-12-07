@@ -45,19 +45,19 @@ export default function Account() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#F7FBFA" }}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
 
         <Text style={styles.headerText}>Account Settings</Text>
       </View>
 
-      {/* OPTIONS */}
+      {/* SETTINGS LIST */}
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
         {options.map((item, index) => (
@@ -66,19 +66,22 @@ export default function Account() {
             style={styles.row}
             onPress={() => router.push(item.route)}
           >
-            <Ionicons name={item.icon} size={26} color="#196F63" />
+            {/* ICON CIRCLE */}
+            <View style={styles.iconWrap}>
+              <Ionicons name={item.icon} size={22} color="#196F63" />
+            </View>
 
-            <View style={{ marginLeft: 12, flex: 1 }}>
+            {/* LABEL + NOTE */}
+            <View style={{ flex: 1 }}>
               <Text style={styles.label}>{item.label}</Text>
-              {item.note && (
-                <Text style={styles.note}>{item.note}</Text>
-              )}
+              {item.note && <Text style={styles.note}>{item.note}</Text>}
             </View>
 
             <Ionicons
-              name="chevron-forward-outline"
+              name="chevron-forward"
               size={22}
-              color="#777"
+              color="#A3A3A3"
+              style={{ marginLeft: 5 }}
             />
           </TouchableOpacity>
         ))}
@@ -93,40 +96,67 @@ export default function Account() {
 const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
-    paddingBottom: 25,
+    paddingBottom: 24,
     paddingHorizontal: 20,
     backgroundColor: "#196F63",
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    elevation: 5,
+    shadowColor: "#000",
   },
+
+  backBtn: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    padding: 6,
+    borderRadius: 8,
+  },
+
   headerText: {
     fontSize: 26,
     fontWeight: "800",
     color: "#fff",
+    marginLeft: 12,
+  },
+
+  scroll: {
+    padding: 20,
+    paddingBottom: 120,
   },
 
   row: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#F1F8F6",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#D8EDE6",
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     marginBottom: 12,
+    borderColor: "#DDEFE8",
+    borderWidth: 1,
+    elevation: 2,
+  },
+
+  iconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: "#E7F5F1",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
 
   label: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "700",
     color: "#18493F",
   },
 
   note: {
     fontSize: 12,
-    color: "#777",
+    color: "#6B7280",
+    marginTop: 2,
   },
 });

@@ -28,7 +28,6 @@ export default function Monthly() {
   const [graphPoints, setGraphPoints] = useState([0,0,0,0,0,0]);
   const [openMonthPicker, setOpenMonthPicker] = useState(false);
 
-  // ------------------ LOAD DATA ------------------
   const load = async () => {
     try {
       setLoading(true);
@@ -36,7 +35,6 @@ export default function Monthly() {
       const res = await getActivity();
       const all = res?.data?.activity || [];
 
-      // Filter by month
       const filtered = all.filter((t) => {
         const d = t.date
           ? new Date(t.date)
@@ -47,7 +45,6 @@ export default function Monthly() {
         return MONTHS[d.getMonth()] === month;
       });
 
-      // Normalize transaction format
       const normalized = filtered.map((t) => ({
         ...t,
         amount: Number(t.amount) || 0,
@@ -61,29 +58,20 @@ export default function Monthly() {
 
       setTransactions(normalized);
 
-      // ------------------ BUCKET LOGIC ------------------
       const buckets = [0, 0, 0, 0, 0, 0];
-
       normalized.forEach((tx) => {
         if (!tx.dateObj) return;
-
         const day = tx.dateObj.getDate();
         let index = Math.min(Math.floor((day - 1) / 5), 5);
-
         const change = tx.type === "income" ? tx.amount : -tx.amount;
         buckets[index] += change;
       });
 
-      // Ensure no Infinity or NaN enters chart
-      const safeBuckets = buckets.map((v) =>
-        Number.isFinite(v) ? v : 0
-      );
-
-      setGraphPoints(safeBuckets);
+      setGraphPoints(buckets.map((v) => (Number.isFinite(v) ? v : 0)));
     } catch (err) {
       console.log("MONTHLY LOAD ERROR:", err);
-      setGraphPoints([0,0,0,0,0,0]);
       setTransactions([]);
+      setGraphPoints([0,0,0,0,0,0]);
     } finally {
       setLoading(false);
     }
@@ -93,213 +81,262 @@ export default function Monthly() {
     load();
   }, [month]);
 
-  // ------------------ SUMMARY ------------------
-  const totalIncome = transactions
-    .filter((t) => t.type === "income")
-    .reduce((s, t) => s + t.amount, 0);
-
-  const totalExpense = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((s, t) => s + t.amount, 0);
-
+  const totalIncome = transactions.filter((t) => t.type === "income").reduce((s,t) => s+t.amount,0);
+  const totalExpense = transactions.filter((t) => t.type === "expense").reduce((s,t) => s+t.amount,0);
   const net = totalIncome - totalExpense;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
-      <View>
-  
-        <Text style={styles.header}>Monthly Breakdown</Text>
-  
-        {/* Month Selector */}
-        <TouchableOpacity
-          style={styles.monthSelector}
-          onPress={() => setOpenMonthPicker(true)}
-        >
-          <Text style={styles.monthSelectorText}>{month}</Text>
-        </TouchableOpacity>
-  
-        {/* Month Picker Modal */}
-        <Modal visible={openMonthPicker} transparent animationType="fade">
-          <Pressable
-            style={styles.modalOverlay}
-            onPress={() => setOpenMonthPicker(false)}
-          >
-            <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>Select Month</Text>
-  
-              {MONTHS.map((m) => (
-                <TouchableOpacity
-                  key={m}
-                  onPress={() => {
-                    setMonth(m);
-                    setOpenMonthPicker(false);
-                  }}
-                  style={styles.monthOption}
+
+      {/* HEADER */}
+      <Text style={styles.header}>Monthly Breakdown</Text>
+
+      {/* MONTH SELECTOR */}
+      <TouchableOpacity style={styles.monthSelector} onPress={() => setOpenMonthPicker(true)}>
+        <Text style={styles.monthSelectorText}>{month}</Text>
+      </TouchableOpacity>
+
+      {/* MONTH PICKER MODAL */}
+      <Modal visible={openMonthPicker} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setOpenMonthPicker(false)}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Select Month</Text>
+
+            {MONTHS.map((m) => (
+              <TouchableOpacity
+                key={m}
+                onPress={() => {
+                  setMonth(m);
+                  setOpenMonthPicker(false);
+                }}
+                style={styles.monthOption}
+              >
+                <Text
+                  style={[
+                    styles.monthOptionText,
+                    m === month && styles.selectedMonth
+                  ]}
                 >
-                  <Text
-                    style={[
-                      styles.monthOptionText,
-                      m === month && { fontWeight: "800", color: "#196F63" }
-                    ]}
-                  >
-                    {m}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                  {m}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#196F63" style={{ marginTop: 40 }} />
+      ) : (
+        <View>
+
+          {/* SUMMARY CARD */}
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryBlock}>
+              <Text style={styles.label}>Income</Text>
+              <Text style={[styles.value, { color: "#198754" }]}>₹{totalIncome.toLocaleString()}</Text>
             </View>
-          </Pressable>
-        </Modal>
-  
-        {loading ? (
-          <ActivityIndicator size="large" color="#196F63" />
-        ) : (
-          <View>
-            {/* Summary */}
-            <View style={styles.summaryCard}>
-              <View style={styles.rowBetween}>
-                <View>
-                  <Text style={styles.label}>Income</Text>
-                  <Text style={[styles.value, { color: "#198754" }]}>
-                    ₹{totalIncome.toLocaleString()}
-                  </Text>
-                </View>
-  
-                <View>
-                  <Text style={styles.label}>Expense</Text>
-                  <Text style={[styles.value, { color: "#D9534F" }]}>
-                    ₹{totalExpense.toLocaleString()}
-                  </Text>
-                </View>
-  
-                <View>
-                  <Text style={styles.label}>Net</Text>
-                  <Text
-                    style={[
-                      styles.value,
-                      { color: net >= 0 ? "#196F63" : "#D9534F" }
-                    ]}
-                  >
-                    {net >= 0 ? "+" : "-"}₹{Math.abs(net).toLocaleString()}
-                  </Text>
-                </View>
-              </View>
+
+            <View style={styles.summaryBlock}>
+              <Text style={styles.label}>Expense</Text>
+              <Text style={[styles.value, { color: "#D9534F" }]}>₹{totalExpense.toLocaleString()}</Text>
             </View>
-  
-            {/* GRAPH */}
-            <Text style={styles.sectionTitle}>Spending Pattern</Text>
-  
+
+            <View style={styles.summaryBlock}>
+              <Text style={styles.label}>Net</Text>
+              <Text
+                style={[
+                  styles.value,
+                  { color: net >= 0 ? "#196F63" : "#D9534F" }
+                ]}
+              >
+                {net >= 0 ? "+" : "-"}₹{Math.abs(net).toLocaleString()}
+              </Text>
+            </View>
+          </View>
+
+          {/* GRAPH */}
+          <Text style={styles.sectionTitle}>Spending Pattern</Text>
+
+          <View style={styles.chartWrapper}>
             <LineChart
               data={{
                 labels: ["1–5", "6–10", "11–15", "16–20", "21–25", "26–31"],
                 datasets: [{ data: graphPoints }],
               }}
-              width={SCREEN_WIDTH - 20}
-              height={220}
+              width={SCREEN_WIDTH - 40}
+              height={230}
               yAxisLabel="₹"
-              withDots={true}
               withInnerLines={false}
               withOuterLines={false}
               chartConfig={{
-                backgroundGradientFrom: "#FFF",
-                backgroundGradientTo: "#FFF",
+                backgroundGradientFrom: "#FFFFFF",
+                backgroundGradientTo: "#FFFFFF",
                 color: (o = 1) => `rgba(25,111,99,${o})`,
                 labelColor: () => "#6B6B6B",
               }}
               bezier
-              style={styles.chart}
             />
-  
-            {/* Transaction List */}
-            <Text style={styles.sectionTitle}>Transactions</Text>
-  
-            {transactions.length === 0 && (
-              <Text style={styles.noData}>No data for this month</Text>
-            )}
-  
-            {transactions.map((tx) => (
-              <View key={tx._id} style={styles.row}>
-                <Text style={styles.title}>{tx.title}</Text>
-  
+          </View>
+
+          {/* TRANSACTIONS */}
+          <Text style={styles.sectionTitle}>Transactions</Text>
+
+          {transactions.length === 0 ? (
+            <Text style={styles.noData}>No data available for this month</Text>
+          ) : (
+            transactions.map((tx) => (
+              <View key={tx._id} style={styles.txCard}>
+                <View>
+                  <Text style={styles.txTitle}>{tx.title}</Text>
+                  <Text style={styles.txDate}>
+                    {tx.dateObj.toLocaleDateString("en-IN",{ day:"numeric", month:"short" })}
+                  </Text>
+                </View>
+
                 <Text
                   style={[
-                    styles.amount,
-                    { color: tx.type === "income" ? "#198754" : "#D9534F" },
+                    styles.txAmount,
+                    { color: tx.type === "income" ? "#198754" : "#D9534F" }
                   ]}
                 >
-                  {tx.type === "income" ? "+" : "-"}₹
-                  {tx.amount.toLocaleString()}
+                  {tx.type === "income" ? "+" : "-"}₹{tx.amount.toLocaleString()}
                 </Text>
               </View>
-            ))}
-          </View>
-        )}
-      </View>
+            ))
+          )}
+        </View>
+      )}
     </ScrollView>
   );
-  
 }
 
-/* ---------------- STYLES ---------------- */
+/* -------------------- UI-IMPROVED STYLES -------------------- */
 
 const styles = StyleSheet.create({
-  container: { padding: 14, backgroundColor: "#fff", paddingTop: 50 },
-  header: { fontSize: 26, fontWeight: "800", color: "#18493F", marginBottom: 18 },
-
-  monthSelector: {
-    backgroundColor: "#EAF6F3",
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#CFE8E2",
-    marginBottom: 16,
+  container: {
+    padding: 20,
+    backgroundColor: "#FFFFFF",
   },
-  monthSelectorText: { fontSize: 18, fontWeight: "700", color: "#18493F" },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "center",
-    paddingHorizontal: 30,
-  },
-  modalBox: { backgroundColor: "#fff", padding: 20, borderRadius: 15 },
-  modalTitle: { fontSize: 20, fontWeight: "800", marginBottom: 12 },
-
-  monthOption: { paddingVertical: 10 },
-  monthOptionText: { fontSize: 18, color: "#18493F" },
-
-  summaryCard: {
-    backgroundColor: "#F8FFFD",
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E6F3EE",
+  header: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#18493F",
     marginBottom: 20,
   },
 
-  rowBetween: { flexDirection: "row", justifyContent: "space-between" },
-
-  label: { fontSize: 12, color: "#5F736D" },
-  value: { fontSize: 18, fontWeight: "700", marginTop: 4 },
-
-  sectionTitle: {
+  monthSelector: {
+    backgroundColor: "#F1F8F6",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D6EDE7",
+    marginBottom: 20,
+    elevation: 2,
+  },
+  monthSelectorText: {
     fontSize: 18,
     fontWeight: "700",
-    marginBottom: 10,
-    marginTop: 10,
-    color: "#0F3F36",
+    color: "#18493F",
   },
 
-  chart: { borderRadius: 12, marginBottom: 20 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "center",
+    paddingHorizontal: 30,
+  },
+  modalBox: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    borderRadius: 16,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 12,
+    color: "#18493F",
+  },
+  monthOption: {
+    paddingVertical: 10,
+  },
+  monthOptionText: {
+    fontSize: 17,
+    color: "#18493F",
+  },
+  selectedMonth: {
+    fontWeight: "800",
+    color: "#196F63",
+  },
 
-  row: {
+  summaryCard: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
+    backgroundColor: "#F8FFFD",
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#DCEFEA",
+    marginBottom: 22,
+    elevation: 2,
   },
-  title: { fontSize: 16, fontWeight: "600" },
-  amount: { fontSize: 16, fontWeight: "700" },
+  summaryBlock: {
+    width: "33%",
+    alignItems: "center",
+  },
+  label: {
+    fontSize: 13,
+    color: "#6F7E78",
+  },
+  value: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginTop: 4,
+  },
 
-  noData: { fontSize: 14, color: "#777", marginTop: 20 },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0F3F36",
+    marginBottom: 14,
+    marginTop: 10,
+  },
+
+  chartWrapper: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#DCEFEA",
+    marginBottom: 20,
+    elevation: 1,
+  },
+
+  txCard: {
+    backgroundColor: "#F8FFFD",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E1F1EC",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    elevation: 1,
+  },
+
+  txTitle: { fontSize: 16, fontWeight: "700", color: "#18493F" },
+  txDate: { fontSize: 12, color: "#6F7E78", marginTop: 4 },
+  txAmount: { fontSize: 18, fontWeight: "900" },
+
+  noData: {
+    textAlign: "center",
+    color: "#777",
+    marginTop: 22,
+    fontSize: 15,
+    fontWeight: "600",
+  },
 });

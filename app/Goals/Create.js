@@ -12,19 +12,16 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import BottomNav from "../components/BottomNav";
-
-import { createGoal } from "../../services/goalService"; // backend call
+import { createGoal } from "../../services/goalService";
 
 export default function CreateGoal() {
   const router = useRouter();
-
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
 
   const saveGoal = async () => {
-    if (!title || !amount) {
+    if (!title || !amount)
       return Alert.alert("Missing Fields", "Title and amount are required.");
-    }
 
     try {
       const res = await createGoal({
@@ -34,33 +31,34 @@ export default function CreateGoal() {
 
       if (res.data.ok) {
         Alert.alert("Success", "Goal created successfully!");
-        router.push("/Goals/Overview"); // go back to goals list
+        router.push("/Goals/Overview");
       }
     } catch (err) {
-      console.log("GOAL CREATE ERROR:", err);
       Alert.alert("Error", "Failed to create goal");
     }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
       
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#fff" />
+          <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.headerText}>Create New Goal</Text>
       </View>
 
       {/* FORM */}
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
+      <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.card}>
           
           <Text style={styles.label}>Goal Title</Text>
           <TextInput
             style={styles.input}
             placeholder="Ex: Buy a Laptop"
+            placeholderTextColor="#94A3B8"
             value={title}
             onChangeText={setTitle}
           />
@@ -69,6 +67,7 @@ export default function CreateGoal() {
           <TextInput
             style={styles.input}
             placeholder="Ex: 60000"
+            placeholderTextColor="#94A3B8"
             keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
@@ -77,6 +76,7 @@ export default function CreateGoal() {
           <TouchableOpacity style={styles.btn} onPress={saveGoal}>
             <Text style={styles.btnText}>Create Goal</Text>
           </TouchableOpacity>
+
         </View>
       </ScrollView>
 
@@ -85,18 +85,21 @@ export default function CreateGoal() {
   );
 }
 
-/* ------------------------ STYLES ------------------------ */
+/* ---------------- GREEN PREMIUM UI ---------------- */
+
 const styles = StyleSheet.create({
+  /* HEADER */
   header: {
     paddingTop: 60,
-    paddingBottom: 25,
+    paddingBottom: 26,
     paddingHorizontal: 20,
     backgroundColor: "#196F63",
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    gap: 14,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 6,
   },
   headerText: {
     fontSize: 26,
@@ -104,41 +107,54 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  card: {
-    backgroundColor: "#F8FFFD",
+  /* CONTAINER */
+  container: {
     padding: 20,
-    borderRadius: 16,
-    borderColor: "#D8EDE6",
-    borderWidth: 1,
+    paddingBottom: 150,
   },
 
+  /* CARD */
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 22,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#DDEFE9",
+    elevation: 3,
+  },
+
+  /* INPUT LABEL */
   label: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#18493F",
-    fontWeight: "600",
+    fontWeight: "700",
     marginTop: 12,
   },
 
+  /* INPUT */
   input: {
     backgroundColor: "#fff",
-    padding: 12,
+    padding: 14,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#CDE7E1",
     marginTop: 6,
     fontSize: 16,
+    color: "#0F172A",
   },
 
+  /* BUTTON */
   btn: {
     backgroundColor: "#196F63",
-    paddingVertical: 15,
+    paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
-    marginTop: 25,
+    marginTop: 26,
+    elevation: 4,
   },
   btnText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });

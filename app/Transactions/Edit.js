@@ -8,13 +8,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { getSingleTransaction, updateTransaction } from "../../services/expenseService";
+import {
+  getSingleTransaction,
+  updateTransaction,
+} from "../../services/expenseService";
 
 export default function EditTransaction() {
-  const { id } = useLocalSearchParams(); // from router.push(`/Transactions/Edit?id=${item._id}`)
+  const { id } = useLocalSearchParams();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -23,7 +27,6 @@ export default function EditTransaction() {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
 
-  // Fetch transaction data
   useEffect(() => {
     loadData();
   }, [id]);
@@ -37,16 +40,13 @@ export default function EditTransaction() {
       setAmount(String(data.amount));
       setCategory(data.category);
       setType(data.type);
-
     } catch (e) {
-      console.log("EDIT LOAD ERROR:", e);
       Alert.alert("Error", "Failed to load transaction");
     } finally {
       setLoading(false);
     }
   };
 
-  // Save changes
   const saveChanges = async () => {
     if (!title || !amount || !category) {
       Alert.alert("Error", "All fields are required");
@@ -66,7 +66,6 @@ export default function EditTransaction() {
         router.back();
       }
     } catch (e) {
-      console.log("UPDATE ERROR:", e);
       Alert.alert("Error", "Update failed");
     }
   };
@@ -81,106 +80,194 @@ export default function EditTransaction() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#18493F" />
+      {/* HEADER */}
+      <View style={styles.headerWrapper}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.header}>Edit Transaction</Text>
+        <Text style={styles.headerText}>Edit Transaction</Text>
       </View>
 
-      {/* Form */}
-      <Text style={styles.label}>Title</Text>
-      <TextInput
-        style={styles.input}
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Enter title"
-      />
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* FORM WRAPPER */}
+        <View style={styles.card}>
 
-      <Text style={styles.label}>Amount</Text>
-      <TextInput
-        style={styles.input}
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="numeric"
-        placeholder="Enter amount"
-      />
+          {/* TITLE */}
+          <Text style={styles.label}>Title</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Enter title"
+            placeholderTextColor="#8CA19A"
+          />
 
-      <Text style={styles.label}>Category</Text>
-      <TextInput
-        style={styles.input}
-        value={category}
-        onChangeText={setCategory}
-        placeholder="Food / Travel / Rent / Income / etc."
-      />
+          {/* AMOUNT */}
+          <Text style={styles.label}>Amount</Text>
+          <TextInput
+            style={styles.input}
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            placeholder="Enter amount"
+            placeholderTextColor="#8CA19A"
+          />
 
-      <Text style={styles.label}>Type</Text>
-      <View style={styles.typeRow}>
-        <TouchableOpacity
-          style={[styles.typeBtn, type === "income" && styles.activeType]}
-          onPress={() => setType("income")}
-        >
-          <Text style={[styles.typeText, type === "income" && styles.activeTypeText]}>
-            Income
-          </Text>
-        </TouchableOpacity>
+          {/* CATEGORY */}
+          <Text style={styles.label}>Category</Text>
+          <TextInput
+            style={styles.input}
+            value={category}
+            onChangeText={setCategory}
+            placeholder="Food / Travel / Rent / etc."
+            placeholderTextColor="#8CA19A"
+          />
 
-        <TouchableOpacity
-          style={[styles.typeBtn, type === "expense" && styles.activeType]}
-          onPress={() => setType("expense")}
-        >
-          <Text style={[styles.typeText, type === "expense" && styles.activeTypeText]}>
-            Expense
-          </Text>
-        </TouchableOpacity>
-      </View>
+          {/* TYPE TOGGLE */}
+          <Text style={styles.label}>Type</Text>
 
-      {/* Save Button */}
-      <TouchableOpacity style={styles.saveBtn} onPress={saveChanges}>
-        <Text style={styles.saveText}>Save Changes</Text>
-      </TouchableOpacity>
+          <View style={styles.typeRow}>
+            <TouchableOpacity
+              style={[styles.typeBtn, type === "income" && styles.typeActive]}
+              onPress={() => setType("income")}
+            >
+              <Text
+                style={[
+                  styles.typeText,
+                  type === "income" && styles.typeActiveText,
+                ]}
+              >
+                Income
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.typeBtn, type === "expense" && styles.typeActive]}
+              onPress={() => setType("expense")}
+            >
+              <Text
+                style={[
+                  styles.typeText,
+                  type === "expense" && styles.typeActiveText,
+                ]}
+              >
+                Expense
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* SAVE */}
+          <TouchableOpacity style={styles.saveBtn} onPress={saveChanges}>
+            <Text style={styles.saveText}>Save Changes</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
-// ------------------------ STYLES ------------------------
+/* ------------------------ STYLES ------------------------ */
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" , paddingTop: 50},
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
 
-  headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  header: { fontSize: 22, fontWeight: "700", color: "#18493F", marginLeft: 10 },
+  /* HEADER */
+  headerWrapper: {
+    paddingTop: 55,
+    paddingBottom: 25,
+    paddingHorizontal: 20,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backBtn: { padding: 6, marginRight: 12 },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
 
-  label: { fontSize: 14, fontWeight: "600", marginTop: 14, color: "#18493F" },
+  /* FORM CARD */
+  card: {
+    marginTop: -10,
+    marginHorizontal: 20,
+    backgroundColor: "#F8FFFD",
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#DCEFEA",
+    elevation: 3,
+  },
+
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#18493F",
+    marginTop: 16,
+  },
 
   input: {
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D7EAE4",
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 6,
     fontSize: 16,
+    color: "#18493F",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
 
-  typeRow: { flexDirection: "row", marginTop: 10 },
+  /* TYPE SELECTOR */
+  typeRow: {
+    flexDirection: "row",
+    marginTop: 12,
+    gap: 10,
+  },
+
   typeBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    backgroundColor: "#E8F3EF",
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  activeType: { backgroundColor: "#196F63" },
-  typeText: { fontSize: 14, fontWeight: "600", color: "#18493F" },
-  activeTypeText: { color: "#fff" },
-
-  saveBtn: {
-    marginTop: 24,
-    backgroundColor: "#196F63",
-    paddingVertical: 14,
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: "#E7F4F0",
     borderRadius: 12,
     alignItems: "center",
   },
-  saveText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+
+  typeActive: {
+    backgroundColor: "#196F63",
+  },
+
+  typeText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18493F",
+  },
+
+  typeActiveText: {
+    color: "#FFFFFF",
+  },
+
+  /* SAVE BUTTON */
+  saveBtn: {
+    backgroundColor: "#196F63",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 26,
+    elevation: 2,
+  },
+
+  saveText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

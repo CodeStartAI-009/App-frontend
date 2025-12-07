@@ -69,6 +69,8 @@ export default function Trends() {
 
   return (
     <ScrollView style={styles.container}>
+      
+      {/* HEADER TITLE */}
       <Text style={styles.title}>Monthly Spending Trends</Text>
 
       {/* TOP CATEGORY CARD */}
@@ -77,62 +79,104 @@ export default function Trends() {
         <Text style={styles.catValue}>{topCategory}</Text>
       </View>
 
-      {/* LINE GRAPH */}
-      <LineChart
-        data={{
-          labels: labels.length ? labels : ["-"],
-          datasets: [{ data: values.length ? values : [0] }],
-        }}
-        width={width - 24}
-        height={260}
-        yAxisLabel="₹"
-        withDots={true}
-        withInnerLines={false}
-        withOuterLines={false}
-        chartConfig={{
-          backgroundGradientFrom: "#F8FFFD",
-          backgroundGradientTo: "#F8FFFD",
-          color: (opacity = 1) => `rgba(25,111,99, ${opacity})`,
-          labelColor: () => "#444",
-        }}
-        bezier
-        style={styles.chart}
-      />
+      {/* GRAPH SECTION */}
+      <View style={styles.graphWrapper}>
+        <Text style={styles.graphTitle}>Expense Over Months</Text>
+
+        <LineChart
+          data={{
+            labels: labels.length ? labels : ["-"],
+            datasets: [{ data: values.length ? values : [0] }],
+          }}
+          width={width - 40}
+          height={260}
+          yAxisLabel="₹"
+          withDots={true}
+          withInnerLines={false}
+          withOuterLines={false}
+          chartConfig={{
+            backgroundGradientFrom: "#FFFFFF",
+            backgroundGradientTo: "#FFFFFF",
+            decimalPlaces: 0,
+            color: (opacity = 1) => `rgba(25,111,99,${opacity})`,
+            labelColor: () => "#6B6B6B",
+          }}
+          bezier
+          style={styles.chart}
+        />
+      </View>
 
       <View style={{ height: 80 }} />
+
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { paddingTop: 50 },
+/* ------------------------ IMPROVED UI STYLES ------------------------ */
 
+const styles = StyleSheet.create({
+  container: {
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    backgroundColor: "#FFFFFF",
+  },
+
+  /* HEADER */
   title: {
-    fontSize: 22,
-    fontWeight: "800",
+    fontSize: 26,
+    fontWeight: "900",
     color: "#18493F",
+    marginBottom: 18,
+  },
+
+  /* CENTER LOADING */
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  /* TOP CATEGORY CARD */
+  card: {
+    backgroundColor: "#F8FFFD",
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#DCEFEA",
+    marginBottom: 24,
+    elevation: 2,
+  },
+  subLabel: {
+    fontSize: 14,
+    color: "#6F7E78",
+    fontWeight: "600",
+  },
+  catValue: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#196F63",
+    marginTop: 6,
+  },
+
+  /* GRAPH SECTION */
+  graphWrapper: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#DCEFEA",
+    elevation: 2,
+  },
+  graphTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0F3F36",
     marginLeft: 12,
     marginBottom: 10,
   },
 
   chart: {
-    borderRadius: 12,
-    marginTop: 10,
+    borderRadius: 16,
     alignSelf: "center",
   },
-
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-
-  card: {
-    marginHorizontal: 12,
-    backgroundColor: "#F8FFFD",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E6F3EE",
-    marginBottom: 20,
-  },
-
-  subLabel: { fontSize: 14, color: "#777" },
-  catValue: { fontSize: 20, fontWeight: "800", color: "#196F63", marginTop: 4 },
 });

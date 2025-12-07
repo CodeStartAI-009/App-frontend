@@ -13,6 +13,7 @@ import { PieChart } from "react-native-chart-kit";
 import { getSummary } from "../../services/expenseService";
 import { useRouter } from "expo-router";
 import BottomNav from "../components/BottomNav";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -63,56 +64,85 @@ export default function Quick() {
       name,
       population: amt,
       color: COLORS[idx % COLORS.length],
-      legendFontColor: "#333",
-      legendFontSize: 12,
+      legendFontColor: "#334155",
+      legendFontSize: 13,
     })) || [];
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={28} color="#18493F" />
-          </TouchableOpacity>
-          <Text style={styles.title}>This Month Summary</Text>
+    <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
+      
+      {/* HEADER */}
+      <LinearGradient
+        colors={["#196F63", "#0E5C53"]}
+        style={styles.header}
+      >
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={28} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Monthly Summary</Text>
+      </LinearGradient>
+
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
+
+        {/* SUMMARY CARD */}
+        <View style={styles.glassCard}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.section}>Expense</Text>
+            <Text style={[styles.value, { color: "#D9534F" }]}>
+              ₹{totalExpense}
+            </Text>
+          </View>
+
+          <View style={styles.rowBetween}>
+            <Text style={styles.section}>Income</Text>
+            <Text style={[styles.value, { color: "#196F63" }]}>
+              ₹{totalIncome}
+            </Text>
+          </View>
+
+          <View style={styles.rowBetween}>
+            <Text style={styles.section}>Savings</Text>
+            <Text
+              style={[
+                styles.value,
+                { color: saving >= 0 ? "#22C55E" : "#D9534F" },
+              ]}
+            >
+              {saving >= 0 ? "₹" : "-₹"}
+              {Math.abs(saving)}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.section}>Expense</Text>
-          <Text style={styles.value}>₹{totalExpense}</Text>
-
-          <Text style={styles.section}>Income</Text>
-          <Text style={styles.value}>₹{totalIncome}</Text>
-
-          <Text style={styles.section}>Savings</Text>
-          <Text
-            style={[
-              styles.value,
-              { color: saving >= 0 ? "#196F63" : "#D9534F" },
-            ]}
-          >
-            {saving >= 0 ? "₹" : "-₹"}{Math.abs(saving)}
-          </Text>
-        </View>
-
+        {/* CHART */}
         <Text style={styles.chartTitle}>Category Breakdown</Text>
 
         <PieChart
-          data={pieData.length ? pieData : [{
-            name: "No Data",
-            population: 1,
-            color: "#ccc",
-            legendFontColor: "#555",
-            legendFontSize: 12,
-          }]}
-          width={SCREEN_WIDTH - 20}
-          height={230}
+          data={
+            pieData.length
+              ? pieData
+              : [
+                  {
+                    name: "No Data",
+                    population: 1,
+                    color: "#CBD5E1",
+                    legendFontColor: "#555",
+                    legendFontSize: 12,
+                  },
+                ]
+          }
+          width={SCREEN_WIDTH - 10}
+          height={250}
           accessor="population"
           backgroundColor="transparent"
+          paddingLeft={"20"}
+          hasLegend={true}
+          chartConfig={{
+            color: () => "#000",
+          }}
           absolute
-          paddingLeft="15"
-          chartConfig={{ color: () => "#000" }}
         />
+
       </ScrollView>
 
       <BottomNav active="home" />
@@ -120,20 +150,66 @@ export default function Quick() {
   );
 }
 
+/* --------------------- STYLES --------------------- */
+
 const styles = StyleSheet.create({
-  container: { padding: 20, paddingTop: 50 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  title: { fontSize: 24, fontWeight: "800", marginLeft: 10 },
-  card: {
-    backgroundColor: "#F8FFFD",
-    borderWidth: 1,
-    borderColor: "#E6F3EE",
-    padding: 20,
-    borderRadius: 14,
-    marginBottom: 20,
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  section: { color: "#6F7E78", marginTop: 10 },
-  value: { fontSize: 26, fontWeight: "800", marginTop: 4 },
-  chartTitle: { fontSize: 18, fontWeight: "700", marginBottom: 15 },
+
+  header: {
+    paddingTop: 60,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    elevation: 6,
+  },
+
+  headerText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "800",
+  },
+
+  glassCard: {
+    backgroundColor: "rgba(255,255,255,0.65)",
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 25,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    elevation: 4,
+  },
+
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+
+  section: {
+    color: "#475569",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  value: {
+    fontSize: 24,
+    fontWeight: "800",
+  },
+
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#18493F",
+    marginBottom: 15,
+    alignSelf: "center",
+    marginTop: 5,
+  },
 });

@@ -18,8 +18,8 @@ export default function Splash() {
 
   return (
     <View style={s.container}>
-      <Animated.Text style={[s.logo, { opacity: fade }]}>WalletWave</Animated.Text>
-      <Text style={s.tag}>Smart money for smart students.</Text>
+      <Animated.Text style={[s.logo, { opacity: fade }]}>UniSpend</Animated.Text>
+      <Text style={s.tag}>Smart money for smart Future.</Text>
     </View>
   );
 }

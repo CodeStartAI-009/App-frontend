@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
 import { useRouter } from "expo-router";
 
@@ -32,12 +32,13 @@ export default function Calculator() {
       {/* HEADER */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={26} color="#18493F" />
+          <Ionicons name="arrow-back" size={26} color="#FFFFFF" />
         </TouchableOpacity>
+
         <Text style={styles.header}>Financial Calculators</Text>
       </View>
 
-      {/* SCROLLABLE TOOLS LIST */}
+      {/* TOOL LIST */}
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {tools.map((tool, index) => (
           <TouchableOpacity
@@ -45,68 +46,89 @@ export default function Calculator() {
             style={styles.card}
             onPress={() => router.push(tool.route)}
           >
-            <Ionicons name={tool.icon} size={28} color="#196F63" />
+            <View style={styles.iconWrap}>
+              <Ionicons name={tool.icon} size={30} color="#196F63" />
+            </View>
+
             <Text style={styles.label}>{tool.label}</Text>
 
             <Ionicons
               name="chevron-forward-outline"
               size={22}
-              color="#999"
+              color="#6F7E78"
               style={{ marginLeft: "auto" }}
             />
           </TouchableOpacity>
         ))}
 
-        {/* Spacing so content isn't hidden behind nav */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* BOTTOM NAV */}
-      <BottomNav active="calculator" />
+      <BottomNav active="profile" />
     </View>
   );
 }
 
-/* ---------------------- STYLES ---------------------- */
+/* ---------------------- THEMED UI STYLES ---------------------- */
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-  },
-
+  /* Header */
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 50,
-    paddingBottom: 10,
-    paddingHorizontal: 16,
-    backgroundColor: "#fff",
+    paddingTop: 60,
+    paddingBottom: 18,
+    paddingHorizontal: 20,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
 
-  backBtn: { padding: 6, marginRight: 10 },
+  backBtn: {
+    padding: 6,
+    marginRight: 12,
+  },
 
   header: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "800",
-    color: "#18493F",
+    color: "#FFFFFF",
   },
 
+  /* Body */
+  container: {
+    paddingTop: 20,
+    paddingHorizontal: 22,
+  },
+
+  /* Card */
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F1F8F6",
+    backgroundColor: "#F8FFFD",
     padding: 18,
-    borderRadius: 14,
-    marginBottom: 12,
+    borderRadius: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#D9ECE6",
+    borderColor: "#E6F3EE",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+
+  iconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: "#EAF6F3",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
   },
 
   label: {
     fontSize: 18,
-    fontWeight: "600",
-    marginLeft: 12,
+    fontWeight: "700",
     color: "#18493F",
   },
 });
-

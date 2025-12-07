@@ -4,7 +4,7 @@ import { Platform } from "react-native";
 
 const LOCAL_URL = "http://localhost:5059/api";         // iOS sim & Web
 const LOCAL_ANDROID = "https://app-backend-psi.vercel.app/api";      // Android emulator
-const PROD_URL = "https://app-backend-psi.vercel.app/api";
+const PROD_URL = "http://localhost:5059/api";
 
 // ✅ Detect correct environment
 let API_BASE_URL;

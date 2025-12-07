@@ -1,4 +1,3 @@
-// app/Authentication/Signup.js
 import React, { useState } from "react";
 import {
   View,
@@ -35,15 +34,12 @@ export default function Signup() {
       return Alert.alert("Error", "Passwords do not match");
     }
 
-    // SIGNUP
     const res = await signupUser({ name, email, password });
-    console.log("SIGNUP RESULT", res);
 
     if (!res.ok) {
       return Alert.alert("Signup Failed", res.error || "Try again later");
     }
 
-    // AUTO LOGIN
     const loginRes = await loginUser({ emailOrPhone: email, password });
 
     if (!loginRes.ok) {
@@ -57,7 +53,8 @@ export default function Signup() {
     <View style={styles.container}>
       <Text style={styles.title}>Create Your WalletWave Account</Text>
 
-      <View style={styles.inputRow}>
+      {/* NAME */}
+      <View style={styles.inputWrapper}>
         <Ionicons name="person-outline" size={20} color="#777" />
         <TextInput
           style={styles.input}
@@ -67,11 +64,12 @@ export default function Signup() {
         />
       </View>
 
-      <View style={styles.inputRow}>
+      {/* EMAIL */}
+      <View style={styles.inputWrapper}>
         <Ionicons name="mail-outline" size={20} color="#777" />
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="Email Address"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
@@ -79,7 +77,8 @@ export default function Signup() {
         />
       </View>
 
-      <View style={styles.inputRow}>
+      {/* PASSWORD */}
+      <View style={styles.inputWrapper}>
         <Ionicons name="lock-closed-outline" size={20} color="#777" />
         <TextInput
           style={styles.input}
@@ -97,9 +96,10 @@ export default function Signup() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.hint}>Password must be 8+ characters</Text>
+      <Text style={styles.hint}>Password must be at least 8 characters</Text>
 
-      <View style={styles.inputRow}>
+      {/* CONFIRM PASSWORD */}
+      <View style={styles.inputWrapper}>
         <Ionicons name="lock-closed-outline" size={20} color="#777" />
         <TextInput
           style={styles.input}
@@ -110,43 +110,93 @@ export default function Signup() {
         />
       </View>
 
-      <TouchableOpacity style={styles.signupBtn} onPress={handleSignup}>
-        <Text style={styles.signupText}>Create Account</Text>
+      {/* SIGNUP BUTTON */}
+      <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
+        <Text style={styles.signupButtonText}>Create Account</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => router.replace("/Authentication/Login")}
-      >
+      <TouchableOpacity onPress={() => router.replace("/Authentication/Login")}>
         <Text style={styles.loginLink}>Already have an account? Login</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-// styles same as before…
-
+/* ----------------------------------------
+        IMPROVED UI STYLES
+---------------------------------------- */
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 28, paddingTop: 70, backgroundColor: "#fff" },
-  title: { fontSize: 26, fontWeight: "700", marginBottom: 20 },
-  inputRow: {
+  container: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 70,
+    backgroundColor: "#fff",
+  },
+
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    marginBottom: 26,
+    color: "#111",
+  },
+
+  inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f3f4f6",
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 12,
-    height: 52,
-    marginBottom: 12,
+    height: 56,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  input: { flex: 1, marginLeft: 10 },
-  hint: { color: "#888", marginBottom: 6 },
-  signupBtn: {
-    height: 54,
+
+  input: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#111",
+  },
+
+  hint: {
+    fontSize: 13,
+    color: "#6b7280",
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+
+  signupButton: {
+    height: 55,
     backgroundColor: "#4c6ef5",
-    borderRadius: 12,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 12,
+
+    shadowColor: "#4c6ef5",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
+
+    marginTop: 10,
   },
-  signupText: { color: "#fff", fontWeight: "700" },
-  loginLink: { textAlign: "center", color: "#4c6ef5", marginTop: 18 },
+
+  signupButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 17,
+  },
+
+  loginLink: {
+    textAlign: "center",
+    color: "#4c6ef5",
+    fontWeight: "600",
+    marginTop: 20,
+    fontSize: 15,
+  },
 });

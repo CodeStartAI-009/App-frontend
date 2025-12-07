@@ -8,17 +8,16 @@ import {
   Modal,
   Pressable,
   ActivityIndicator,
-  FlatList
+  FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-
 import { useUserAuthStore } from "../../store/useAuthStore";
 
-// IMPORTANT: use FULL summary route
 import {
   getMonthlySummary,
-  getRecentActivity
+  getRecentActivity,
 } from "../../services/expenseService";
 
 import BottomNav from "../components/BottomNav";
@@ -35,13 +34,11 @@ export default function Home() {
   const { user, hydrated } = useUserAuthStore();
 
   const [loading, setLoading] = useState(true);
-
   const [balance, setBalance] = useState({
     total: 0,
     income: 0,
     expenses: 0,
   });
-
   const [recent, setRecent] = useState([]);
   const [fabOpen, setFabOpen] = useState(false);
 
@@ -53,7 +50,6 @@ export default function Home() {
     try {
       setLoading(true);
 
-      // 1️⃣ Load FULL summary
       const sRes = await getMonthlySummary();
       const summary = sRes.data;
 
@@ -70,10 +66,8 @@ export default function Home() {
         expenses: m?.totalExpense || 0,
       });
 
-      // 2️⃣ Load recent activity
       const rRes = await getRecentActivity();
       setRecent(rRes.data.recent || []);
-
     } catch (err) {
       console.log("HOME LOAD ERROR:", err);
     } finally {
@@ -91,53 +85,62 @@ export default function Home() {
   if (!hydrated || loading || !user) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4c6ef5" />
+        <ActivityIndicator size="large" color="#196F63" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      
-      {/* TOP BAR */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.push("/Profile/Profile")}>
-          <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-        </TouchableOpacity>
+      {/* HEADER */}
+      <LinearGradient
+        colors={["#196F63", "#145A52"]}
+        style={styles.header}
+      >
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => router.push("/Profile/Profile")}>
+            <Image
+              source={{ uri: user.avatarUrl }}
+              style={styles.avatar}
+            />
+          </TouchableOpacity>
 
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.greeting}>
-            {topGreeting},{" "}
-            <Text style={{ fontWeight: "800" }}>{user.name}</Text>
-          </Text>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={styles.greeting}>
+              {topGreeting},{" "}
+              <Text style={{ fontWeight: "800" }}>{user.name}</Text>
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => router.push("/Profile/Notification")}
+          >
+            <Ionicons name="notifications-outline" size={26} color="#fff" />
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={() => router.push("/Profile/Notification")}>
-          <Ionicons name="notifications-outline" size={26} color="#111" />
-        </TouchableOpacity>
-      </View>
-
-      {/* BALANCE CARD */}
-      <TouchableOpacity
-        style={styles.balanceCard}
-        onPress={() => router.push("/Home/Quick")}
-      >
-        <View>
+        {/* BALANCE CARD */}
+        <View style={styles.glassCard}>
           <Text style={styles.balanceLabel}>Total Balance</Text>
           <Text style={styles.balanceValue}>{currency(balance.total)}</Text>
 
           <View style={styles.miniRow}>
-            <Text style={styles.small}>Income: {currency(balance.income)}</Text>
-            <Text style={[styles.small, { marginLeft: 12 }]}>
+            <Text style={styles.smallLight}>
+              Income: {currency(balance.income)}
+            </Text>
+            <Text style={[styles.smallLight, { marginLeft: 14 }]}>
               Expenses: {currency(balance.expenses)}
             </Text>
           </View>
-        </View>
 
-        <View style={styles.viewBtn}>
-          <Text style={styles.viewBtnText}>View</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/Home/Quick")}
+            style={styles.viewBtn}
+          >
+            <Text style={styles.viewBtnText}>View Summary</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </LinearGradient>
 
       {/* RECENT ACTIVITY */}
       <View style={styles.recentBox}>
@@ -159,8 +162,8 @@ export default function Home() {
                         ? "arrow-up-circle"
                         : "arrow-down-circle"
                     }
-                    size={22}
-                    color={item.type === "income" ? "#198754" : "#D9534F"}
+                    size={26}
+                    color={item.type === "income" ? "#28A745" : "#DC3545"}
                   />
 
                   <View style={{ marginLeft: 12 }}>
@@ -179,7 +182,10 @@ export default function Home() {
                 <Text
                   style={[
                     styles.amount,
-                    { color: item.type === "income" ? "#198754" : "#D9534F" },
+                    {
+                      color:
+                        item.type === "income" ? "#28A745" : "#DC3545",
+                    },
                   ]}
                 >
                   {item.type === "income" ? "+" : "-"}₹{item.amount}
@@ -191,13 +197,19 @@ export default function Home() {
       </View>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => setFabOpen(true)}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setFabOpen(true)}
+      >
         <Ionicons name="add" size={32} color="#fff" />
       </TouchableOpacity>
 
       {/* ACTION SHEET */}
-      <Modal visible={fabOpen} transparent animationType="slide">
-        <Pressable style={styles.modalOverlay} onPress={() => setFabOpen(false)}>
+      <Modal visible={fabOpen} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setFabOpen(false)}
+        >
           <View style={styles.actionSheet}>
             <Text style={styles.actionTitle}>Quick Actions</Text>
 
@@ -209,7 +221,11 @@ export default function Home() {
                   router.push("/Transactions/AddExpense");
                 }}
               >
-                <Ionicons name="remove-circle-outline" size={22} color="#fff" />
+                <Ionicons
+                  name="remove-circle-outline"
+                  size={26}
+                  color="#fff"
+                />
                 <Text style={styles.actionText}>Add Expense</Text>
               </TouchableOpacity>
 
@@ -220,16 +236,20 @@ export default function Home() {
                   router.push("/Transactions/AddIncome");
                 }}
               >
-                <Ionicons name="add-circle-outline" size={22} color="#fff" />
+                <Ionicons
+                  name="add-circle-outline"
+                  size={26}
+                  color="#fff"
+                />
                 <Text style={styles.actionText}>Add Income</Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
               onPress={() => setFabOpen(false)}
-              style={{ marginTop: 10 }}
+              style={{ marginTop: 12 }}
             >
-              <Text style={{ color: "#4c6ef5", fontWeight: "700" }}>Close</Text>
+              <Text style={styles.close}>Close</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -240,96 +260,113 @@ export default function Home() {
   );
 }
 
-/* STYLES SAME… not repeating */
+/* ---------------------- STYLES ---------------------- */
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 16,
-    paddingTop: 48,
-  },
+  container: { flex: 1, backgroundColor: "#F6FBF9" },
 
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  /* HEADER */
+  header: {
+    paddingHorizontal: 18,
+    paddingTop: 55,
+    paddingBottom: 40,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
 
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 18,
   },
 
-  avatar: { width: 48, height: 48, borderRadius: 12 },
-
-  greeting: { fontSize: 16, color: "#111" },
-
-  balanceCard: {
-    backgroundColor: "#eef2ff",
-    flexDirection: "row",
-    padding: 16,
-    borderRadius: 14,
-    justifyContent: "space-between",
-    marginBottom: 16,
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#fff",
   },
 
-  balanceLabel: { color: "#334155", fontSize: 14 },
-  balanceValue: { fontSize: 28, fontWeight: "800", color: "#0f172a" },
+  greeting: { color: "#fff", fontSize: 18 },
+
+  /* GLASS CARD */
+  glassCard: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    padding: 18,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.28)",
+  },
+
+  balanceLabel: { color: "#E8FFFA", fontSize: 14 },
+  balanceValue: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#fff",
+    marginTop: 4,
+  },
+
   miniRow: { flexDirection: "row", marginTop: 8 },
-  small: { fontSize: 13, color: "#334155" },
+  smallLight: { color: "#E8FFFA", fontSize: 14 },
 
   viewBtn: {
-    backgroundColor: "#4c6ef5",
+    marginTop: 14,
+    alignSelf: "flex-start",
+    backgroundColor: "#145A52",
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     borderRadius: 10,
-    alignSelf: "center",
   },
   viewBtnText: { color: "#fff", fontWeight: "700" },
 
+  /* RECENT */
   recentBox: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: "#F8FFFD",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E6F3EE",
+    marginTop: -10,
+    padding: 18,
+    backgroundColor: "#fff",
+    marginHorizontal: 16,
+    borderRadius: 18,
+    elevation: 3,
   },
 
-  title: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
+  title: { fontSize: 20, fontWeight: "800", marginBottom: 12 },
 
-  emptyText: { color: "#6F7E78" },
+  emptyText: { color: "#777", fontSize: 14 },
 
   row: {
     flexDirection: "row",
-    paddingVertical: 10,
+    paddingVertical: 12,
     justifyContent: "space-between",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderColor: "#E8F2EF",
+    borderColor: "#ECF4F2",
   },
 
   left: { flexDirection: "row", alignItems: "center" },
 
-  txTitle: { fontSize: 15, fontWeight: "600", color: "#18493F" },
+  txTitle: { fontSize: 16, fontWeight: "700", color: "#18493F" },
   time: { fontSize: 12, color: "#6F7E78" },
 
-  amount: { fontSize: 16, fontWeight: "700" },
+  amount: { fontSize: 17, fontWeight: "800" },
 
+  /* FAB */
   fab: {
     position: "absolute",
     right: 20,
     bottom: 90,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#4c6ef5",
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: "#196F63",
     justifyContent: "center",
     alignItems: "center",
+    elevation: 7,
   },
 
+  /* MODAL */
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -338,23 +375,30 @@ const styles = StyleSheet.create({
 
   actionSheet: {
     backgroundColor: "#fff",
-    padding: 20,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    padding: 22,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
   },
 
-  actionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
+  actionTitle: { fontSize: 20, fontWeight: "800", marginBottom: 14 },
 
   actionRow: { flexDirection: "row", justifyContent: "space-between" },
 
   actionBtn: {
-    backgroundColor: "#0f172a",
-    paddingVertical: 12,
-    borderRadius: 12,
+    backgroundColor: "#196F63",
+    paddingVertical: 14,
+    borderRadius: 14,
     marginHorizontal: 6,
     flex: 1,
     alignItems: "center",
   },
 
-  actionText: { color: "#fff", marginTop: 6, fontWeight: "700" },
+  actionText: {
+    color: "#fff",
+    marginTop: 8,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  close: { color: "#196F63", fontWeight: "700", fontSize: 16 },
 });

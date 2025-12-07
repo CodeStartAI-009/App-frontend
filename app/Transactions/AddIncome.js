@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { addIncome } from "../../services/expenseService";
@@ -14,9 +15,19 @@ import { addIncome } from "../../services/expenseService";
 export default function AddIncome() {
   const router = useRouter();
 
+  const INCOME_CATEGORIES = [
+    "Salary",
+    "Business",
+    "Gift",
+    "Freelance",
+    "Allowance",
+    "Bonus",
+    "Other",
+  ];
+
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("Income"); // ✅ Default Category
+  const [category, setCategory] = useState("Salary"); // Default
 
   const saveIncome = async () => {
     if (!title.trim()) {
@@ -33,7 +44,7 @@ export default function AddIncome() {
       const res = await addIncome({
         title,
         amount: Number(amount),
-        category, // ✅ Send category
+        category,
       });
 
       if (res.data.ok) {
@@ -41,61 +52,144 @@ export default function AddIncome() {
         router.push("/Home/Home");
       }
     } catch (err) {
-      Alert.alert(
-        "Error",
-        err.response?.data?.error || "Something went wrong"
-      );
+      Alert.alert("Error", err.response?.data?.error || "Something went wrong");
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Add Income</Text>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
+      <Text style={styles.header}>Add Income</Text>
 
-      <TextInput
-        placeholder="Title (e.g., Salary, Pocket Money)"
-        style={styles.input}
-        value={title}
-        onChangeText={setTitle}
-      />
+      <View style={styles.card}>
+        {/* TITLE */}
+        <Text style={styles.label}>Income Title</Text>
+        <TextInput
+          placeholder="Eg: Salary, Pocket Money"
+          style={styles.input}
+          value={title}
+          onChangeText={setTitle}
+        />
 
-      <TextInput
-        placeholder="Amount"
-        keyboardType="numeric"
-        style={styles.input}
-        value={amount}
-        onChangeText={setAmount}
-      />
+        {/* AMOUNT */}
+        <Text style={styles.label}>Amount (₹)</Text>
+        <TextInput
+          placeholder="Enter amount"
+          keyboardType="numeric"
+          style={styles.input}
+          value={amount}
+          onChangeText={setAmount}
+        />
 
-      {/* CATEGORY INPUT (OPTIONAL) */}
-      <TextInput
-        placeholder="Category (optional — default: Income)"
-        style={styles.input}
-        value={category}
-        onChangeText={setCategory}
-      />
+        {/* CATEGORY */}
+        <Text style={styles.label}>Category</Text>
+        <View style={styles.catGrid}>
+          {INCOME_CATEGORIES.map((c) => {
+            const active = category === c;
+            return (
+              <TouchableOpacity
+                key={c}
+                style={[styles.catItem, active && styles.catActive]}
+                onPress={() => setCategory(c)}
+              >
+                <Text style={[styles.catText, active && styles.catTextActive]}>
+                  {c}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-      <TouchableOpacity style={styles.btn} onPress={saveIncome}>
-        <Text style={styles.btnText}>Save Income</Text>
-      </TouchableOpacity>
-    </View>
+        {/* SAVE BUTTON */}
+        <TouchableOpacity style={styles.btn} onPress={saveIncome}>
+          <Text style={styles.btnText}>Save Income</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
+/* --------------------- STYLES --------------------- */
+
 const styles = StyleSheet.create({
-  container: { padding: 24, marginTop: 50 },
-  title: { fontSize: 24, fontWeight: "800", marginBottom: 20 },
+  container: { flex: 1, backgroundColor: "#FFFFFF", paddingTop: 50 },
+
+  header: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#18493F",
+    marginLeft: 22,
+    marginBottom: 20,
+  },
+
+  card: {
+    backgroundColor: "#F8FFFD",
+    padding: 20,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#DCEFEA",
+    marginHorizontal: 20,
+    elevation: 2,
+  },
+
+  label: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#18493F",
+  },
+
   input: {
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "#FFFFFF",
     padding: 12,
-    borderRadius: 10,
-    marginBottom: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#CFE8E2",
+    marginTop: 6,
+    fontSize: 16,
   },
+
+  catGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 12,
+  },
+
+  catItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: "#EAF6F3",
+    borderRadius: 20,
+    margin: 4,
+    borderWidth: 1,
+    borderColor: "#CFE8E2",
+  },
+
+  catActive: {
+    backgroundColor: "#196F63",
+    borderColor: "#196F63",
+  },
+
+  catText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#18493F",
+  },
+
+  catTextActive: {
+    color: "#FFFFFF",
+  },
+
   btn: {
-    backgroundColor: "#4c6ef5",
-    padding: 14,
-    borderRadius: 10,
+    backgroundColor: "#196F63",
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: "center",
+    marginTop: 24,
   },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+
+  btnText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+  },
 });

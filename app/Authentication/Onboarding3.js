@@ -7,13 +7,13 @@ export default function Onboarding3() {
   const router = useRouter();
   return (
     <View style={styles.container}>
-      <Image source={{ uri: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&q=80&auto=format&fit=crop" }} style={styles.image} />
+      <Image source={{ uri: " " }} style={styles.image} />
       <Text style={styles.title}>Stay on Track</Text>
       <Text style={styles.subtitle}>Get personalised insights and reminders.</Text>
 
       <View style={{width:"90%",flexDirection:"row",justifyContent:"space-between",marginTop:36}}>
         <TouchableOpacity style={styles.back} onPress={() => router.back()}><Text>Back</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.getStarted} onPress={() => router.replace("Authentication/Login")}><Text style={{color:"#fff"}}>Get Started</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.getStarted} onPress={() => router.replace("Authentication/Signup")}><Text style={{color:"#fff"}}>Get Started</Text></TouchableOpacity>
       </View>
 
       <Text style={styles.note}>By continuing you agree to our Terms & Privacy.</Text>

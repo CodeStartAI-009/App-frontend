@@ -12,10 +12,7 @@ import BottomNav from "../components/BottomNav";
 import { useRouter } from "expo-router";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 
-import {
-  getGoals,
-  deleteGoal,
-} from "../../services/goalService"; // backend connected
+import { getGoals, deleteGoal } from "../../services/goalService";
 
 export default function Overview() {
   const router = useRouter();
@@ -26,17 +23,12 @@ export default function Overview() {
       const res = await getGoals();
       let list = res.data.goals;
 
-      // → Mark completed
       list = list.map((g) => ({
         ...g,
         completed: g.saved >= g.amount,
       }));
 
-      // → Sort: incomplete first, completed last
-      list.sort((a, b) => {
-        if (a.completed === b.completed) return 0;
-        return a.completed ? 1 : -1;
-      });
+      list.sort((a, b) => (a.completed ? 1 : -1));
 
       setGoals(list);
     } catch (e) {
@@ -50,38 +42,37 @@ export default function Overview() {
 
   const renderLeftActions = (goal) => (
     <TouchableOpacity
-      style={styles.editSwipe}
+      style={styles.swipeEdit}
       onPress={() => router.push(`/Goals/GoalEdit?id=${goal._id}`)}
     >
-      <Ionicons name="create-outline" size={26} color="#fff" />
+      <Ionicons name="create-outline" size={24} color="#fff" />
       <Text style={styles.swipeText}>Edit</Text>
     </TouchableOpacity>
   );
 
   const renderRightActions = (goal) => (
     <TouchableOpacity
-      style={styles.deleteSwipe}
+      style={styles.swipeDelete}
       onPress={async () => {
         await deleteGoal(goal._id);
         loadGoals();
       }}
     >
-      <Ionicons name="trash-outline" size={26} color="#fff" />
+      <Ionicons name="trash-outline" size={24} color="#fff" />
       <Text style={styles.swipeText}>Delete</Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
       
       {/* HEADER */}
-      <View style={styles.header}>
+      <View style={styles.headerRow}>
         <Text style={styles.headerText}>My Goals</Text>
       </View>
 
-      {/* CONTENT */}
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-        
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+
         {/* Create New Goal */}
         <TouchableOpacity
           style={styles.createBtn}
@@ -91,9 +82,9 @@ export default function Overview() {
           <Text style={styles.createBtnText}>Create New Goal</Text>
         </TouchableOpacity>
 
-        {/* Goal List */}
+        {/* LIST */}
         {goals.length === 0 ? (
-          <Text style={styles.noGoalText}>No goals created yet.</Text>
+          <Text style={styles.noGoalsText}>No goals created yet.</Text>
         ) : (
           goals.map((g) => (
             <Swipeable
@@ -102,48 +93,44 @@ export default function Overview() {
               renderRightActions={() => renderRightActions(g)}
             >
               <TouchableOpacity
-                style={[
-                  styles.goalCard,
-                  g.completed && styles.completedGoalCard,
-                ]}
+                style={[styles.goalCard, g.completed && styles.goalCompleted]}
                 onPress={() => router.push(`/Goals/GoalDetail?id=${g._id}`)}
               >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                {/* TITLE */}
+                <View style={styles.titleRow}>
                   <Text style={styles.goalTitle}>{g.title}</Text>
-
                   {g.completed && (
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
-                      color="#2ECC71"
-                      style={{ marginLeft: 6 }}
+                      color="#22c55e"
                     />
                   )}
                 </View>
 
-                <View style={styles.amountRow}>
+                {/* AMOUNTS */}
+                <View style={styles.row}>
                   <Text style={styles.label}>Target:</Text>
                   <Text style={styles.value}>₹{g.amount}</Text>
                 </View>
 
-                <View style={styles.amountRow}>
+                <View style={styles.row}>
                   <Text style={styles.label}>Saved:</Text>
                   <Text style={[styles.value, { color: "#196F63" }]}>
                     ₹{g.saved}
                   </Text>
                 </View>
 
-                {/* Progress Bar */}
-                <View style={styles.progressBarBackground}>
+                {/* PROGRESS BAR */}
+                <View style={styles.progressBackground}>
                   <View
                     style={[
-                      styles.progressBarFill,
+                      styles.progressFill,
                       {
-                        width: `${Math.min(
-                          (g.saved / g.amount) * 100,
-                          100
-                        )}%`,
-                        backgroundColor: g.completed ? "#2ECC71" : "#196F63",
+                        width: `${Math.min((g.saved / g.amount) * 100, 100)}%`,
+                        backgroundColor: g.completed
+                          ? "#22c55e"
+                          : "#196F63",
                       },
                     ]}
                   />
@@ -156,6 +143,8 @@ export default function Overview() {
             </Swipeable>
           ))
         )}
+
+        <View style={{ height: 120 }} />
       </ScrollView>
 
       <BottomNav active="profile" />
@@ -163,13 +152,14 @@ export default function Overview() {
   );
 }
 
-/* -------------------------- STYLES -------------------------- */
+/* ---------------------- STYLES ---------------------- */
+
 const styles = StyleSheet.create({
-  header: {
+  headerRow: {
     paddingTop: 60,
-    paddingBottom: 25,
-    backgroundColor: "#196F63",
+    paddingBottom: 20,
     paddingHorizontal: 20,
+    backgroundColor: "#196F63",
     borderBottomLeftRadius: 25,
     borderBottomRightRadius: 25,
   },
@@ -179,6 +169,12 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 130,
+  },
+
+  /* CREATE BUTTON */
   createBtn: {
     backgroundColor: "#196F63",
     padding: 14,
@@ -187,49 +183,52 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    elevation: 3,
     marginBottom: 20,
   },
-  createBtnText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
-  },
+  createBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
 
+  /* GOAL CARD */
   goalCard: {
-    backgroundColor: "#F8FFFD",
+    backgroundColor: "#FFFFFF",
     padding: 18,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#D8EDE6",
+    borderRadius: 18,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#E6F3EE",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
 
-  completedGoalCard: {
-    opacity: 0.7,
-    borderColor: "#2ECC71",
+  goalCompleted: {
+    borderColor: "#22c55e",
+    opacity: 0.9,
+  },
+
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
   },
 
   goalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "800",
     color: "#18493F",
-    marginBottom: 10,
   },
 
-  completedText: {
-    marginTop: 10,
-    color: "#2ECC71",
-    fontWeight: "700",
-  },
-
-  amountRow: {
+  /* LABELS */
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 2,
+    marginVertical: 3,
   },
   label: {
     fontSize: 15,
-    color: "#47645A",
+    color: "#4B6F68",
     fontWeight: "600",
   },
   value: {
@@ -238,40 +237,44 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  progressBarBackground: {
+  /* PROGRESS BAR */
+  progressBackground: {
     height: 8,
     backgroundColor: "#D9EDE6",
     borderRadius: 10,
-    marginTop: 10,
+    marginTop: 14,
   },
-  progressBarFill: {
+  progressFill: {
     height: 8,
     borderRadius: 10,
   },
 
-  editSwipe: {
-    backgroundColor: "#4CAF50",
+  completedText: {
+    marginTop: 12,
+    color: "#22c55e",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+
+  /* SWIPE STYLES */
+  swipeEdit: {
+    backgroundColor: "#0EA5E9",
     justifyContent: "center",
     alignItems: "center",
     width: 80,
   },
-  deleteSwipe: {
-    backgroundColor: "#E74C3C",
+  swipeDelete: {
+    backgroundColor: "#EF4444",
     justifyContent: "center",
     alignItems: "center",
     width: 80,
   },
+  swipeText: { color: "#fff", fontSize: 12, marginTop: 4 },
 
-  swipeText: {
-    color: "#fff",
-    fontSize: 12,
-    marginTop: 4,
-  },
-
-  noGoalText: {
+  noGoalsText: {
     textAlign: "center",
     fontSize: 16,
-    color: "#777",
+    color: "#6F7E78",
     marginTop: 40,
   },
 });

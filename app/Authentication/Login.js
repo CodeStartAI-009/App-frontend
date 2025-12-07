@@ -1,9 +1,18 @@
 // app/Login.js
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useUserAuthStore } from "../../store/useAuthStore";
+import { registerForPushNotifications } from "../../utils/notifications";  // <-- ADD
+import api from "../../services/api"; // <-- ADD
 
 export default function Login() {
   const router = useRouter();
@@ -23,11 +32,24 @@ export default function Login() {
       emailOrPhone: emailOrPhone.trim(),
       password,
     });
-    
 
     if (!res.ok) {
       Alert.alert("Login Failed", res.error);
       return;
+    }
+
+    /* ---------------------------------------------------
+        🔥 Register Push Notification Token After Login
+    --------------------------------------------------- */
+    try {
+      const token = await registerForPushNotifications();
+
+      if (token) {
+        await api.post("/notifications/save-token", { token });
+        console.log("Expo push token saved ✔");
+      }
+    } catch (err) {
+      console.log("❌ Failed to save push token", err);
     }
 
     router.replace("/Home/Home");
@@ -35,9 +57,12 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
+      {/* HEADER */}
+      <Text style={styles.title}>Welcome Back 👋</Text>
+      <Text style={styles.subTitle}>Log in to continue to your dashboard</Text>
 
-      <View style={styles.inputContainer}>
+      {/* EMAIL / PHONE */}
+      <View style={styles.inputWrapper}>
         <Ionicons name="mail-outline" size={20} color="#777" />
         <TextInput
           style={styles.input}
@@ -47,7 +72,8 @@ export default function Login() {
         />
       </View>
 
-      <View style={styles.inputContainer}>
+      {/* PASSWORD */}
+      <View style={styles.inputWrapper}>
         <Ionicons name="lock-closed-outline" size={20} color="#777" />
         <TextInput
           style={styles.input}
@@ -65,43 +91,112 @@ export default function Login() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={() => router.push("Authentication/ForgotPassword")}>
+      {/* FORGOT PASSWORD */}
+      <TouchableOpacity
+        onPress={() => router.push("Authentication/ForgotPassword")}
+      >
         <Text style={styles.forgot}>Forgot Password?</Text>
       </TouchableOpacity>
 
+      {/* LOGIN BUTTON */}
       <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
         <Text style={styles.loginText}>Login</Text>
       </TouchableOpacity>
 
+      {/* SIGNUP LINK */}
       <TouchableOpacity onPress={() => router.push("/Authentication/Signup")}>
-        <Text style={styles.signupLink}>Create Account</Text>
+        <Text style={styles.signupLink}>
+          Don't have an account?{" "}
+          <Text style={styles.signupStrong}>Create Account</Text>
+        </Text>
       </TouchableOpacity>
     </View>
   );
 }
 
+/* ---------------- IMPROVED UI STYLES ---------------- */
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 28, backgroundColor: "#fff", paddingTop: 90 },
-  title: { fontSize: 30, fontWeight: "700", marginBottom: 30 },
-  inputContainer: {
+  container: {
+    flex: 1,
+    padding: 28,
+    backgroundColor: "#fff",
+    paddingTop: 90,
+  },
+
+  title: {
+    fontSize: 32,
+    fontWeight: "800",
+    marginBottom: 6,
+    color: "#000",
+  },
+
+  subTitle: {
+    fontSize: 15,
+    color: "#6b7280",
+    marginBottom: 28,
+  },
+
+  inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f3f4f6",
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
     height: 54,
-    marginBottom: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  input: { flex: 1, marginLeft: 10 },
-  forgot: { textAlign: "right", color: "#4c6ef5", marginBottom: 18 },
+
+  input: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#111",
+  },
+
+  forgot: {
+    textAlign: "right",
+    color: "#4c6ef5",
+    fontWeight: "600",
+    marginBottom: 20,
+    fontSize: 14,
+  },
+
   loginBtn: {
     height: 54,
     backgroundColor: "#4c6ef5",
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  loginText: { color: "#fff", fontWeight: "700" },
-  signupLink: { textAlign: "center", color: "#4c6ef5", marginTop: 8 },
+
+  loginText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+
+  signupLink: {
+    textAlign: "center",
+    color: "#6b7280",
+    marginTop: 22,
+    fontSize: 15,
+  },
+
+  signupStrong: {
+    color: "#4c6ef5",
+    fontWeight: "700",
+  },
 });

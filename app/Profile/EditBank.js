@@ -1,4 +1,3 @@
-// app/Profile/EditBank.js
 import React, { useState } from "react";
 import {
   View,
@@ -32,12 +31,7 @@ export default function EditBank() {
 
     try {
       setLoading(true);
-
-      const res = await secureUpdate({
-        upi,
-        bankNumber,
-        password,
-      });
+      const res = await secureUpdate({ upi, bankNumber, password });
 
       if (res.data.ok) {
         Alert.alert("Success", "UPI / Bank Account updated successfully!");
@@ -46,7 +40,6 @@ export default function EditBank() {
         Alert.alert("Error", res.data.error || "Failed to update details.");
       }
     } catch (error) {
-      console.log("UPDATE ERROR:", error);
       Alert.alert("Error", "Wrong password or server error.");
     } finally {
       setLoading(false);
@@ -54,22 +47,23 @@ export default function EditBank() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#F7FBFA" }}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Edit Bank / UPI</Text>
       </View>
 
       {/* CONTENT */}
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
+      <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
           <Text style={styles.label}>UPI ID</Text>
           <TextInput
             style={styles.input}
             placeholder="example@upi"
+            placeholderTextColor="#9CA3AF"
             value={upi}
             onChangeText={setUpi}
           />
@@ -78,6 +72,7 @@ export default function EditBank() {
           <TextInput
             style={styles.input}
             placeholder="Enter bank account number"
+            placeholderTextColor="#9CA3AF"
             keyboardType="numeric"
             value={bankNumber}
             onChangeText={setBankNumber}
@@ -88,12 +83,13 @@ export default function EditBank() {
             style={styles.input}
             secureTextEntry
             placeholder="Enter your password"
+            placeholderTextColor="#9CA3AF"
             value={password}
             onChangeText={setPassword}
           />
 
           <TouchableOpacity
-            style={styles.saveBtn}
+            style={[styles.saveBtn, loading && styles.disabledBtn]}
             onPress={handleSave}
             disabled={loading}
           >
@@ -114,53 +110,77 @@ export default function EditBank() {
 const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
-    paddingBottom: 28,
+    paddingBottom: 26,
     paddingHorizontal: 20,
     backgroundColor: "#196F63",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    elevation: 3,
+    shadowColor: "#00000030",
   },
+
+  backBtn: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    padding: 7,
+    borderRadius: 10,
+  },
+
   headerText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
     color: "#fff",
+    marginLeft: 12,
+  },
+
+  scroll: {
+    padding: 20,
+    paddingBottom: 130,
   },
 
   card: {
-    backgroundColor: "#F8FFFD",
-    padding: 20,
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    padding: 22,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#D8EDE6",
+    borderColor: "#D9EEE7",
+    elevation: 2,
+    shadowColor: "#00000020",
   },
 
   label: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#18493F",
-    marginTop: 12,
+    marginTop: 16,
     marginBottom: 6,
   },
 
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFFFD",
     borderWidth: 1,
     borderColor: "#CDE7E1",
     padding: 12,
     borderRadius: 12,
     fontSize: 16,
+    color: "#0F172A",
   },
 
   saveBtn: {
     backgroundColor: "#196F63",
-    padding: 15,
+    paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
-    marginTop: 22,
+    marginTop: 28,
+    elevation: 3,
+    shadowColor: "#00000030",
   },
+
+  disabledBtn: {
+    opacity: 0.7,
+  },
+
   saveBtnText: {
     color: "#fff",
     fontSize: 17,

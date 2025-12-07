@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
 import { useRouter } from "expo-router";
@@ -42,14 +41,14 @@ export default function EMI() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
+
       {/* HEADER */}
-      <LinearGradient colors={["#1E9C87", "#0F5F52"]} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-
         <Text style={styles.headerTitle}>Loan EMI Calculator</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
 
@@ -101,44 +100,51 @@ export default function EMI() {
         )}
       </ScrollView>
 
-      <BottomNav active="calculator" />
+      <BottomNav active="profile" />
     </View>
   );
 }
 
-/* -------------------- STYLES -------------------- */
+/* -------------------- WALLETWAVE UI STYLES -------------------- */
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-
-  header: {
-    paddingTop: 55,
-    paddingBottom: 25,
+  /* HEADER */
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 60,
+    paddingBottom: 18,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
+
+  backBtn: { paddingRight: 12 },
 
   headerTitle: {
     fontSize: 26,
     fontWeight: "800",
     color: "#fff",
-    marginTop: 10,
   },
 
+  /* CONTENT */
+  container: { padding: 20 },
+
+  /* INPUT CARD */
   card: {
-    backgroundColor: "#F0FAF7",
+    backgroundColor: "#F8FFFD",
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#CDEEE5",
+    borderColor: "#E6F3EE",
     marginBottom: 20,
   },
 
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginTop: 10,
+    fontSize: 15,
+    fontWeight: "700",
+    marginTop: 12,
     color: "#18493F",
   },
 
@@ -147,15 +153,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#DDF0EA",
+    borderColor: "#DCEFEA",
     marginTop: 6,
+    fontSize: 16,
   },
 
+  /* BUTTON */
   btn: {
-    backgroundColor: "#1E9C87",
+    backgroundColor: "#196F63",
     padding: 14,
     borderRadius: 14,
-    marginTop: 20,
+    marginTop: 22,
   },
 
   btnText: {
@@ -165,22 +173,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
+  /* RESULT CARD */
   resultCard: {
-    backgroundColor: "#E8FFF4",
+    backgroundColor: "#F8FFFD",
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#C5EDE0",
+    borderColor: "#E6F3EE",
   },
 
-  resultLabel: { fontSize: 18, fontWeight: "700", color: "#18493F" },
+  resultLabel: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#18493F",
+  },
 
   resultValue: {
     fontSize: 30,
     fontWeight: "900",
-    color: "#1E9C87",
+    color: "#196F63",
     marginVertical: 10,
   },
 
-  resultSub: { fontSize: 15, fontWeight: "600", color: "#196F63", marginTop: 4 },
+  resultSub: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#6F7E78",
+    marginTop: 4,
+  },
 });

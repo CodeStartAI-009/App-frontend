@@ -41,19 +41,17 @@ export default function SI() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      
+
       {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-
         <Text style={styles.headerText}>Simple Interest</Text>
       </View>
 
-      {/* CONTENT */}
       <ScrollView contentContainerStyle={styles.scroll}>
-        
+
         {/* INPUT CARD */}
         <View style={styles.card}>
           <Text style={styles.label}>Principal Amount (₹)</Text>
@@ -108,68 +106,70 @@ export default function SI() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* BOTTOM NAV */}
-      <BottomNav active="calculator" />
+      <BottomNav active="profile" />
     </View>
   );
 }
 
-/* -------------------- STYLES -------------------- */
+/* -------------------- WALLETWAVE THEME -------------------- */
 
 const styles = StyleSheet.create({
-  header: {
+  /* HEADER */
+  headerRow: {
     backgroundColor: "#196F63",
-    paddingTop: 55,
-    paddingBottom: 22,
+    paddingTop: 60,
+    paddingBottom: 18,
     paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
 
+  backBtn: { paddingRight: 12 },
+
   headerText: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "800",
     color: "#fff",
-    marginLeft: 12,
   },
 
   scroll: { padding: 20 },
 
+  /* INPUT CARD */
   card: {
     backgroundColor: "#F8FFFD",
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#DDEFEA",
-    elevation: 2,
+    borderColor: "#E6F3EE",
     marginBottom: 20,
   },
 
   label: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#18493F",
-    marginTop: 12,
+    marginTop: 14,
   },
 
   input: {
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#CFE8E2",
-    borderRadius: 10,
+    borderColor: "#DCEFEA",
+    borderRadius: 12,
     padding: 12,
     marginTop: 6,
     fontSize: 16,
   },
 
+  /* BUTTON */
   calcBtn: {
     backgroundColor: "#196F63",
-    padding: 15,
+    paddingVertical: 16,
     borderRadius: 14,
-    marginTop: 20,
     alignItems: "center",
+    marginTop: 26,
   },
 
   calcBtnText: {
@@ -178,30 +178,32 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
+  /* RESULT CARD */
   resultCard: {
-    backgroundColor: "#EAF6F3",
+    backgroundColor: "#F8FFFD",
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#C7E6DF",
+    borderColor: "#E6F3EE",
   },
 
   resultTitle: {
     fontSize: 20,
     fontWeight: "800",
     color: "#18493F",
-    marginBottom: 15,
+    marginBottom: 16,
   },
 
   resultRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 14,
   },
 
   resultLabel: {
     fontSize: 15,
-    color: "#18493F",
+    color: "#6F7E78",
+    fontWeight: "600",
   },
 
   resultValue: {

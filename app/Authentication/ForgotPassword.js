@@ -43,15 +43,12 @@ export default function ForgotPassword() {
     try {
       setLoading(true);
 
-      // ⭐ REAL API CALL ⭐
       const res = await forgotPassword({ email: email.trim() });
-
       console.log("OTP API Response:", res.data);
 
       setSecondsLeft(45);
       Alert.alert("OTP Sent", "A verification code has been sent to your email.");
 
-      // Navigate to OTP screen
       router.push(
         `/Authentication/ResetPasswordOTP?email=${encodeURIComponent(
           email.trim()
@@ -70,12 +67,15 @@ export default function ForgotPassword() {
 
   return (
     <View style={styles.container}>
+
+      {/* HEADER */}
       <Text style={styles.title}>Reset Password</Text>
       <Text style={styles.subtitle}>
         Enter your email and we will send you a verification code.
       </Text>
 
-      <View style={styles.inputRow}>
+      {/* INPUT */}
+      <View style={styles.inputWrapper}>
         <TextInput
           style={styles.input}
           placeholder="Email address"
@@ -87,6 +87,7 @@ export default function ForgotPassword() {
         />
       </View>
 
+      {/* BUTTON */}
       <TouchableOpacity
         style={[styles.btn, loading && styles.btnDisabled]}
         onPress={sendOtp}
@@ -99,13 +100,11 @@ export default function ForgotPassword() {
         )}
       </TouchableOpacity>
 
+      {/* RESEND ROW */}
       <View style={styles.row}>
         <Text style={styles.hintText}>Didn't receive the email?</Text>
 
-        <TouchableOpacity
-          onPress={sendOtp}
-          disabled={secondsLeft > 0}
-        >
+        <TouchableOpacity onPress={sendOtp} disabled={secondsLeft > 0}>
           <Text
             style={[
               styles.resendText,
@@ -117,43 +116,104 @@ export default function ForgotPassword() {
         </TouchableOpacity>
       </View>
 
+      {/* BACK LINK */}
       <TouchableOpacity
         style={styles.backLink}
         onPress={() => router.replace("/Authentication/Login")}
       >
         <Text style={styles.backText}>Back to Login</Text>
       </TouchableOpacity>
+
     </View>
   );
 }
 
+/* ---------------- STYLES (Improved UI Only) ---------------- */
+
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, paddingTop: 80, backgroundColor: "#fff" },
-  title: { fontSize: 28, fontWeight: "700", marginBottom: 8 },
-  subtitle: { color: "#6b7280", marginBottom: 24 },
-  inputRow: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 52,
-    justifyContent: "center",
-    marginBottom: 18,
+  container: {
+    flex: 1,
+    padding: 26,
+    paddingTop: 90,
+    backgroundColor: "#fff",
   },
-  input: { fontSize: 16 },
+
+  /* TITLE */
+  title: {
+    fontSize: 30,
+    fontWeight: "800",
+    marginBottom: 6,
+    color: "#000",
+  },
+  subtitle: {
+    color: "#6b7280",
+    fontSize: 15,
+    lineHeight: 20,
+    marginBottom: 28,
+  },
+
+  /* INPUT */
+  inputWrapper: {
+    backgroundColor: "#f3f4f6",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 54,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: 20,
+  },
+  input: {
+    fontSize: 16,
+    color: "#111",
+  },
+
+  /* BUTTON */
   btn: {
     height: 52,
     backgroundColor: "#4c6ef5",
-    borderRadius: 12,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 14,
   },
-  btnDisabled: { opacity: 0.7 },
-  btnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  row: { marginTop: 6, flexDirection: "row", justifyContent: "space-between" },
-  hintText: { color: "#6b7280" },
-  resendText: { color: "#4c6ef5", fontWeight: "700" },
+  btnDisabled: { opacity: 0.6 },
+  btnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+    letterSpacing: 0.3,
+  },
+
+  /* RESEND ROW */
+  row: {
+    marginTop: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  hintText: { color: "#6b7280", fontSize: 14 },
+  resendText: { color: "#4c6ef5", fontWeight: "700", fontSize: 15 },
   resendDisabled: { color: "#94a3b8" },
-  backLink: { marginTop: 28, alignItems: "center" },
-  backText: { color: "#4c6ef5", fontWeight: "600" },
+
+  /* BACK LINK */
+  backLink: {
+    marginTop: 32,
+    alignItems: "center",
+  },
+  backText: {
+    color: "#4c6ef5",
+    fontWeight: "700",
+    fontSize: 15,
+  },
 });

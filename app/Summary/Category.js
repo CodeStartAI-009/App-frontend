@@ -39,42 +39,108 @@ export default function Category() {
   const items = Object.entries(categories);
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>This Month Categories</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      
+      {/* Title Section */}
+      <View style={styles.headerBlock}>
+        <Text style={styles.title}>Spending by Category</Text>
+        <Text style={styles.subtitle}>This Month</Text>
+      </View>
 
+      {/* No Data */}
       {items.length === 0 && (
-        <Text style={styles.noData}>No category data</Text>
+        <Text style={styles.noData}>No category data available this month.</Text>
       )}
 
+      {/* Category Cards */}
       {items.map(([name, amount], index) => (
         <View key={index} style={styles.card}>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.amount}>₹{Number(amount).toLocaleString()}</Text>
+          <View style={styles.colorStrip} />
+
+          <View style={{ marginLeft: 12 }}>
+            <Text style={styles.name}>{name}</Text>
+            <Text style={styles.amount}>₹{Number(amount).toLocaleString()}</Text>
+          </View>
         </View>
       ))}
 
-      <View style={{ height: 80 }} />
+      <View style={{ height: 90 }} />
     </ScrollView>
   );
 }
 
+/* -------------------- STYLES -------------------- */
+
 const styles = StyleSheet.create({
   container: { padding: 20, backgroundColor: "#fff" },
-  title: { fontSize: 24, fontWeight: "800", marginBottom: 20, color: "#18493F" },
 
-  card: {
-    backgroundColor: "#EEF8F4",
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#DCEFEA",
+  /* HEADER BLOCK */
+  headerBlock: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#18493F",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#6F7E78",
+    marginTop: 4,
   },
 
-  name: { fontSize: 16, fontWeight: "700" },
-  amount: { fontSize: 18, fontWeight: "800", marginTop: 4, color: "#196F63" },
+  /* CATEGORY CARD */
+  card: {
+    flexDirection: "row",
+    backgroundColor: "#F8FFFD",
+    padding: 18,
+    borderRadius: 14,
 
-  noData: { textAlign: "center", marginTop: 30, color: "#777" },
+    borderWidth: 1,
+    borderColor: "#D8EDE6",
 
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+    marginBottom: 14,
+    alignItems: "center",
+
+    /* Subtle shadow */
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+
+  /* Decorative left strip */
+  colorStrip: {
+    width: 6,
+    height: "100%",
+    backgroundColor: "#196F63",
+    borderRadius: 6,
+  },
+
+  name: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#18493F",
+  },
+  amount: {
+    fontSize: 18,
+    fontWeight: "800",
+    marginTop: 4,
+    color: "#196F63",
+  },
+
+  noData: {
+    textAlign: "center",
+    marginTop: 30,
+    color: "#7A8680",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

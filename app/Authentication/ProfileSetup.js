@@ -24,41 +24,30 @@ export default function ProfileSetup() {
     if (!token) router.replace("/Authentication/Login");
   }, [hydrated, token]);
 
-  /* -------------------------------
-        Avatar List
-  ------------------------------- */
+  /* ---------------- AVATAR LIST ---------------- */
   const avatarList = [
     { uri: "https://api.dicebear.com/6.x/fun-emoji/png?seed=Alex" },
     { uri: "https://api.dicebear.com/6.x/fun-emoji/png?seed=Mia" },
     { uri: "https://api.dicebear.com/6.x/fun-emoji/png?seed=John" },
   ];
 
-  /* -------------------------------
-        FORM STATES
-  ------------------------------- */
+  /* ---------------- FORM STATES ---------------- */
   const [selected, setSelected] = useState(null);
   const [name, setName] = useState("");
   const [income, setIncome] = useState("");
-  const [currentBalance, setCurrentBalance] = useState(""); // ⭐ NEW FIELD
+  const [currentBalance, setCurrentBalance] = useState("");
   const [mobile, setMobile] = useState("");
   const [upi, setUpi] = useState("");
   const [bankNumber, setBankNumber] = useState("");
 
-  /* -------------------------------
-        SUBMIT PROFILE
-  ------------------------------- */
+  /* ---------------- SUBMIT PROFILE ---------------- */
   const handleContinue = async () => {
     if (!selected) return Alert.alert("Select Avatar");
     if (!name.trim()) return Alert.alert("Enter your name");
-
-    if (!income.trim() || isNaN(income))
-      return Alert.alert("Enter valid monthly income");
-
+    if (!income.trim() || isNaN(income)) return Alert.alert("Enter valid monthly income");
     if (!currentBalance.trim() || isNaN(currentBalance))
       return Alert.alert("Enter valid current balance");
-
-    if (mobile.length < 10)
-      return Alert.alert("Enter valid 10-digit mobile number");
+    if (mobile.length < 10) return Alert.alert("Enter valid 10-digit mobile number");
 
     const avatarUrl = avatarList[selected].uri;
 
@@ -66,7 +55,7 @@ export default function ProfileSetup() {
       name,
       avatarUrl,
       monthlyIncome: Number(income),
-      bankBalance: Number(currentBalance), // ⭐ SAVE BALANCE
+      bankBalance: Number(currentBalance),
       phone: mobile,
       upi,
       bankNumber,
@@ -80,122 +69,172 @@ export default function ProfileSetup() {
     router.replace("/Home/Home");
   };
 
-  /* -------------------------------
-        UI
-  ------------------------------- */
+  /* ---------------- UI ---------------- */
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Set Up Your Profile</Text>
+      <Text style={styles.subtitle}>Customize your experience</Text>
 
-      {/* Avatar Selection */}
+      {/* AVATARS */}
       <View style={styles.grid}>
         {avatarList.map((a, i) => (
           <TouchableOpacity
             key={i}
             onPress={() => setSelected(i)}
-            style={[styles.avatarWrap, selected === i && styles.selected]}
+            style={[
+              styles.avatarWrap,
+              selected === i && styles.selected,
+            ]}
           >
             <Image source={{ uri: a.uri }} style={styles.avatar} />
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Name */}
-      <TextInput
-        style={styles.input}
-        placeholder="Display Name"
-        value={name}
-        onChangeText={setName}
-      />
+      {/* INPUTS */}
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          placeholder="Display Name"
+          value={name}
+          onChangeText={setName}
+        />
+      </View>
 
-      {/* Monthly Income */}
-      <TextInput
-        style={styles.input}
-        placeholder="Monthly Income"
-        keyboardType="numeric"
-        value={income}
-        onChangeText={setIncome}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          placeholder="Monthly Income"
+          keyboardType="numeric"
+          value={income}
+          onChangeText={setIncome}
+        />
+      </View>
 
-      {/* ⭐ NEW CURRENT BALANCE FIELD */}
-      <TextInput
-        style={styles.input}
-        placeholder="Current Bank Balance"
-        keyboardType="numeric"
-        value={currentBalance}
-        onChangeText={setCurrentBalance}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          placeholder="Current Bank Balance"
+          keyboardType="numeric"
+          value={currentBalance}
+          onChangeText={setCurrentBalance}
+        />
+      </View>
 
-      {/* Mobile Number */}
-      <TextInput
-        style={styles.input}
-        placeholder="Mobile Number"
-        keyboardType="phone-pad"
-        maxLength={10}
-        value={mobile}
-        onChangeText={setMobile}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          placeholder="Mobile Number"
+          keyboardType="phone-pad"
+          maxLength={10}
+          value={mobile}
+          onChangeText={setMobile}
+        />
+      </View>
 
-      {/* Optional UPI */}
-      <TextInput
-        style={styles.input}
-        placeholder="UPI ID (optional)"
-        value={upi}
-        onChangeText={setUpi}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          placeholder="UPI ID (optional)"
+          value={upi}
+          onChangeText={setUpi}
+        />
+      </View>
 
-      {/* Optional Bank Number */}
-      <TextInput
-        style={styles.input}
-        placeholder="Bank Account Number (optional)"
-        value={bankNumber}
-        keyboardType="numeric"
-        onChangeText={setBankNumber}
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          placeholder="Bank Account Number (optional)"
+          keyboardType="numeric"
+          value={bankNumber}
+          onChangeText={setBankNumber}
+        />
+      </View>
 
-      {/* Submit Button */}
       <TouchableOpacity style={styles.btn} onPress={handleContinue}>
-        <Text style={{ color: "#fff", fontWeight: "700" }}>
-          Save & Continue
-        </Text>
+        <Text style={styles.btnText}>Save & Continue</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-/* -------------------------------
-        STYLES
-------------------------------- */
+/* ---------------- STYLES ---------------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 28,
+    paddingTop: 70,
     backgroundColor: "#fff",
-    paddingTop: 60,
   },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 20 },
+
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111",
+  },
+
+  subtitle: {
+    color: "#6b7280",
+    marginBottom: 22,
+    fontSize: 15,
+  },
+
+  /* AVATARS */
   grid: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 25,
   },
+
   avatarWrap: {
     width: "30%",
     height: 100,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "transparent",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+    backgroundColor: "#fff",
   },
-  selected: { borderColor: "#4c6ef5" },
-  avatar: { width: "100%", height: "100%" },
-  input: {
+
+  selected: {
+    borderColor: "#4c6ef5",
+    shadowColor: "#4c6ef5",
+    shadowOpacity: 0.25,
+    elevation: 4,
+  },
+
+  avatar: {
+    width: "100%",
+    height: "100%",
+  },
+
+  /* INPUTS */
+  inputWrapper: {
     backgroundColor: "#f3f4f6",
-    height: 50,
     borderRadius: 12,
-    paddingHorizontal: 12,
-    marginVertical: 8,
+    paddingHorizontal: 14,
+    height: 52,
+    justifyContent: "center",
+    marginVertical: 6,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
+
+  input: {
+    fontSize: 16,
+  },
+
+  /* BUTTON */
   btn: {
     backgroundColor: "#4c6ef5",
     height: 55,
@@ -203,5 +242,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: 20,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+
+  btnText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
   },
 });

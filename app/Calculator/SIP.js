@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -28,7 +27,6 @@ export default function SIP() {
     const r = Number(rate) / 100 / 12;
     const n = Number(years) * 12;
 
-    // SIP Formula
     const amount = P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
 
     const invested = P * n;
@@ -43,21 +41,19 @@ export default function SIP() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      
+
       {/* HEADER */}
-      <LinearGradient
-        colors={["#1FA084", "#16795A"]}
-        style={styles.header}
-      >
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color="#fff" />
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>SIP Calculator</Text>
-      </LinearGradient>
+      </View>
 
       {/* CONTENT */}
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        
+
         {/* INPUT CARD */}
         <View style={styles.card}>
           <Text style={styles.label}>Monthly Investment (₹)</Text>
@@ -75,7 +71,7 @@ export default function SIP() {
             keyboardType="numeric"
             value={rate}
             onChangeText={setRate}
-            placeholder="Enter rate"
+            placeholder="Enter expected %"
           />
 
           <Text style={styles.label}>Time Period (Years)</Text>
@@ -87,7 +83,6 @@ export default function SIP() {
             placeholder="Enter years"
           />
 
-          {/* BUTTON */}
           <TouchableOpacity style={styles.calcBtn} onPress={calculateSIP}>
             <Text style={styles.calcBtnText}>Calculate</Text>
           </TouchableOpacity>
@@ -104,13 +99,13 @@ export default function SIP() {
             </View>
 
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>Total Value</Text>
+              <Text style={styles.resultLabel}>Future Value</Text>
               <Text style={styles.resultValue}>₹{result.amount}</Text>
             </View>
 
             <View style={styles.resultRow}>
-              <Text style={[styles.resultLabel]}>Wealth Gain</Text>
-              <Text style={[styles.resultValue, { color: "#1FA084" }]}>
+              <Text style={styles.resultLabel}>Wealth Gain</Text>
+              <Text style={[styles.resultValue, styles.profitValue]}>
                 ₹{result.profit}
               </Text>
             </View>
@@ -120,93 +115,117 @@ export default function SIP() {
         <View style={{ height: 90 }} />
       </ScrollView>
 
-      {/* BOTTOM NAV */}
-      <BottomNav active="calculator" />
+      <BottomNav active="profile" />
     </View>
   );
 }
 
-/* -------------------- STYLES -------------------- */
+/* -------------------- WALLETWAVE THEME -------------------- */
 
 const styles = StyleSheet.create({
-  header: {
+  /* HEADER */
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: 60,
-    paddingBottom: 30,
+    paddingBottom: 16,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
+
+  backBtn: { paddingRight: 12 },
+
   headerTitle: {
-    fontSize: 28,
-    fontWeight: "900",
+    fontSize: 26,
+    fontWeight: "800",
     color: "#fff",
-    marginTop: 10,
   },
 
-  container: { padding: 20 },
+  /* CONTENT */
+  container: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
 
+  /* INPUT CARD */
   card: {
     backgroundColor: "#F8FFFD",
+    borderRadius: 18,
     padding: 20,
-    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#DDEEEA",
+    borderColor: "#E6F3EE",
     marginBottom: 20,
-    elevation: 2,
   },
 
   label: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
     color: "#18493F",
-    marginTop: 12,
+    marginTop: 14,
   },
 
   input: {
     borderWidth: 1,
-    borderColor: "#CFE8E2",
+    borderColor: "#DCEFEA",
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 6,
     backgroundColor: "#fff",
     fontSize: 16,
   },
 
+  /* BUTTON */
   calcBtn: {
-    backgroundColor: "#1FA084",
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 22,
+    backgroundColor: "#196F63",
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: "center",
+    marginTop: 26,
   },
+
   calcBtnText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "700",
   },
 
+  /* RESULT CARD */
   resultCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8FFFD",
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#DDEEEA",
-    elevation: 2,
+    borderColor: "#E6F3EE",
   },
 
   resultHeader: {
     fontSize: 20,
     fontWeight: "800",
-    marginBottom: 16,
     color: "#18493F",
+    marginBottom: 16,
   },
 
   resultRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 14,
   },
 
-  resultLabel: { fontSize: 16, color: "#18493F" },
-  resultValue: { fontSize: 18, fontWeight: "800", color: "#18493F" },
+  resultLabel: {
+    fontSize: 15,
+    color: "#6F7E78",
+    fontWeight: "600",
+  },
+
+  resultValue: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#196F63",
+  },
+
+  profitValue: {
+    color: "#0EAD91",
+  },
 });

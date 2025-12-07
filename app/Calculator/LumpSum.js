@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNav";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -28,7 +27,6 @@ export default function LumpSum() {
     const r = parseFloat(rate) / 100;
     const n = parseFloat(years);
 
-    // Lumpsum Formula → A = P(1+r)^n
     const amount = P * Math.pow(1 + r, n);
     const profit = amount - P;
 
@@ -41,19 +39,18 @@ export default function LumpSum() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
+
       {/* HEADER */}
-      <LinearGradient
-        colors={["#196F63", "#0F3F36"]}
-        style={styles.header}
-      >
-        <TouchableOpacity onPress={() => router.back()}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Lumpsum Calculator</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
         {/* INPUT CARD */}
         <View style={styles.card}>
           <Text style={styles.label}>Investment Amount (₹)</Text>
@@ -104,8 +101,8 @@ export default function LumpSum() {
             </View>
 
             <View style={styles.resultRow}>
-              <Text style={[styles.resultLabel]}>Wealth Gain</Text>
-              <Text style={[styles.resultValue, { color: "#198754" }]}>
+              <Text style={styles.resultLabel}>Wealth Gain</Text>
+              <Text style={[styles.resultValue, { color: "#196F63" }]}>
                 ₹{result.profit}
               </Text>
             </View>
@@ -115,79 +112,95 @@ export default function LumpSum() {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      <BottomNav active="calculator" />
+      <BottomNav active="profile" />
     </View>
   );
 }
 
-/* ---------------------- STYLES ---------------------- */
+/* ---------------- WALLETWAVE THEME STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  header: {
-    paddingTop: 70,
-    paddingBottom: 30,
+  /* HEADER */
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 60,
+    paddingBottom: 18,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: "#196F63",
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
   },
+
+  backBtn: { paddingRight: 12 },
+
   headerTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
     color: "#fff",
-    marginTop: 10,
+    marginLeft: 4,
   },
 
-  container: { padding: 20 },
+  /* CONTENT */
+  container: { paddingHorizontal: 24, paddingTop: 20 },
 
+  /* CARD */
   card: {
     backgroundColor: "#F8FFFD",
-    padding: 20,
     borderRadius: 16,
+    padding: 20,
     borderWidth: 1,
-    borderColor: "#DDEEEA",
+    borderColor: "#E6F3EE",
     marginBottom: 20,
-    elevation: 2,
   },
 
   label: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
     color: "#18493F",
-    marginTop: 10,
+    marginTop: 12,
   },
 
   input: {
     borderWidth: 1,
-    borderColor: "#CFE8E2",
+    borderColor: "#DCEFEA",
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 6,
     backgroundColor: "#fff",
     fontSize: 16,
   },
 
+  /* BUTTON */
   calcBtn: {
     backgroundColor: "#196F63",
     padding: 16,
-    borderRadius: 12,
-    marginTop: 22,
+    borderRadius: 14,
     alignItems: "center",
+    marginTop: 22,
   },
+
   calcBtnText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "700",
   },
 
+  /* RESULT CARD */
   resultCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8FFFD",
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#DDEEEA",
+    borderColor: "#E6F3EE",
   },
 
-  resultTitle: { fontSize: 20, fontWeight: "700", marginBottom: 15, color: "#18493F" },
+  resultTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 15,
+    color: "#18493F",
+  },
 
   resultRow: {
     flexDirection: "row",
@@ -195,8 +208,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  resultLabel: { fontSize: 16, color: "#18493F" },
-  resultValue: { fontSize: 18, fontWeight: "700" },
-});
+  resultLabel: {
+    fontSize: 16,
+    color: "#6F7E78",
+    fontWeight: "600",
+  },
 
- 
+  resultValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#196F63",
+  },
+});

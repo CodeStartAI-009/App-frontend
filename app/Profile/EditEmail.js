@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -29,63 +30,72 @@ export default function EditEmail() {
     try {
       const res = await changeEmail({
         newEmail: email,
-        password: password,
+        password,
       });
 
       if (res.data.ok) {
         setMsg("✅ Email updated successfully!");
 
-        // Redirect back after a small delay
         setTimeout(() => router.back(), 1200);
       } else {
         setMsg(res.data.error || "❌ Failed to update email.");
       }
     } catch (err) {
-      console.log("EMAIL UPDATE ERROR:", err);
       setMsg("❌ Wrong password or server error.");
     }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
-
+    <View style={styles.page}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" color="#fff" size={26} />
         </TouchableOpacity>
         <Text style={styles.headerText}>Edit Email</Text>
       </View>
 
-      {/* FORM */}
-      <View style={styles.card}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/* CARD */}
+        <View style={styles.card}>
+          <Text style={styles.label}>New Email</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Enter new email"
+            placeholderTextColor="#9CA3AF"
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
 
-        <Text style={styles.label}>New Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Enter new email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
+          <Text style={styles.label}>Password (required)</Text>
+          <TextInput
+            secureTextEntry
+            style={styles.input}
+            value={password}
+            placeholder="Enter your password"
+            placeholderTextColor="#9CA3AF"
+            onChangeText={setPassword}
+          />
 
-        <Text style={styles.label}>Password (required)</Text>
-        <TextInput
-          secureTextEntry
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter your password"
-        />
+          {msg ? (
+            <Text
+              style={[
+                styles.msg,
+                { color: msg.includes("✅") ? "#16a34a" : "#dc2626" },
+              ]}
+            >
+              {msg}
+            </Text>
+          ) : null}
 
-        {msg ? <Text style={styles.msg}>{msg}</Text> : null}
-
-        <TouchableOpacity style={styles.btn} onPress={updateEmail}>
-          <Text style={styles.btnText}>Save Email</Text>
-        </TouchableOpacity>
-
-      </View>
+          {/* BUTTON */}
+          <TouchableOpacity style={styles.btn} onPress={updateEmail}>
+            <Text style={styles.btnText}>Save Email</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       <BottomNav active="profile" />
     </View>
@@ -93,67 +103,90 @@ export default function EditEmail() {
 }
 
 /* -------------------- STYLES -------------------- */
-
 const styles = StyleSheet.create({
+  page: {
+    flex: 1,
+    backgroundColor: "#F7FBFA",
+  },
+
   header: {
     paddingTop: 60,
-    paddingBottom: 25,
+    paddingBottom: 28,
     paddingHorizontal: 20,
     backgroundColor: "#196F63",
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    gap: 14,
+    elevation: 3,
+    shadowColor: "#00000040",
   },
+
+  backBtn: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    padding: 7,
+    borderRadius: 10,
+  },
+
   headerText: {
     color: "#fff",
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "800",
   },
 
+  scroll: {
+    padding: 20,
+    paddingBottom: 130,
+  },
+
   card: {
-    margin: 20,
+    backgroundColor: "#FFFFFF",
     padding: 20,
     borderRadius: 18,
-    backgroundColor: "#F8FFFD",
     borderWidth: 1,
-    borderColor: "#D8EDE6",
+    borderColor: "#D9EEE7",
+    elevation: 2,
+    shadowColor: "#00000020",
   },
 
   label: {
     fontSize: 15,
+    fontWeight: "700",
     color: "#18493F",
-    marginTop: 12,
-    fontWeight: "600",
+    marginTop: 14,
   },
 
   input: {
     padding: 12,
+    marginTop: 6,
+    backgroundColor: "#FAFFFD",
     borderWidth: 1,
     borderColor: "#CDE7E1",
     borderRadius: 12,
-    marginTop: 6,
-    backgroundColor: "#fff",
-  },
-
-  btn: {
-    backgroundColor: "#196F63",
-    marginTop: 20,
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  btnText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 16,
+    color: "#0F172A",
   },
 
   msg: {
     marginTop: 12,
-    color: "#d9534f",
     fontSize: 15,
     fontWeight: "600",
+  },
+
+  btn: {
+    backgroundColor: "#196F63",
+    marginTop: 26,
+    paddingVertical: 15,
+    borderRadius: 14,
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#00000030",
+  },
+
+  btnText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
   },
 });

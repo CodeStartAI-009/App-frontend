@@ -7,7 +7,7 @@ export default function Onboarding2() {
   const router = useRouter();
   return (
     <View style={styles.container}>
-      <Image source={{ uri: "https://images.unsplash.com/photo-1523475496153-3d6ccf8f9d5a?w=1200&q=80&auto=format&fit=crop" }} style={styles.image} />
+      <Image source={{ uri: " " }} style={styles.image} />
       <Text style={styles.title}>Save Automatically</Text>
       <Text style={styles.subtitle}>Set smart rules and automatic savings.</Text>
 

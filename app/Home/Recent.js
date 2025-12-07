@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  FlatList,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getRecentActivity } from "../../services/expenseService";
 
@@ -46,16 +52,27 @@ export default function RecentActivity() {
         data={activity}
         keyExtractor={(item) => item._id}
         scrollEnabled={false}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <View style={styles.left}>
-              <Ionicons
-                name={item.type === "income" ? "arrow-up-circle" : "arrow-down-circle"}
-                size={22}
-                color={item.type === "income" ? "#198754" : "#D9534F"}
-              />
+        renderItem={({ item }) => {
+          const isIncome = item.type === "income";
 
-              <View style={{ marginLeft: 12 }}>
+          return (
+            <View style={styles.row}>
+              {/* ICON CIRCLE */}
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: isIncome ? "#E8FFF2" : "#FFE8E8" },
+                ]}
+              >
+                <Ionicons
+                  name={isIncome ? "arrow-up-circle" : "arrow-down-circle"}
+                  size={22}
+                  color={isIncome ? "#16A34A" : "#DC2626"}
+                />
+              </View>
+
+              {/* TEXTS */}
+              <View style={styles.middle}>
                 <Text style={styles.name}>{item.title}</Text>
                 <Text style={styles.time}>
                   {new Date(item.createdAt).toLocaleString("en-IN", {
@@ -66,51 +83,89 @@ export default function RecentActivity() {
                   })}
                 </Text>
               </View>
-            </View>
 
-            <Text
-              style={[
-                styles.amount,
-                { color: item.type === "income" ? "#198754" : "#D9534F" },
-              ]}
-            >
-              {item.type === "income" ? "+" : "-"}₹{item.amount}
-            </Text>
-          </View>
-        )}
+              {/* AMOUNT */}
+              <Text
+                style={[
+                  styles.amount,
+                  { color: isIncome ? "#16A34A" : "#DC2626" },
+                ]}
+              >
+                {isIncome ? "+" : "-"}₹{item.amount}
+              </Text>
+            </View>
+          );
+        }}
       />
     </View>
   );
 }
 
+/* ---------------- IMPROVED UI STYLES ---------------- */
+
 const styles = StyleSheet.create({
   box: {
     marginTop: 20,
-    padding: 16,
-    backgroundColor: "#F8FFFD",
-    borderRadius: 14,
+    padding: 18,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E6F3EE",
+    borderColor: "#E5F2ED",
+    elevation: 2,
   },
+
   title: {
     fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
+    fontWeight: "800",
+    marginBottom: 16,
     color: "#18493F",
   },
+
   row: {
     flexDirection: "row",
-    paddingVertical: 10,
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderColor: "#E8F2EF",
+    alignItems: "center",
+    backgroundColor: "#F8FFFD",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#EAF3EF",
+  },
+
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
     alignItems: "center",
   },
-  left: { flexDirection: "row", alignItems: "center" },
-  name: { fontSize: 15, fontWeight: "600", color: "#18493F" },
-  time: { fontSize: 12, color: "#6F7E78" },
-  amount: { fontSize: 16, fontWeight: "700" },
+
+  middle: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  name: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18493F",
+  },
+
+  time: {
+    fontSize: 12,
+    color: "#6F7E78",
+    marginTop: 2,
+  },
+
+  amount: {
+    fontSize: 17,
+    fontWeight: "800",
+  },
+
   loadingBox: { padding: 16, alignItems: "center" },
+
   emptyBox: { padding: 16, alignItems: "center" },
-  emptyText: { color: "#6F7E78" },
+
+  emptyText: { color: "#6F7E78", fontStyle: "italic" },
 });

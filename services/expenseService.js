@@ -6,7 +6,7 @@ import api from "./api";   // Your configured axios instance
  ************************/
 export const addExpense = (data) => api.post("/expense/add", data);
 export const addIncome = (data) => api.post("/income/add", data);
-
+   
 /***********************
  *  SUMMARY ROUTES
  ************************/
@@ -31,6 +31,9 @@ export const deleteTransaction = (id, type) =>
 
 export const getSingleTransaction = (id) =>
   api.get(`/transactions/single/${id}`);
+// UPDATE transaction (expense or income)
+export const updateTransaction = (id, data) =>
+  api.put(`/transactions/update/${id}`, data);
 
 /***********************
  *  USER PROFILE
