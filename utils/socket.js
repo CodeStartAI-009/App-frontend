@@ -1,7 +1,8 @@
 import { io } from "socket.io-client";
-import { API_BASE_URL } from "../services/api";
-
-export const socket = io(API_BASE_URL, { autoConnect: false });
+export const socket = io("https://app-backend-kyhh.onrender.com", {
+  transports: ["websocket"],
+  autoConnect: false,
+});
 
 export function connectSocket(userId) {
   socket.connect();

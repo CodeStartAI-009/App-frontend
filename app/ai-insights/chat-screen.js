@@ -1,4 +1,5 @@
-// app/AI/ChatScreen.js  (UI Improved - Functionality Unchanged)
+// app/AI/ChatScreen.js
+
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -14,10 +15,25 @@ import {
   Keyboard,
   Animated,
 } from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { getCoins, sendChat, watchAd, claimWeekly } from "../../services/aiService";
+
+import {
+  getCoins,
+  sendChat,
+  watchAd,
+  claimWeekly,
+} from "../../services/aiService";
+
 import BottomNav from "../components/BottomNav";
+
+// ⭐ Corrected Rewarded Interstitial imports
+import {
+  loadRewardedInterstitial,
+  showRewardAd,
+  setRewardCallback,
+} from "../../utils/RewardedAd";
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -29,14 +45,30 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const [weeklyAvailable, setWeeklyAvailable] = useState(false);
 
+  const [adLoaded, setAdLoaded] = useState(false);
+  const [adModalVisible, setAdModalVisible] = useState(false);
+
   const listRef = useRef(null);
   const nextId = useRef(0);
   const glowAnim = useRef(new Animated.Value(1)).current;
 
+  /* -----------------------------------
+    Load coins on mount
+  ----------------------------------- */
   useEffect(() => {
     loadCoins();
   }, []);
 
+  /* -----------------------------------
+    Load Rewarded Interstitial Ad ONCE
+  ----------------------------------- */
+  useEffect(() => {
+    loadRewardedInterstitial(setAdLoaded);
+  }, []);
+
+  /* -----------------------------------
+    Weekly Glow Animation
+  ----------------------------------- */
   useEffect(() => {
     if (weeklyAvailable) startGlow();
     else glowAnim.setValue(1);
@@ -45,16 +77,26 @@ export default function ChatScreen() {
   function startGlow() {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1.15, duration: 500, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 1.0, duration: 500, useNativeDriver: true }),
+        Animated.timing(glowAnim, {
+          toValue: 1.15,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 1.0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
       ])
     ).start();
   }
 
+  /* -----------------------------------
+    Load Coins from Backend
+  ----------------------------------- */
   async function loadCoins() {
     try {
       const res = await getCoins();
-
       if (res?.data?.ok) {
         setCoins(res.data.coins);
 
@@ -63,9 +105,9 @@ export default function ChatScreen() {
           : null;
 
         const now = Date.now();
-        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+        const week = 7 * 24 * 60 * 60 * 1000;
 
-        setWeeklyAvailable(!last || now - last.getTime() >= oneWeek);
+        setWeeklyAvailable(!last || now - last.getTime() >= week);
       } else {
         setCoins(0);
       }
@@ -77,19 +119,24 @@ export default function ChatScreen() {
     }
   }
 
+  /* -----------------------------------
+    Push Messages
+  ----------------------------------- */
   function pushMessage(role, text) {
     const id = String(nextId.current++);
     setMessages((prev) => [...prev, { id, role, text }]);
   }
 
+  /* -----------------------------------
+    Send Chat
+  ----------------------------------- */
   async function onSend() {
     const trimmed = prompt.trim();
     if (!trimmed || sending) return;
 
     if (coins < 5) {
-      return Alert.alert("Not Enough Coins", "Watch an ad to continue chatting.", [
-        { text: "Watch Ad", onPress: onWatchAd },
-      ]);
+      setAdModalVisible(true);
+      return;
     }
 
     pushMessage("user", trimmed);
@@ -106,13 +153,16 @@ export default function ChatScreen() {
       } else {
         pushMessage("assistant", res?.data?.error || "Chat failed.");
       }
-    } catch {
+    } catch (err) {
       pushMessage("assistant", "Server error. Try again.");
     } finally {
       setSending(false);
     }
   }
 
+  /* -----------------------------------
+    Weekly Bonus
+  ----------------------------------- */
   async function onTapCoins() {
     if (!weeklyAvailable) return;
 
@@ -121,25 +171,58 @@ export default function ChatScreen() {
       if (res?.data?.ok) {
         setCoins(res.data.coins);
         setWeeklyAvailable(false);
-        Alert.alert("Weekly Bonus Claimed!", "+15 coins added 🎉");
+        Alert.alert("Weekly Bonus!", "+15 coins 🎉");
       }
     } catch {
       Alert.alert("Error", "Unable to claim bonus.");
     }
   }
 
+  /* -----------------------------------
+    Watch Ad Handler
+  ----------------------------------- */
   async function onWatchAd() {
-    try {
-      const res = await watchAd();
-      if (res?.data?.ok) {
-        setCoins(res.data.coins);
-        Alert.alert("Thanks!", "+10 coins added.");
+    setAdModalVisible(false);
+
+    console.log("AdLoaded:", adLoaded);
+
+    // If ad NOT loaded yet
+    if (!adLoaded) {
+      Alert.alert("Please wait", "Ad is still loading…");
+
+      // Reload ad
+      loadRewardedInterstitial(setAdLoaded);
+      return;
+    }
+
+    // Set reward handler BEFORE showing
+    setRewardCallback(async () => {
+      try {
+        const res = await watchAd();
+
+        if (res?.data?.ok) {
+          setCoins(res.data.coins);
+          Alert.alert("Reward Added!", "+10 coins 🎉");
+        }
+      } catch {
+        Alert.alert("Error", "Could not add reward.");
       }
-    } catch {
-      Alert.alert("Error", "Could not watch ad.");
+
+      // Load next ad
+      loadRewardedInterstitial(setAdLoaded);
+    });
+
+    const shown = showRewardAd();
+
+    if (!shown) {
+      Alert.alert("Please wait", "Ad not ready. Reloading…");
+      loadRewardedInterstitial(setAdLoaded);
     }
   }
 
+  /* -----------------------------------
+    UI Render
+  ----------------------------------- */
   if (loading)
     return (
       <View style={styles.center}>
@@ -149,6 +232,34 @@ export default function ChatScreen() {
 
   return (
     <>
+      {/* ⭐ POPUP MODAL FOR WATCH AD */}
+      {adModalVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Not Enough Coins</Text>
+
+            <Text style={styles.modalText}>
+              You need 5 coins to continue chatting.{"\n"}
+              Watch an ad to earn +10 coins!
+            </Text>
+
+            <TouchableOpacity
+              style={styles.modalBtn}
+              onPress={() => onWatchAd()}
+            >
+              <Text style={styles.modalBtnText}>Watch Ad</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setAdModalVisible(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       <KeyboardAvoidingView
         style={styles.screen}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -156,7 +267,7 @@ export default function ChatScreen() {
       >
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={26} color="#4c6ef5" />
           </TouchableOpacity>
 
@@ -196,12 +307,10 @@ export default function ChatScreen() {
         <View style={styles.inputBar}>
           <TextInput
             style={styles.input}
-            placeholder={
-              coins < 5 ? "Not enough coins…" : "Type a message…"
-            }
+            placeholder={coins < 5 ? "Not enough coins…" : "Type a message…"}
             value={prompt}
             onChangeText={setPrompt}
-            editable={!sending && coins >= 5}
+            editable={!sending}
           />
 
           <TouchableOpacity
@@ -221,22 +330,20 @@ export default function ChatScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      <BottomNav active="home" />
+      <BottomNav active="month" />
     </>
   );
 }
 
-/* ------------------------------------------
-   UPDATED UI STYLES (MATCH YOUR STYLE SYSTEM)
-------------------------------------------- */
+/* ----------------------------------
+   STYLES
+---------------------------------- */
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
-
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  /* HEADER */
   header: {
-    paddingTop: 48,
+    paddingTop: 50,
     paddingBottom: 16,
     paddingHorizontal: 20,
     backgroundColor: "#fff",
@@ -246,15 +353,13 @@ const styles = StyleSheet.create({
     borderColor: "#e2e8f0",
   },
 
-  backBtn: { paddingRight: 12 },
-
   headerTitle: {
     flex: 1,
     fontSize: 22,
     fontWeight: "700",
     textAlign: "center",
     color: "#1e293b",
-    marginLeft: -20, // keeps visual center alignment
+    marginLeft: -20,
   },
 
   coins: {
@@ -274,11 +379,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
   },
 
-  /* CHAT */
-  chatList: {
-    padding: 16,
-    paddingBottom: 130,
-  },
+  chatList: { padding: 16, paddingBottom: 130 },
 
   msgBubble: {
     padding: 12,
@@ -303,7 +404,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  /* INPUT BAR */
   inputBar: {
     flexDirection: "row",
     padding: 12,
@@ -334,5 +434,68 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+
+  /* MODAL */
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+
+  modalBox: {
+    width: "75%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 16,
+    alignItems: "center",
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 10,
+    color: "#1e293b",
+  },
+
+  modalText: {
+    fontSize: 15,
+    color: "#475569",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+
+  modalBtn: {
+    backgroundColor: "#4c6ef5",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    width: "100%",
+    marginBottom: 10,
+  },
+
+  modalBtnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+
+  modalCancel: {
+    paddingVertical: 8,
+    width: "100%",
+  },
+
+  modalCancelText: {
+    textAlign: "center",
+    fontSize: 15,
+    color: "#64748b",
   },
 });

@@ -1,3 +1,4 @@
+import 'expo-dev-client';
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,11 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { addExpense } from "../../services/expenseService";
+
+// ⭐ Import Interstitial Ads
+import { loadInterstitial, showInterstitial } from "../../utils/InterstitialAd";
 
 export default function AddExpense() {
   const router = useRouter();
@@ -27,6 +31,12 @@ export default function AddExpense() {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Food");
+  const [adLoaded, setAdLoaded] = useState(false);
+
+  // ⭐ Load ad when screen opens
+  useEffect(() => {
+    loadInterstitial(setAdLoaded);
+  }, []);
 
   const saveExpense = async () => {
     if (!title || !amount) {
@@ -43,6 +53,21 @@ export default function AddExpense() {
 
       if (res.data.ok) {
         Alert.alert("Success", "Expense added!");
+
+        // ⭐ Increase expense counter
+        let count = Number(await AsyncStorage.getItem("expense_count")) || 0;
+        count += 1;
+        await AsyncStorage.setItem("expense_count", String(count));
+
+        console.log("Expense Count =", count);
+
+        // 🎯 Show Ad After Every 4 Expenses
+        if (count >= 4 && adLoaded) {
+          showInterstitial();
+          loadInterstitial(setAdLoaded); // Load next ad
+          await AsyncStorage.setItem("expense_count", "0"); // Reset counter
+        }
+
         router.push("/Home/Home");
       }
     } catch (err) {
@@ -168,9 +193,7 @@ const styles = StyleSheet.create({
     color: "#18493F",
   },
 
-  catTextActive: {
-    color: "#FFFFFF",
-  },
+  catTextActive: { color: "#FFFFFF" },
 
   saveBtn: {
     backgroundColor: "#196F63",
@@ -179,6 +202,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 24,
   },
+
   saveText: {
     color: "#FFFFFF",
     fontSize: 18,

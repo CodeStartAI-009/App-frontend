@@ -1,5 +1,5 @@
 // app/Transactions/AddIncome.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,11 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { addIncome } from "../../services/expenseService";
+
+// ⭐ Import Interstitial Ads
+import { loadInterstitial, showInterstitial } from "../../utils/InterstitialAd";
 
 export default function AddIncome() {
   const router = useRouter();
@@ -27,18 +31,18 @@ export default function AddIncome() {
 
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("Salary"); // Default
+  const [category, setCategory] = useState("Salary");
+  const [adLoaded, setAdLoaded] = useState(false);
+
+  // ⭐ Load ad once on screen open
+  useEffect(() => {
+    loadInterstitial(setAdLoaded);
+  }, []);
 
   const saveIncome = async () => {
-    if (!title.trim()) {
-      Alert.alert("Error", "Title is required!");
-      return;
-    }
-
-    if (!amount.trim() || isNaN(amount)) {
-      Alert.alert("Error", "Enter a valid amount!");
-      return;
-    }
+    if (!title.trim()) return Alert.alert("Error", "Title is required!");
+    if (!amount.trim() || isNaN(amount))
+      return Alert.alert("Error", "Enter a valid amount!");
 
     try {
       const res = await addIncome({
@@ -49,6 +53,21 @@ export default function AddIncome() {
 
       if (res.data.ok) {
         Alert.alert("Success", "Income added!");
+
+        // ⭐ Increase income counter
+        let count = Number(await AsyncStorage.getItem("income_count")) || 0;
+        count += 1;
+
+        await AsyncStorage.setItem("income_count", String(count));
+        console.log("Income Count =", count);
+
+        // 🎯 Show ad after every 4 incomes
+        if (count >= 4 && adLoaded) {
+          showInterstitial();
+          loadInterstitial(setAdLoaded); // load next ad
+          await AsyncStorage.setItem("income_count", "0"); // reset
+        }
+
         router.push("/Home/Home");
       }
     } catch (err) {

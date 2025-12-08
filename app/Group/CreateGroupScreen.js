@@ -1,5 +1,5 @@
 // app/Group/CreateGroupScreen.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { createSplitGroup } from "../../services/splitService";
 
+// ⭐ Import Interstitial Ads
+import {
+  loadInterstitial,
+  showInterstitial,
+} from "../../utils/InterstitialAd";
+
 export default function CreateGroupScreen() {
   const router = useRouter();
 
@@ -22,6 +28,13 @@ export default function CreateGroupScreen() {
 
   const [tempUser, setTempUser] = useState("");
   const [tempAmount, setTempAmount] = useState("");
+
+  const [adLoaded, setAdLoaded] = useState(false);
+
+  // ⭐ Load the ad when screen opens
+  useEffect(() => {
+    loadInterstitial(setAdLoaded);
+  }, []);
 
   function addParticipant() {
     if (!tempUser.trim() || !tempAmount.trim())
@@ -53,6 +66,13 @@ export default function CreateGroupScreen() {
 
       if (res?.data?.ok) {
         Alert.alert("Success", "Group created!");
+
+        // ⭐ Show ad after creating split group
+        if (adLoaded) showInterstitial();
+
+        // load next ad
+        loadInterstitial(setAdLoaded);
+
         router.back();
       } else {
         Alert.alert("Error", res?.data?.error || "Failed to create group");

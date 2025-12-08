@@ -1,5 +1,5 @@
 // app/Goals/CreateGoal.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,10 +14,23 @@ import { useRouter } from "expo-router";
 import BottomNav from "../components/BottomNav";
 import { createGoal } from "../../services/goalService";
 
+// ⭐ Import Interstitial Ads
+import {
+  loadInterstitial,
+  showInterstitial,
+} from "../../utils/InterstitialAd";
+
 export default function CreateGoal() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
+
+  const [adLoaded, setAdLoaded] = useState(false); // ⭐ Track ad status
+
+  // ⭐ Load interstitial ad when screen opens
+  useEffect(() => {
+    loadInterstitial(setAdLoaded);
+  }, []);
 
   const saveGoal = async () => {
     if (!title || !amount)
@@ -31,9 +44,19 @@ export default function CreateGoal() {
 
       if (res.data.ok) {
         Alert.alert("Success", "Goal created successfully!");
+
+        // ⭐ SHOW NON-REWARD AD AFTER GOAL CREATION
+        if (adLoaded) {
+          showInterstitial();
+        }
+
+        // Load next ad for future
+        loadInterstitial(setAdLoaded);
+
         router.push("/Goals/Overview");
       }
     } catch (err) {
+      console.log(err);
       Alert.alert("Error", "Failed to create goal");
     }
   };
