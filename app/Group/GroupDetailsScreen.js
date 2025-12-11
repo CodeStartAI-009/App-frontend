@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getGroupDetails } from "../../services/splitService";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 
 export default function GroupDetailsScreen() {
   const { groupId } = useLocalSearchParams();
@@ -17,10 +17,6 @@ export default function GroupDetailsScreen() {
 
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    load();
-  }, []);
 
   async function load() {
     try {
@@ -38,6 +34,14 @@ export default function GroupDetailsScreen() {
       setLoading(false);
     }
   }
+
+  // REFRESH DATA EVERY TIME SCREEN FOCUSES
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      load();
+    }, [groupId])
+  );
 
   if (loading) {
     return (
@@ -94,8 +98,6 @@ export default function GroupDetailsScreen() {
 
         {group.participants.map((p) => (
           <View key={p.userId._id} style={styles.participantBox}>
-
-            {/* Avatar */}
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>
                 {p.userId.name ? p.userId.name[0] : p.userId.email[0]}
@@ -130,7 +132,6 @@ export default function GroupDetailsScreen() {
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  /* HEADER */
   header: {
     paddingTop: 60,
     paddingBottom: 26,
@@ -149,7 +150,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  /* GROUP CARD */
   groupCard: {
     backgroundColor: "#FFFFFF",
     padding: 22,
@@ -182,7 +182,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  /* SECTION TITLE */
   sectionTitle: {
     fontSize: 18,
     fontWeight: "800",
@@ -191,7 +190,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  /* LABEL ROW */
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -208,7 +206,6 @@ const styles = StyleSheet.create({
     color: "#18493F",
   },
 
-  /* PARTICIPANT CARD */
   participantBox: {
     backgroundColor: "#FFFFFF",
     padding: 16,
@@ -251,7 +248,6 @@ const styles = StyleSheet.create({
     color: "#196F63",
   },
 
-  /* TOTAL CARD */
   totalCard: {
     backgroundColor: "#EFFFFA",
     padding: 24,

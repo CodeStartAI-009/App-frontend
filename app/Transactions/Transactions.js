@@ -1,5 +1,5 @@
 // app/Transactions/TransactionsScreen.js
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import {
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { getActivity, deleteTransaction } from "../../services/expenseService";
 import BottomNav from "../components/BottomNav";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 
 /* ---------------- ICON PICKER ---------------- */
 function getCategoryIcon(category, color) {
@@ -39,10 +39,11 @@ function getCategoryIcon(category, color) {
   }
 }
 
-function TransactionsScreen() {
+export default function TransactionsScreen() {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [activity, setActivity] = useState([]);
-  const router = useRouter();
 
   const [sortMode, setSortMode] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
@@ -57,17 +58,21 @@ function TransactionsScreen() {
     "Food","Shopping","Travel","Rent","Income","Split Group","Others"
   ];
 
-  /* ---------------- LOAD ACTIVITY ---------------- */
-  useEffect(() => {
-    load();
-  }, []);
+  /* ---------------- ALWAYS REFRESH ON SCREEN FOCUS ---------------- */
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
-  const load = async () => {
+  const loadData = async () => {
     try {
+      setLoading(true);
       const res = await getActivity();
       setActivity(res.data.activity || []);
-    } catch (e) {
-      console.log("Activity error:", e);
+    } catch (err) {
+      console.log("Activity error:", err);
+      setActivity([]);
     } finally {
       setLoading(false);
     }
@@ -101,8 +106,12 @@ function TransactionsScreen() {
   /* ---------------- ACTIONS ---------------- */
   const handleDelete = async (item) => {
     if (isSplit(item)) return;
-    await deleteTransaction(item._id, item.type);
-    load();
+    try {
+      await deleteTransaction(item._id, item.type);
+      loadData(); // refresh instantly
+    } catch (e) {
+      console.log("Delete error:", e);
+    }
   };
 
   const handleEdit = (item) => {
@@ -117,21 +126,28 @@ function TransactionsScreen() {
 
   /* ---------------- SWIPE ACTIONS ---------------- */
   const renderRightActions = (item) =>
-    isSplit(item) ? null : (
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={() => handleDelete(item)}
-      >
-        <Ionicons name="trash" size={24} color="#fff" />
-      </TouchableOpacity>
-    );
+    isSplit(item)
+      ? null
+      : (
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={() => handleDelete(item)}
+        >
+          <Ionicons name="trash" size={24} color="#fff" />
+        </TouchableOpacity>
+      );
 
   const renderLeftActions = (item) =>
-    isSplit(item) ? null : (
-      <TouchableOpacity style={styles.editBtn} onPress={() => handleEdit(item)}>
-        <Ionicons name="create" size={24} color="#fff" />
-      </TouchableOpacity>
-    );
+    isSplit(item)
+      ? null
+      : (
+        <TouchableOpacity
+          style={styles.editBtn}
+          onPress={() => handleEdit(item)}
+        >
+          <Ionicons name="create" size={24} color="#fff" />
+        </TouchableOpacity>
+      );
 
   /* ---------------- LOADING ---------------- */
   if (loading)
@@ -166,7 +182,14 @@ function TransactionsScreen() {
         <View style={styles.filterBar}>
           <TouchableOpacity
             style={styles.filterBtn}
-            onPress={() => setSortMode(sortMode === "mode" ? "" : "mode")}
+            onPress={() => {
+              if (sortMode === "mode") setSortMode("");
+              else {
+                setSortMode("mode");
+                setSelectedMonth("");
+                setSelectedCategory("");
+              }
+            }}
           >
             <Ionicons name="filter-outline" size={18} color="#18493F" />
             <Text style={styles.filterLabel}>Filters</Text>
@@ -264,7 +287,7 @@ function TransactionsScreen() {
   );
 }
 
-/* ---------------- SINGLE ITEM ROW ---------------- */
+/* ---------------- SINGLE ITEM ---------------- */
 function TransactionItem({ item, onPress }) {
   const isIncome = item.type === "income";
   const color = isIncome ? "#198754" : "#D9534F";
@@ -290,10 +313,8 @@ function TransactionItem({ item, onPress }) {
 /* ---------------- STYLES ---------------- */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  /* HEADER */
   headerWrapper: {
     paddingTop: 55,
     paddingBottom: 25,
@@ -301,52 +322,33 @@ const styles = StyleSheet.create({
     backgroundColor: "#196F63",
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-
     flexDirection: "row",
     alignItems: "center",
   },
   backBtn: { padding: 6, marginRight: 12 },
-  headerText: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
+  headerText: { fontSize: 26, fontWeight: "800", color: "#FFFFFF" },
 
-  /* SPLIT */
   splitBtn: {
     marginTop: -15,
     marginHorizontal: 20,
-
     backgroundColor: "#196F63",
     padding: 14,
     borderRadius: 16,
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    alignItems: "center",
     elevation: 3,
   },
-  splitText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    marginLeft: 10,
-  },
+  splitText: { color: "#fff", fontSize: 16, fontWeight: "700", marginLeft: 10 },
 
-  /* FILTERS */
   filterBar: { paddingHorizontal: 20, marginTop: 16, marginBottom: 6 },
   filterBtn: {
     flexDirection: "row",
     padding: 10,
-    borderColor: "#CDE7E1",
-    borderWidth: 1,
-
     backgroundColor: "#F8FFFD",
     borderRadius: 12,
-
+    borderWidth: 1,
+    borderColor: "#CDE7E1",
     alignItems: "center",
     gap: 8,
     width: 120,
@@ -363,7 +365,6 @@ const styles = StyleSheet.create({
   filterOption: { paddingVertical: 8 },
   filterOptionText: { fontSize: 16, fontWeight: "700", color: "#18493F" },
 
-  /* SELECT BOXES */
   selectBox: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -379,28 +380,20 @@ const styles = StyleSheet.create({
     margin: 4,
   },
   activeOption: { backgroundColor: "#196F63" },
-
   optionText: { fontWeight: "700", color: "#18493F" },
   activeOptionText: { color: "#fff" },
 
-  /* TRANSACTION CARD */
   itemCard: {
     marginHorizontal: 20,
     marginVertical: 6,
     padding: 16,
-
     backgroundColor: "#F8FFFD",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#E1F1EC",
-
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
     elevation: 1,
   },
 
@@ -410,7 +403,6 @@ const styles = StyleSheet.create({
 
   amount: { fontSize: 18, fontWeight: "800" },
 
-  /* SWIPE BUTTONS */
   deleteBtn: {
     width: 80,
     backgroundColor: "#D9534F",
@@ -418,6 +410,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
   },
+
   editBtn: {
     width: 80,
     backgroundColor: "#198754",
@@ -426,5 +419,3 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 });
-
-export default TransactionsScreen;

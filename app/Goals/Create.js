@@ -1,5 +1,5 @@
 // app/Goals/CreateGoal.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,11 +10,11 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import BottomNav from "../components/BottomNav";
 import { createGoal } from "../../services/goalService";
 
-// ⭐ Import Interstitial Ads
+// Interstitial Ads
 import {
   loadInterstitial,
   showInterstitial,
@@ -25,12 +25,20 @@ export default function CreateGoal() {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
 
-  const [adLoaded, setAdLoaded] = useState(false); // ⭐ Track ad status
+  const [adLoaded, setAdLoaded] = useState(false);
 
-  // ⭐ Load interstitial ad when screen opens
+  // Load interstitial ad
   useEffect(() => {
     loadInterstitial(setAdLoaded);
   }, []);
+
+  // CLEAR FORM EVERY TIME USER ENTERS THIS SCREEN
+  useFocusEffect(
+    useCallback(() => {
+      setTitle("");
+      setAmount("");
+    }, [])
+  );
 
   const saveGoal = async () => {
     if (!title || !amount)
@@ -45,12 +53,10 @@ export default function CreateGoal() {
       if (res.data.ok) {
         Alert.alert("Success", "Goal created successfully!");
 
-        // ⭐ SHOW NON-REWARD AD AFTER GOAL CREATION
-        if (adLoaded) {
-          showInterstitial();
-        }
+        // Show ad
+        if (adLoaded) showInterstitial();
 
-        // Load next ad for future
+        // Prepare next ad
         loadInterstitial(setAdLoaded);
 
         router.push("/Goals/Overview");
@@ -111,7 +117,6 @@ export default function CreateGoal() {
 /* ---------------- GREEN PREMIUM UI ---------------- */
 
 const styles = StyleSheet.create({
-  /* HEADER */
   header: {
     paddingTop: 60,
     paddingBottom: 26,
@@ -130,13 +135,11 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  /* CONTAINER */
   container: {
     padding: 20,
     paddingBottom: 150,
   },
 
-  /* CARD */
   card: {
     backgroundColor: "#FFFFFF",
     padding: 22,
@@ -146,7 +149,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  /* INPUT LABEL */
   label: {
     fontSize: 15,
     color: "#18493F",
@@ -154,7 +156,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  /* INPUT */
   input: {
     backgroundColor: "#fff",
     padding: 14,
@@ -166,7 +167,6 @@ const styles = StyleSheet.create({
     color: "#0F172A",
   },
 
-  /* BUTTON */
   btn: {
     backgroundColor: "#196F63",
     paddingVertical: 16,

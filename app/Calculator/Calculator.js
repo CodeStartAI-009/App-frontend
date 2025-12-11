@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 
 export default function Calculator() {
   const router = useRouter();
@@ -25,6 +25,14 @@ export default function Calculator() {
     { label: "Currency Converter", icon: "swap-horizontal-outline", route: "/Calculator/Currency" },
     { label: "Retirement Planner", icon: "person-outline", route: "/Calculator/Retirement" },
   ];
+
+  /* --------------- AUTO REFRESH WHEN SCREEN OPENS --------------- */
+  useFocusEffect(
+    useCallback(() => {
+      // Future: You can refresh global data here (currency, tax, etc)
+      // Example: refreshCalculatorCache();
+    }, [])
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -71,7 +79,6 @@ export default function Calculator() {
 
 /* ---------------------- THEMED UI STYLES ---------------------- */
 const styles = StyleSheet.create({
-  /* Header */
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -94,13 +101,11 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 
-  /* Body */
   container: {
     paddingTop: 20,
     paddingHorizontal: 22,
   },
 
-  /* Card */
   card: {
     flexDirection: "row",
     alignItems: "center",

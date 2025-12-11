@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { PieChart } from "react-native-chart-kit";
 import { getSummary } from "../../services/expenseService";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import BottomNav from "../components/BottomNav";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -30,12 +30,16 @@ const COLORS = [
 
 export default function Quick() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState(null);
 
-  useEffect(() => {
-    loadSummary();
-  }, []);
+  // Refresh summary whenever the screen is opened
+  useFocusEffect(
+    useCallback(() => {
+      loadSummary();
+    }, [])
+  );
 
   const loadSummary = async () => {
     setLoading(true);
@@ -83,7 +87,7 @@ export default function Quick() {
       </LinearGradient>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
-
+        
         {/* SUMMARY CARD */}
         <View style={styles.glassCard}>
           <View style={styles.rowBetween}>

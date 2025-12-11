@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { getActivity } from "../../services/expenseService";
+import { useFocusEffect } from "expo-router";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -25,8 +26,15 @@ export default function Monthly() {
   const [transactions, setTransactions] = useState([]);
   const [month, setMonth] = useState(currentMonth);
   const [loading, setLoading] = useState(false);
-  const [graphPoints, setGraphPoints] = useState([0,0,0,0,0,0]);
+  const [graphPoints, setGraphPoints] = useState([0, 0, 0, 0, 0, 0]);
   const [openMonthPicker, setOpenMonthPicker] = useState(false);
+
+  // Auto-refresh on screen focus OR month change
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [month])
+  );
 
   const load = async () => {
     try {
@@ -36,11 +44,11 @@ export default function Monthly() {
       const all = res?.data?.activity || [];
 
       const filtered = all.filter((t) => {
-        const d = t.date
-          ? new Date(t.date)
-          : t.createdAt
-          ? new Date(t.createdAt)
-          : null;
+        const d =
+          t.date ? new Date(t.date) :
+          t.createdAt ? new Date(t.createdAt) :
+          null;
+
         if (!d) return false;
         return MONTHS[d.getMonth()] === month;
       });
@@ -63,40 +71,46 @@ export default function Monthly() {
         if (!tx.dateObj) return;
         const day = tx.dateObj.getDate();
         let index = Math.min(Math.floor((day - 1) / 5), 5);
+
         const change = tx.type === "income" ? tx.amount : -tx.amount;
         buckets[index] += change;
       });
 
-      setGraphPoints(buckets.map((v) => (Number.isFinite(v) ? v : 0)));
+      setGraphPoints(buckets.map((v) => (isFinite(v) ? v : 0)));
     } catch (err) {
       console.log("MONTHLY LOAD ERROR:", err);
       setTransactions([]);
-      setGraphPoints([0,0,0,0,0,0]);
+      setGraphPoints([0, 0, 0, 0, 0, 0]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    load();
-  }, [month]);
+  const totalIncome = transactions
+    .filter((t) => t.type === "income")
+    .reduce((s, t) => s + t.amount, 0);
 
-  const totalIncome = transactions.filter((t) => t.type === "income").reduce((s,t) => s+t.amount,0);
-  const totalExpense = transactions.filter((t) => t.type === "expense").reduce((s,t) => s+t.amount,0);
+  const totalExpense = transactions
+    .filter((t) => t.type === "expense")
+    .reduce((s, t) => s + t.amount, 0);
+
   const net = totalIncome - totalExpense;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
-
+      
       {/* HEADER */}
       <Text style={styles.header}>Monthly Breakdown</Text>
 
       {/* MONTH SELECTOR */}
-      <TouchableOpacity style={styles.monthSelector} onPress={() => setOpenMonthPicker(true)}>
+      <TouchableOpacity
+        style={styles.monthSelector}
+        onPress={() => setOpenMonthPicker(true)}
+      >
         <Text style={styles.monthSelectorText}>{month}</Text>
       </TouchableOpacity>
 
-      {/* MONTH PICKER MODAL */}
+      {/* MONTH PICKER */}
       <Modal visible={openMonthPicker} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setOpenMonthPicker(false)}>
           <View style={styles.modalBox}>
@@ -114,7 +128,7 @@ export default function Monthly() {
                 <Text
                   style={[
                     styles.monthOptionText,
-                    m === month && styles.selectedMonth
+                    m === month && styles.selectedMonth,
                   ]}
                 >
                   {m}
@@ -134,22 +148,21 @@ export default function Monthly() {
           <View style={styles.summaryCard}>
             <View style={styles.summaryBlock}>
               <Text style={styles.label}>Income</Text>
-              <Text style={[styles.value, { color: "#198754" }]}>₹{totalIncome.toLocaleString()}</Text>
+              <Text style={[styles.value, { color: "#198754" }]}>
+                ₹{totalIncome.toLocaleString()}
+              </Text>
             </View>
 
             <View style={styles.summaryBlock}>
               <Text style={styles.label}>Expense</Text>
-              <Text style={[styles.value, { color: "#D9534F" }]}>₹{totalExpense.toLocaleString()}</Text>
+              <Text style={[styles.value, { color: "#D9534F" }]}>
+                ₹{totalExpense.toLocaleString()}
+              </Text>
             </View>
 
             <View style={styles.summaryBlock}>
               <Text style={styles.label}>Net</Text>
-              <Text
-                style={[
-                  styles.value,
-                  { color: net >= 0 ? "#196F63" : "#D9534F" }
-                ]}
-              >
+              <Text style={[styles.value, { color: net >= 0 ? "#196F63" : "#D9534F" }]}>
                 {net >= 0 ? "+" : "-"}₹{Math.abs(net).toLocaleString()}
               </Text>
             </View>
@@ -190,14 +203,17 @@ export default function Monthly() {
                 <View>
                   <Text style={styles.txTitle}>{tx.title}</Text>
                   <Text style={styles.txDate}>
-                    {tx.dateObj.toLocaleDateString("en-IN",{ day:"numeric", month:"short" })}
+                    {tx.dateObj.toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })}
                   </Text>
                 </View>
 
                 <Text
                   style={[
                     styles.txAmount,
-                    { color: tx.type === "income" ? "#198754" : "#D9534F" }
+                    { color: tx.type === "income" ? "#198754" : "#D9534F" },
                   ]}
                 >
                   {tx.type === "income" ? "+" : "-"}₹{tx.amount.toLocaleString()}
@@ -236,6 +252,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     elevation: 2,
   },
+
   monthSelectorText: {
     fontSize: 18,
     fontWeight: "700",
@@ -248,6 +265,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 30,
   },
+
   modalBox: {
     backgroundColor: "#FFFFFF",
     padding: 20,
@@ -260,6 +278,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: "#18493F",
   },
+
   monthOption: {
     paddingVertical: 10,
   },
@@ -267,6 +286,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: "#18493F",
   },
+
   selectedMonth: {
     fontWeight: "800",
     color: "#196F63",
@@ -283,10 +303,12 @@ const styles = StyleSheet.create({
     marginBottom: 22,
     elevation: 2,
   },
+
   summaryBlock: {
     width: "33%",
     alignItems: "center",
   },
+
   label: {
     fontSize: 13,
     color: "#6F7E78",

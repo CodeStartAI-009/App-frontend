@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { getTrendBreakdown } from "../../services/expenseService";
+import { useFocusEffect } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
@@ -17,9 +18,12 @@ export default function Trends() {
   const [trend, setTrend] = useState([]);
   const [topCategory, setTopCategory] = useState("None");
 
-  useEffect(() => {
-    load();
-  }, []);
+  // Auto refresh on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [])
+  );
 
   const load = async () => {
     try {
@@ -37,8 +41,8 @@ export default function Trends() {
 
       setTrend(normalized);
 
+      // Compute top category
       const categoryTotals = {};
-
       normalized.forEach((m) => {
         Object.entries(m.categories).forEach(([cat, val]) => {
           categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(val);
@@ -48,10 +52,13 @@ export default function Trends() {
       if (Object.keys(categoryTotals).length > 0) {
         const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
         setTopCategory(sorted[0][0]);
+      } else {
+        setTopCategory("None");
       }
     } catch (e) {
       console.log("TREND ERROR:", e);
       setTrend([]);
+      setTopCategory("None");
     } finally {
       setLoading(false);
     }
@@ -64,8 +71,8 @@ export default function Trends() {
       </View>
     );
 
-  const labels = trend.map((m) => m.month.split("-")[1]);
-  const values = trend.map((m) => m.totalExpense);
+  const labels = trend.map((m) => m.month.split("-")[1]) || [];
+  const values = trend.map((m) => m.totalExpense) || [];
 
   return (
     <ScrollView style={styles.container}>
@@ -121,7 +128,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
 
-  /* HEADER */
   title: {
     fontSize: 26,
     fontWeight: "900",
@@ -129,14 +135,12 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
 
-  /* CENTER LOADING */
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  /* TOP CATEGORY CARD */
   card: {
     backgroundColor: "#F8FFFD",
     padding: 18,
@@ -158,7 +162,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 
-  /* GRAPH SECTION */
   graphWrapper: {
     backgroundColor: "#FFFFFF",
     paddingVertical: 12,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,17 +7,22 @@ import {
   ScrollView,
 } from "react-native";
 import { getSummary } from "../../services/expenseService";
+import { useFocusEffect } from "expo-router";
 
 export default function Category() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState({});
 
-  useEffect(() => {
-    load();
-  }, []);
+  // Load data whenever screen becomes active
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [])
+  );
 
   const load = async () => {
     try {
+      setLoading(true);
       const res = await getSummary();
       const data = res?.data || {};
       setCategories(data.categories || {});
@@ -29,19 +34,20 @@ export default function Category() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#196F63" />
       </View>
     );
+  }
 
   const items = Object.entries(categories);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       
-      {/* Title Section */}
+      {/* Header */}
       <View style={styles.headerBlock}>
         <Text style={styles.title}>Spending by Category</Text>
         <Text style={styles.subtitle}>This Month</Text>
@@ -49,7 +55,9 @@ export default function Category() {
 
       {/* No Data */}
       {items.length === 0 && (
-        <Text style={styles.noData}>No category data available this month.</Text>
+        <Text style={styles.noData}>
+          No category data available this month.
+        </Text>
       )}
 
       {/* Category Cards */}
@@ -59,7 +67,9 @@ export default function Category() {
 
           <View style={{ marginLeft: 12 }}>
             <Text style={styles.name}>{name}</Text>
-            <Text style={styles.amount}>₹{Number(amount).toLocaleString()}</Text>
+            <Text style={styles.amount}>
+              ₹{Number(amount).toLocaleString()}
+            </Text>
           </View>
         </View>
       ))}
@@ -74,35 +84,30 @@ export default function Category() {
 const styles = StyleSheet.create({
   container: { padding: 20, backgroundColor: "#fff" },
 
-  /* HEADER BLOCK */
-  headerBlock: {
-    marginBottom: 20,
-  },
+  headerBlock: { marginBottom: 20 },
+
   title: {
     fontSize: 26,
     fontWeight: "800",
     color: "#18493F",
   },
+
   subtitle: {
     fontSize: 14,
     color: "#6F7E78",
     marginTop: 4,
   },
 
-  /* CATEGORY CARD */
   card: {
     flexDirection: "row",
     backgroundColor: "#F8FFFD",
     padding: 18,
     borderRadius: 14,
-
     borderWidth: 1,
     borderColor: "#D8EDE6",
-
     marginBottom: 14,
     alignItems: "center",
 
-    /* Subtle shadow */
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -110,7 +115,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  /* Decorative left strip */
   colorStrip: {
     width: 6,
     height: "100%",
@@ -123,6 +127,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#18493F",
   },
+
   amount: {
     fontSize: 18,
     fontWeight: "800",

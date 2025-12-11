@@ -1,5 +1,5 @@
 // app/Profile/Overview.js
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 
 import { getGoals, deleteGoal } from "../../services/goalService";
@@ -36,9 +36,12 @@ export default function Overview() {
     }
   };
 
-  useEffect(() => {
-    loadGoals();
-  }, []);
+  // REFRESH GOALS WHENEVER THIS SCREEN IS FOCUSED
+  useFocusEffect(
+    useCallback(() => {
+      loadGoals();
+    }, [])
+  );
 
   const renderLeftActions = (goal) => (
     <TouchableOpacity
@@ -73,7 +76,7 @@ export default function Overview() {
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
 
-        {/* Create New Goal */}
+        {/* CREATE BUTTON */}
         <TouchableOpacity
           style={styles.createBtn}
           onPress={() => router.push("/Goals/Create")}
@@ -82,7 +85,7 @@ export default function Overview() {
           <Text style={styles.createBtnText}>Create New Goal</Text>
         </TouchableOpacity>
 
-        {/* LIST */}
+        {/* GOAL LIST */}
         {goals.length === 0 ? (
           <Text style={styles.noGoalsText}>No goals created yet.</Text>
         ) : (
@@ -96,7 +99,6 @@ export default function Overview() {
                 style={[styles.goalCard, g.completed && styles.goalCompleted]}
                 onPress={() => router.push(`/Goals/GoalDetail?id=${g._id}`)}
               >
-                {/* TITLE */}
                 <View style={styles.titleRow}>
                   <Text style={styles.goalTitle}>{g.title}</Text>
                   {g.completed && (
@@ -108,7 +110,6 @@ export default function Overview() {
                   )}
                 </View>
 
-                {/* AMOUNTS */}
                 <View style={styles.row}>
                   <Text style={styles.label}>Target:</Text>
                   <Text style={styles.value}>₹{g.amount}</Text>
@@ -121,16 +122,13 @@ export default function Overview() {
                   </Text>
                 </View>
 
-                {/* PROGRESS BAR */}
                 <View style={styles.progressBackground}>
                   <View
                     style={[
                       styles.progressFill,
                       {
                         width: `${Math.min((g.saved / g.amount) * 100, 100)}%`,
-                        backgroundColor: g.completed
-                          ? "#22c55e"
-                          : "#196F63",
+                        backgroundColor: g.completed ? "#22c55e" : "#196F63",
                       },
                     ]}
                   />
@@ -174,7 +172,6 @@ const styles = StyleSheet.create({
     paddingBottom: 130,
   },
 
-  /* CREATE BUTTON */
   createBtn: {
     backgroundColor: "#196F63",
     padding: 14,
@@ -188,7 +185,6 @@ const styles = StyleSheet.create({
   },
   createBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
 
-  /* GOAL CARD */
   goalCard: {
     backgroundColor: "#FFFFFF",
     padding: 18,
@@ -220,7 +216,6 @@ const styles = StyleSheet.create({
     color: "#18493F",
   },
 
-  /* LABELS */
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -237,7 +232,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  /* PROGRESS BAR */
   progressBackground: {
     height: 8,
     backgroundColor: "#D9EDE6",
@@ -256,7 +250,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  /* SWIPE STYLES */
   swipeEdit: {
     backgroundColor: "#0EA5E9",
     justifyContent: "center",

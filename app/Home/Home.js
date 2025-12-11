@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+// app/Home/Home.js
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,7 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useUserAuthStore } from "../../store/useAuthStore";
 
 import {
@@ -41,10 +42,6 @@ export default function Home() {
   });
   const [recent, setRecent] = useState([]);
   const [fabOpen, setFabOpen] = useState(false);
-
-  useEffect(() => {
-    if (hydrated) loadHomeData();
-  }, [hydrated]);
 
   const loadHomeData = async () => {
     try {
@@ -75,6 +72,13 @@ export default function Home() {
     }
   };
 
+  // -------- LOAD HOME DATA WHEN SCREEN FOCUSES --------
+  useFocusEffect(
+    useCallback(() => {
+      if (hydrated) loadHomeData();
+    }, [hydrated])
+  );
+
   const topGreeting = useMemo(() => {
     const hr = new Date().getHours();
     if (hr < 12) return "Good morning";
@@ -92,17 +96,12 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
-      <LinearGradient
-        colors={["#196F63", "#145A52"]}
-        style={styles.header}
-      >
+      <LinearGradient colors={["#196F63", "#145A52"]} style={styles.header}>
+        
+        {/* HEADER BAR */}
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => router.push("/Profile/Profile")}>
-            <Image
-              source={{ uri: user.avatarUrl }}
-              style={styles.avatar}
-            />
+            <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           </TouchableOpacity>
 
           <View style={{ flex: 1, marginLeft: 12 }}>
@@ -112,9 +111,7 @@ export default function Home() {
             </Text>
           </View>
 
-          <TouchableOpacity
-            onPress={() => router.push("/Profile/Notification")}
-          >
+          <TouchableOpacity onPress={() => router.push("/Profile/Notification")}>
             <Ionicons name="notifications-outline" size={26} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -125,9 +122,7 @@ export default function Home() {
           <Text style={styles.balanceValue}>{currency(balance.total)}</Text>
 
           <View style={styles.miniRow}>
-            <Text style={styles.smallLight}>
-              Income: {currency(balance.income)}
-            </Text>
+            <Text style={styles.smallLight}>Income: {currency(balance.income)}</Text>
             <Text style={[styles.smallLight, { marginLeft: 14 }]}>
               Expenses: {currency(balance.expenses)}
             </Text>
@@ -149,67 +144,61 @@ export default function Home() {
         {!recent.length ? (
           <Text style={styles.emptyText}>No transactions yet</Text>
         ) : (
-          <FlatList
-            data={recent}
-            scrollEnabled={false}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <View style={styles.row}>
-                <View style={styles.left}>
-                  <Ionicons
-                    name={
-                      item.type === "income"
-                        ? "arrow-up-circle"
-                        : "arrow-down-circle"
-                    }
-                    size={26}
-                    color={item.type === "income" ? "#28A745" : "#DC3545"}
-                  />
+          <View style={{ maxHeight: 330 }}>
+            <FlatList
+              data={recent}
+              scrollEnabled
+              showsVerticalScrollIndicator={false}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <View style={styles.row}>
+                  <View style={styles.left}>
+                    <Ionicons
+                      name={
+                        item.type === "income"
+                          ? "arrow-up-circle"
+                          : "arrow-down-circle"
+                      }
+                      size={26}
+                      color={item.type === "income" ? "#28A745" : "#DC3545"}
+                    />
 
-                  <View style={{ marginLeft: 12 }}>
-                    <Text style={styles.txTitle}>{item.title}</Text>
-                    <Text style={styles.time}>
-                      {new Date(item.createdAt).toLocaleString("en-IN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        day: "2-digit",
-                        month: "short",
-                      })}
-                    </Text>
+                    <View style={{ marginLeft: 12 }}>
+                      <Text style={styles.txTitle}>{item.title}</Text>
+                      <Text style={styles.time}>
+                        {new Date(item.createdAt).toLocaleString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          day: "2-digit",
+                          month: "short",
+                        })}
+                      </Text>
+                    </View>
                   </View>
-                </View>
 
-                <Text
-                  style={[
-                    styles.amount,
-                    {
-                      color:
-                        item.type === "income" ? "#28A745" : "#DC3545",
-                    },
-                  ]}
-                >
-                  {item.type === "income" ? "+" : "-"}₹{item.amount}
-                </Text>
-              </View>
-            )}
-          />
+                  <Text
+                    style={[
+                      styles.amount,
+                      { color: item.type === "income" ? "#28A745" : "#DC3545" },
+                    ]}
+                  >
+                    {item.type === "income" ? "+" : "-"}₹{item.amount}
+                  </Text>
+                </View>
+              )}
+            />
+          </View>
         )}
       </View>
 
       {/* FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setFabOpen(true)}
-      >
+      <TouchableOpacity style={styles.fab} onPress={() => setFabOpen(true)}>
         <Ionicons name="add" size={32} color="#fff" />
       </TouchableOpacity>
 
       {/* ACTION SHEET */}
       <Modal visible={fabOpen} transparent animationType="fade">
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setFabOpen(false)}
-        >
+        <Pressable style={styles.modalOverlay} onPress={() => setFabOpen(false)}>
           <View style={styles.actionSheet}>
             <Text style={styles.actionTitle}>Quick Actions</Text>
 
@@ -221,11 +210,7 @@ export default function Home() {
                   router.push("/Transactions/AddExpense");
                 }}
               >
-                <Ionicons
-                  name="remove-circle-outline"
-                  size={26}
-                  color="#fff"
-                />
+                <Ionicons name="remove-circle-outline" size={26} color="#fff" />
                 <Text style={styles.actionText}>Add Expense</Text>
               </TouchableOpacity>
 
@@ -236,19 +221,12 @@ export default function Home() {
                   router.push("/Transactions/AddIncome");
                 }}
               >
-                <Ionicons
-                  name="add-circle-outline"
-                  size={26}
-                  color="#fff"
-                />
+                <Ionicons name="add-circle-outline" size={26} color="#fff" />
                 <Text style={styles.actionText}>Add Income</Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              onPress={() => setFabOpen(false)}
-              style={{ marginTop: 12 }}
-            >
+            <TouchableOpacity onPress={() => setFabOpen(false)} style={{ marginTop: 12 }}>
               <Text style={styles.close}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -267,7 +245,6 @@ const styles = StyleSheet.create({
 
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  /* HEADER */
   header: {
     paddingHorizontal: 18,
     paddingTop: 55,
@@ -292,7 +269,6 @@ const styles = StyleSheet.create({
 
   greeting: { color: "#fff", fontSize: 18 },
 
-  /* GLASS CARD */
   glassCard: {
     backgroundColor: "rgba(255,255,255,0.18)",
     padding: 18,
@@ -322,7 +298,6 @@ const styles = StyleSheet.create({
   },
   viewBtnText: { color: "#fff", fontWeight: "700" },
 
-  /* RECENT */
   recentBox: {
     marginTop: -10,
     padding: 18,
@@ -352,11 +327,10 @@ const styles = StyleSheet.create({
 
   amount: { fontSize: 17, fontWeight: "800" },
 
-  /* FAB */
   fab: {
     position: "absolute",
     right: 20,
-    bottom: 90,
+    bottom: 120,
     width: 62,
     height: 62,
     borderRadius: 31,
@@ -366,7 +340,6 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
 
-  /* MODAL */
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",

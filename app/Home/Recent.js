@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+// app/.../RecentActivity.js
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,25 +9,30 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getRecentActivity } from "../../services/expenseService";
+import { useFocusEffect } from "expo-router";
 
 export default function RecentActivity() {
   const [loading, setLoading] = useState(true);
   const [activity, setActivity] = useState([]);
 
-  useEffect(() => {
-    load();
-  }, []);
-
   const load = async () => {
     try {
+      setLoading(true);
       const res = await getRecentActivity();
       setActivity(res.data.recent?.slice(0, 10) || []);
     } catch (e) {
-      console.log("Recent error:", e);
+      console.log("Recent Load Error:", e);
     } finally {
       setLoading(false);
     }
   };
+
+  // Refresh on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [])
+  );
 
   if (loading) {
     return (
@@ -57,7 +63,6 @@ export default function RecentActivity() {
 
           return (
             <View style={styles.row}>
-              {/* ICON CIRCLE */}
               <View
                 style={[
                   styles.iconCircle,
@@ -71,7 +76,6 @@ export default function RecentActivity() {
                 />
               </View>
 
-              {/* TEXTS */}
               <View style={styles.middle}>
                 <Text style={styles.name}>{item.title}</Text>
                 <Text style={styles.time}>
@@ -84,7 +88,6 @@ export default function RecentActivity() {
                 </Text>
               </View>
 
-              {/* AMOUNT */}
               <Text
                 style={[
                   styles.amount,

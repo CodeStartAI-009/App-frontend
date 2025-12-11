@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 80,
+    height: 110,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
 
-    paddingBottom: 10,
+    paddingBottom: 50,
   },
 
   tab: {

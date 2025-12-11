@@ -1,5 +1,5 @@
 // app/Group/GroupListScreen.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import Swipeable from "react-native-gesture-handler/Swipeable";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
 
@@ -29,10 +29,6 @@ export default function GroupListScreen() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("created");
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   async function loadData() {
     try {
       setLoading(true);
@@ -46,6 +42,13 @@ export default function GroupListScreen() {
       setLoading(false);
     }
   }
+
+  // REFRESH LIST WHEN SCREEN IS FOCUSED
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   async function completeGroup(groupId) {
     Alert.alert("Complete Group?", "This marks the entire group as completed.", [
@@ -155,7 +158,6 @@ export default function GroupListScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Split Groups</Text>
@@ -208,7 +210,7 @@ export default function GroupListScreen() {
   );
 }
 
-/* -------------------------- UI STYLES -------------------------- */
+/* -------------------------- STYLES -------------------------- */
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
@@ -228,7 +230,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  /* SEGMENTED CONTROL */
   tabRow: {
     flexDirection: "row",
     marginTop: 20,
@@ -256,7 +257,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  /* CARD */
   card: {
     backgroundColor: "#FFFFFF",
     padding: 18,
@@ -295,7 +295,6 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
 
-  /* SWIPE BUTTONS */
   swipeComplete: {
     backgroundColor: "#16A34A",
     justifyContent: "center",
@@ -316,7 +315,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  /* FLOAT BUTTON */
   fab: {
     position: "absolute",
     bottom: 90,

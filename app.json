@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "UniSpend",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/image.png",
     "scheme": "frontend",
     "newArchEnabled": true,
 
     "ios": {
-      "bundleIdentifier": "com.yourcompany.walletwave",
+      "bundleIdentifier": "com.yourcompany.unispend",
       "supportsTablet": true
     },
 
     "android": {
-      "package": "com.yourcompany.walletwave",
+      "package": "com.yourcompany.unispend",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png"
+        "foregroundImage": "./assets/images/image.png",
+        "backgroundImage": "./assets/images/image.png"
       }
     },
 
@@ -27,7 +27,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/image.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }

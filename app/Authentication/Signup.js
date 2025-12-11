@@ -22,28 +22,48 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [agreed, setAgreed] = useState(false); // AGREEMENT CHECKBOX
 
+  /* ---------------------------------------------
+      HANDLE SIGNUP
+  --------------------------------------------- */
   const handleSignup = async () => {
     if (!name || !email || !password || !confirmPwd) {
       return Alert.alert("Error", "Fill all fields");
     }
+
     if (password.length < 8) {
       return Alert.alert("Error", "Password must be 8+ characters");
     }
+
     if (password !== confirmPwd) {
       return Alert.alert("Error", "Passwords do not match");
     }
 
-    const res = await signupUser({ name, email, password });
+    if (!agreed) {
+      return Alert.alert(
+        "Agreement Required",
+        "You must agree to the Terms & Conditions and Privacy Policy to continue."
+      );
+    }
+
+    // SEND AGREEMENT TO BACKEND
+    const res = await signupUser({
+      name,
+      email,
+      password,
+      agreedToTerms: agreed,
+    });
 
     if (!res.ok) {
       return Alert.alert("Signup Failed", res.error || "Try again later");
     }
 
+    // AUTO LOGIN AFTER SIGNUP
     const loginRes = await loginUser({ emailOrPhone: email, password });
 
     if (!loginRes.ok) {
-      return Alert.alert("Error", "Account created, login failed");
+      return Alert.alert("Error", "Account created, but login failed");
     }
 
     router.replace("/Authentication/ProfileSetup");
@@ -51,9 +71,9 @@ export default function Signup() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Your WalletWave Account</Text>
+      <Text style={styles.title}>Create Your UniSpend Account</Text>
 
-      {/* NAME */}
+      {/* FULL NAME */}
       <View style={styles.inputWrapper}>
         <Ionicons name="person-outline" size={20} color="#777" />
         <TextInput
@@ -87,6 +107,7 @@ export default function Signup() {
           value={password}
           onChangeText={setPassword}
         />
+
         <TouchableOpacity onPress={() => setShowPwd(!showPwd)}>
           <Ionicons
             name={showPwd ? "eye-off-outline" : "eye-outline"}
@@ -110,11 +131,44 @@ export default function Signup() {
         />
       </View>
 
+      {/* TERMS CHECKBOX */}
+      <View style={styles.checkRow}>
+        <TouchableOpacity onPress={() => setAgreed(!agreed)}>
+          <Ionicons
+            name={agreed ? "checkbox-outline" : "square-outline"}
+            size={24}
+            color={agreed ? "#4c6ef5" : "#777"}
+          />
+        </TouchableOpacity>
+
+        <Text style={styles.checkText}>
+          I agree to the{" "}
+          <Text
+            style={styles.link}
+            onPress={() => router.push("/Authentication/Terms")}
+          >
+            Terms & Conditions
+          </Text>{" "}
+          and{" "}
+          <Text
+            style={styles.link}
+            onPress={() => router.push("/Authentication/Privacy")}
+          >
+            Privacy Policy
+          </Text>.
+        </Text>
+      </View>
+
       {/* SIGNUP BUTTON */}
-      <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
+      <TouchableOpacity
+        style={[styles.signupButton, !agreed && { opacity: 0.5 }]}
+        disabled={!agreed}
+        onPress={handleSignup}
+      >
         <Text style={styles.signupButtonText}>Create Account</Text>
       </TouchableOpacity>
 
+      {/* LOGIN REDIRECT */}
       <TouchableOpacity onPress={() => router.replace("/Authentication/Login")}>
         <Text style={styles.loginLink}>Already have an account? Login</Text>
       </TouchableOpacity>
@@ -122,9 +176,7 @@ export default function Signup() {
   );
 }
 
-/* ----------------------------------------
-        IMPROVED UI STYLES
----------------------------------------- */
+/* -------------------- STYLES ------------------------ */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -150,10 +202,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
     elevation: 2,
   },
 
@@ -171,19 +219,32 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 
+  checkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 18,
+  },
+
+  checkText: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    color: "#444",
+  },
+
+  link: {
+    color: "#4c6ef5",
+    fontWeight: "700",
+  },
+
   signupButton: {
     height: 55,
     backgroundColor: "#4c6ef5",
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-
-    shadowColor: "#4c6ef5",
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
     elevation: 3,
-
-    marginTop: 10,
   },
 
   signupButtonText: {

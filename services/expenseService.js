@@ -6,7 +6,7 @@ import api from "./api";   // Your configured axios instance
  ************************/
 export const addExpense = (data) => api.post("/expense/add", data);
 export const addIncome = (data) => api.post("/income/add", data);
-   
+
 /***********************
  *  SUMMARY ROUTES
  ************************/

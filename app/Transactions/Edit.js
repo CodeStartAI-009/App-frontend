@@ -22,54 +22,82 @@ export default function EditTransaction() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
+  const [blocked, setBlocked] = useState(false); // If split group → disallow edit
+
   const [type, setType] = useState("expense");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
 
+  /* ---------------- LOAD EXISTING DATA ---------------- */
   useEffect(() => {
-    loadData();
+    load();
   }, [id]);
 
-  const loadData = async () => {
+  const load = async () => {
     try {
+      setLoading(true);
       const res = await getSingleTransaction(id);
       const data = res.data.transaction;
+
+      if (!data) {
+        Alert.alert("Error", "Transaction not found");
+        return router.back();
+      }
+
+      // Block editing split group entries
+      if (String(data.category).toLowerCase() === "split group") {
+        setBlocked(true);
+      }
 
       setTitle(data.title);
       setAmount(String(data.amount));
       setCategory(data.category);
       setType(data.type);
-    } catch (e) {
+    } catch (err) {
       Alert.alert("Error", "Failed to load transaction");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ---------------- SAVE CHANGES ---------------- */
   const saveChanges = async () => {
-    if (!title || !amount || !category) {
+    if (blocked) {
+      Alert.alert("Not Allowed", "Split Group transactions cannot be edited.");
+      return;
+    }
+
+    if (!title.trim() || !amount.trim() || !category.trim()) {
       Alert.alert("Error", "All fields are required");
+      return;
+    }
+
+    if (isNaN(Number(amount))) {
+      Alert.alert("Error", "Amount must be a valid number");
       return;
     }
 
     try {
       const res = await updateTransaction(id, {
-        title,
+        title: title.trim(),
         amount: Number(amount),
-        category,
+        category: category.trim(),
         type,
       });
 
       if (res.data.ok) {
-        Alert.alert("Success", "Transaction updated!");
-        router.back();
+        Alert.alert("Updated", "Transaction updated successfully");
+
+        // Ensures TransactionsScreen reloads fresh data
+        router.push("/Transactions/TransactionsScreen");
       }
-    } catch (e) {
+    } catch (err) {
       Alert.alert("Error", "Update failed");
     }
   };
 
+  /* ---------------- UI STATES ---------------- */
   if (loading) {
     return (
       <View style={styles.center}>
@@ -85,17 +113,18 @@ export default function EditTransaction() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Edit Transaction</Text>
+        <Text style={styles.headerText}>
+          {blocked ? "View Transaction" : "Edit Transaction"}
+        </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* FORM WRAPPER */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
         <View style={styles.card}>
-
           {/* TITLE */}
           <Text style={styles.label}>Title</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, blocked && styles.disabled]}
+            editable={!blocked}
             value={title}
             onChangeText={setTitle}
             placeholder="Enter title"
@@ -105,7 +134,8 @@ export default function EditTransaction() {
           {/* AMOUNT */}
           <Text style={styles.label}>Amount</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, blocked && styles.disabled]}
+            editable={!blocked}
             value={amount}
             onChangeText={setAmount}
             keyboardType="numeric"
@@ -116,19 +146,24 @@ export default function EditTransaction() {
           {/* CATEGORY */}
           <Text style={styles.label}>Category</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, blocked && styles.disabled]}
+            editable={!blocked}
             value={category}
             onChangeText={setCategory}
             placeholder="Food / Travel / Rent / etc."
             placeholderTextColor="#8CA19A"
           />
 
-          {/* TYPE TOGGLE */}
+          {/* TYPE SELECTOR */}
           <Text style={styles.label}>Type</Text>
-
           <View style={styles.typeRow}>
             <TouchableOpacity
-              style={[styles.typeBtn, type === "income" && styles.typeActive]}
+              disabled={blocked}
+              style={[
+                styles.typeBtn,
+                type === "income" && styles.typeActive,
+                blocked && styles.disabledBtn,
+              ]}
               onPress={() => setType("income")}
             >
               <Text
@@ -142,7 +177,12 @@ export default function EditTransaction() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.typeBtn, type === "expense" && styles.typeActive]}
+              disabled={blocked}
+              style={[
+                styles.typeBtn,
+                type === "expense" && styles.typeActive,
+                blocked && styles.disabledBtn,
+              ]}
               onPress={() => setType("expense")}
             >
               <Text
@@ -156,10 +196,18 @@ export default function EditTransaction() {
             </TouchableOpacity>
           </View>
 
-          {/* SAVE */}
-          <TouchableOpacity style={styles.saveBtn} onPress={saveChanges}>
-            <Text style={styles.saveText}>Save Changes</Text>
-          </TouchableOpacity>
+          {/* SAVE BUTTON */}
+          {!blocked && (
+            <TouchableOpacity style={styles.saveBtn} onPress={saveChanges}>
+              <Text style={styles.saveText}>Save Changes</Text>
+            </TouchableOpacity>
+          )}
+
+          {blocked && (
+            <Text style={styles.infoText}>
+              This entry belongs to a Split Group and cannot be edited.
+            </Text>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -171,7 +219,6 @@ export default function EditTransaction() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
 
-  /* HEADER */
   headerWrapper: {
     paddingTop: 55,
     paddingBottom: 25,
@@ -189,7 +236,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 
-  /* FORM CARD */
   card: {
     marginTop: -10,
     marginHorizontal: 20,
@@ -201,12 +247,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#18493F",
-    marginTop: 16,
-  },
+  label: { fontSize: 14, fontWeight: "600", color: "#18493F", marginTop: 16 },
 
   input: {
     backgroundColor: "#FFFFFF",
@@ -217,14 +258,14 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 16,
     color: "#18493F",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
     elevation: 1,
   },
 
-  /* TYPE SELECTOR */
+  disabled: {
+    backgroundColor: "#E5E5E5",
+    color: "#888",
+  },
+
   typeRow: {
     flexDirection: "row",
     marginTop: 12,
@@ -239,33 +280,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  disabledBtn: { opacity: 0.5 },
+
   typeActive: {
     backgroundColor: "#196F63",
   },
 
-  typeText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#18493F",
-  },
+  typeText: { fontSize: 15, fontWeight: "700", color: "#18493F" },
+  typeActiveText: { color: "#fff" },
 
-  typeActiveText: {
-    color: "#FFFFFF",
-  },
-
-  /* SAVE BUTTON */
   saveBtn: {
     backgroundColor: "#196F63",
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
     marginTop: 26,
-    elevation: 2,
   },
 
-  saveText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+  saveText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+
+  infoText: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#D9534F",
     fontWeight: "700",
   },
 

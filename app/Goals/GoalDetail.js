@@ -1,5 +1,5 @@
 // app/Goals/GoalDetails.js
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import BottomNav from "../components/BottomNav";
 import { getSingleGoal } from "../../services/goalService";
 
@@ -18,10 +18,6 @@ export default function GoalDetails() {
 
   const [goal, setGoal] = useState(null);
 
-  useEffect(() => {
-    loadGoal();
-  }, []);
-
   const loadGoal = async () => {
     try {
       const res = await getSingleGoal(id);
@@ -30,6 +26,13 @@ export default function GoalDetails() {
       console.log("GOAL DETAILS ERROR:", err);
     }
   };
+
+  // REFRESH GOAL WHENEVER SCREEN IS FOCUSED
+  useFocusEffect(
+    useCallback(() => {
+      loadGoal();
+    }, [id])
+  );
 
   if (!goal) {
     return (
@@ -43,7 +46,6 @@ export default function GoalDetails() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -54,7 +56,6 @@ export default function GoalDetails() {
 
       {/* CONTENT */}
       <ScrollView contentContainerStyle={styles.scroll}>
-
         {/* Goal Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{goal.title}</Text>
@@ -112,12 +113,11 @@ export default function GoalDetails() {
   );
 }
 
-/* ------------------- GREEN PREMIUM UI ------------------- */
+/* ------------------- STYLES ------------------- */
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  /* HEADER */
   header: {
     paddingTop: 60,
     paddingBottom: 28,
@@ -136,13 +136,11 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  /* CONTENT */
   scroll: {
     padding: 20,
     paddingBottom: 150,
   },
 
-  /* CARD */
   card: {
     backgroundColor: "#FFFFFF",
     padding: 22,
@@ -178,7 +176,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  /* Progress */
   progressBackground: {
     height: 12,
     backgroundColor: "#DCEFE6",
@@ -197,7 +194,6 @@ const styles = StyleSheet.create({
     color: "#18493F",
   },
 
-  /* Completed Badge */
   completedBox: {
     marginTop: 20,
     backgroundColor: "#E8FFF1",
@@ -214,7 +210,6 @@ const styles = StyleSheet.create({
     color: "#15803d",
   },
 
-  /* CTA BUTTON */
   addBtn: {
     backgroundColor: "#196F63",
     paddingVertical: 16,

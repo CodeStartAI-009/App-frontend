@@ -1,5 +1,5 @@
 // app/Transactions/Detail.js
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getSingleTransaction } from "../../services/expenseService";
 
@@ -18,16 +18,21 @@ export default function DetailScreen() {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    load();
-  }, []);
+  // REFRESH WHEN SCREEN COMES INTO FOCUS
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [id])
+  );
 
   const load = async () => {
     try {
+      setLoading(true);
       const res = await getSingleTransaction(id);
-      setItem(res.data.transaction);
+      setItem(res?.data?.transaction || null);
     } catch (err) {
       console.log("DETAIL ERROR:", err);
+      setItem(null);
     } finally {
       setLoading(false);
     }
@@ -54,12 +59,12 @@ export default function DetailScreen() {
         <Text style={styles.headerText}>Transaction Details</Text>
       </View>
 
-      {/* DETAILS CARD */}
+      {/* CARD */}
       <View style={styles.card}>
         <Text style={styles.title}>{item.title}</Text>
 
         <Text style={[styles.amount, { color }]}>
-          {isIncome ? "+" : "-"}₹{item.amount.toLocaleString()}
+          {isIncome ? "+" : "-"}₹{Number(item.amount).toLocaleString()}
         </Text>
 
         <View style={styles.divider} />
@@ -69,7 +74,7 @@ export default function DetailScreen() {
           <Ionicons name="pricetag-outline" size={20} color="#196F63" />
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.label}>Category</Text>
-            <Text style={styles.value}>{item.category}</Text>
+            <Text style={styles.value}>{item.category || "Uncategorized"}</Text>
           </View>
         </View>
 
@@ -105,10 +110,8 @@ export default function DetailScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-
   container: { flex: 1, backgroundColor: "#FFFFFF" },
 
-  /* HEADER */
   headerWrapper: {
     paddingTop: 55,
     paddingBottom: 25,
@@ -119,17 +122,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  backBtn: {
-    padding: 6,
-    marginRight: 12,
-  },
+  backBtn: { padding: 6, marginRight: 12 },
   headerText: {
     fontSize: 24,
     fontWeight: "800",
     color: "#FFFFFF",
   },
 
-  /* CARD */
   card: {
     backgroundColor: "#F8FFFD",
     padding: 22,
@@ -171,7 +170,6 @@ const styles = StyleSheet.create({
     color: "#6F7E78",
     fontWeight: "600",
   },
-
   value: {
     fontSize: 17,
     fontWeight: "700",
