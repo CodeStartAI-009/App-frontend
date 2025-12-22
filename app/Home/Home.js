@@ -1,5 +1,4 @@
-// app/Home/Home.js
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,78 +6,93 @@ import {
   TouchableOpacity,
   Image,
   Modal,
-  Pressable,
-  ActivityIndicator,
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, useFocusEffect } from "expo-router";
-import { useUserAuthStore } from "../../store/useAuthStore";
 
+import { useUserAuthStore } from "../../store/useAuthStore";
 import {
   getMonthlySummary,
   getRecentActivity,
 } from "../../services/expenseService";
-
+import { formatMoney, formatCurrencyLabel } from "../../utils/money";
 import BottomNav from "../components/BottomNav";
-
-function currency(n) {
-  if (!n) return "₹0";
-  const sign = n < 0 ? "-" : "";
-  const v = Math.abs(n).toFixed(2);
-  return `${sign}₹${Number(v).toLocaleString()}`;
-}
 
 export default function Home() {
   const router = useRouter();
-  const { user, hydrated } = useUserAuthStore();
 
-  const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState({
-    total: 0,
-    income: 0,
-    expenses: 0,
-  });
-  const [recent, setRecent] = useState([]);
+  const { user, hydrated, homeCache, homeDirty, setHomeCache } =
+    useUserAuthStore();
+
+  const currencyCode = user?.currency || "INR";
+  const currencySymbol = formatCurrencyLabel(currencyCode);
+
+  const [balance, setBalance] = useState(
+    homeCache?.balance || { total: 0, income: 0, expenses: 0 }
+  );
+  const [recent, setRecent] = useState(homeCache?.recent || []);
+  const [loadingBalance, setLoadingBalance] = useState(!homeCache);
+  const [loadingRecent, setLoadingRecent] = useState(!homeCache);
   const [fabOpen, setFabOpen] = useState(false);
 
-  const loadHomeData = async () => {
+  /* ---------------- LOAD HOME DATA ---------------- */
+  const loadHomeData = async (force = false) => {
+    if (homeCache && !force) return;
+
+    setLoadingBalance(true);
+    setLoadingRecent(true);
+
     try {
-      setLoading(true);
+      const [summaryRes, recentRes] = await Promise.all([
+        getMonthlySummary(force),
+        getRecentActivity(force),
+      ]);
 
-      const sRes = await getMonthlySummary();
-      const summary = sRes.data;
-
+      const summary = summaryRes.data;
       const now = new Date();
       const monthKey = `${now.getFullYear()}-${String(
         now.getMonth() + 1
       ).padStart(2, "0")}`;
 
-      const m = summary.monthlySummaries?.find((x) => x.month === monthKey);
+      const m = summary.monthlySummaries?.find(
+        (x) => x.month === monthKey
+      );
 
-      setBalance({
+      const newBalance = {
         total: summary.bankBalance || 0,
         income: m?.totalIncome || 0,
         expenses: m?.totalExpense || 0,
-      });
+      };
 
-      const rRes = await getRecentActivity();
-      setRecent(rRes.data.recent || []);
+      const newRecent = recentRes.data.recent || [];
+
+      setBalance(newBalance);
+      setRecent(newRecent);
+
+      setHomeCache({
+        balance: newBalance,
+        recent: newRecent,
+        timestamp: Date.now(),
+      });
     } catch (err) {
       console.log("HOME LOAD ERROR:", err);
     } finally {
-      setLoading(false);
+      setLoadingBalance(false);
+      setLoadingRecent(false);
     }
   };
 
-  // -------- LOAD HOME DATA WHEN SCREEN FOCUSES --------
+  /* ---------------- LOAD ON FOCUS ---------------- */
   useFocusEffect(
     useCallback(() => {
-      if (hydrated) loadHomeData();
-    }, [hydrated])
+      if (!hydrated || !user) return;
+      loadHomeData(homeDirty);
+    }, [hydrated, user?._id, homeDirty])
   );
 
+  /* ---------------- GREETING ---------------- */
   const topGreeting = useMemo(() => {
     const hr = new Date().getHours();
     if (hr < 12) return "Good morning";
@@ -86,19 +100,18 @@ export default function Home() {
     return "Good evening";
   }, []);
 
-  if (!hydrated || loading || !user) {
+  if (!hydrated || !user) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#196F63" />
+        <Ionicons name="hourglass-outline" size={28} color="#196F63" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* HEADER */}
       <LinearGradient colors={["#196F63", "#145A52"]} style={styles.header}>
-        
-        {/* HEADER BAR */}
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => router.push("/Profile/Profile")}>
             <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
@@ -111,29 +124,38 @@ export default function Home() {
             </Text>
           </View>
 
-          <TouchableOpacity onPress={() => router.push("/Profile/Notification")}>
+          <TouchableOpacity
+            onPress={() => router.push("/Profile/Notification")}
+          >
             <Ionicons name="notifications-outline" size={26} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* BALANCE CARD */}
+        {/* BALANCE */}
         <View style={styles.glassCard}>
           <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceValue}>{currency(balance.total)}</Text>
+
+          <Text style={styles.balanceValue}>
+            {loadingBalance
+              ? "— — —"
+              : formatMoney(balance.total, currencyCode)}
+          </Text>
 
           <View style={styles.miniRow}>
-            <Text style={styles.smallLight}>Income: {currency(balance.income)}</Text>
+            <Text style={styles.smallLight}>
+              Income:{" "}
+              {loadingBalance
+                ? "—"
+                : formatMoney(balance.income, currencyCode)}
+            </Text>
+
             <Text style={[styles.smallLight, { marginLeft: 14 }]}>
-              Expenses: {currency(balance.expenses)}
+              Expenses:{" "}
+              {loadingBalance
+                ? "—"
+                : formatMoney(balance.expenses, currencyCode)}
             </Text>
           </View>
-
-          <TouchableOpacity
-            onPress={() => router.push("/Home/Quick")}
-            style={styles.viewBtn}
-          >
-            <Text style={styles.viewBtnText}>View Summary</Text>
-          </TouchableOpacity>
         </View>
       </LinearGradient>
 
@@ -141,64 +163,81 @@ export default function Home() {
       <View style={styles.recentBox}>
         <Text style={styles.title}>Recent Activity</Text>
 
-        {!recent.length ? (
+        {loadingRecent ? (
+          <Text style={styles.emptyText}>Loading activity…</Text>
+        ) : !recent.length ? (
           <Text style={styles.emptyText}>No transactions yet</Text>
         ) : (
-          <View style={{ maxHeight: 330 }}>
-            <FlatList
-              data={recent}
-              scrollEnabled
-              showsVerticalScrollIndicator={false}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item }) => (
-                <View style={styles.row}>
-                  <View style={styles.left}>
-                    <Ionicons
-                      name={
-                        item.type === "income"
-                          ? "arrow-up-circle"
-                          : "arrow-down-circle"
-                      }
-                      size={26}
-                      color={item.type === "income" ? "#28A745" : "#DC3545"}
-                    />
-
-                    <View style={{ marginLeft: 12 }}>
-                      <Text style={styles.txTitle}>{item.title}</Text>
-                      <Text style={styles.time}>
-                        {new Date(item.createdAt).toLocaleString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          day: "2-digit",
-                          month: "short",
-                        })}
-                      </Text>
-                    </View>
+          <FlatList
+            data={recent}
+            keyExtractor={(item) => item._id}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <View style={styles.row}>
+                <View style={styles.left}>
+                  <Ionicons
+                    name={
+                      item.type === "income"
+                        ? "arrow-up-circle"
+                        : "arrow-down-circle"
+                    }
+                    size={26}
+                    color={item.type === "income" ? "#22c55e" : "#ef4444"}
+                  />
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={styles.txTitle}>{item.title}</Text>
+                    <Text style={styles.time}>
+                      {new Date(item.createdAt).toLocaleString()}
+                    </Text>
                   </View>
-
-                  <Text
-                    style={[
-                      styles.amount,
-                      { color: item.type === "income" ? "#28A745" : "#DC3545" },
-                    ]}
-                  >
-                    {item.type === "income" ? "+" : "-"}₹{item.amount}
-                  </Text>
                 </View>
-              )}
-            />
-          </View>
+
+                <Text
+                  style={[
+                    styles.amount,
+                    {
+                      color:
+                        item.type === "income"
+                          ? "#22c55e"
+                          : "#ef4444",
+                    },
+                  ]}
+                >
+                  {item.type === "income" ? "+" : "-"}
+                  {currencySymbol}
+                  {Math.abs(item.amount)}
+                </Text>
+              </View>
+            )}
+          />
         )}
       </View>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => setFabOpen(true)}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={styles.fab}
+        onPress={() => setFabOpen(true)}
+      >
         <Ionicons name="add" size={32} color="#fff" />
       </TouchableOpacity>
 
-      {/* ACTION SHEET */}
-      <Modal visible={fabOpen} transparent animationType="fade">
-        <Pressable style={styles.modalOverlay} onPress={() => setFabOpen(false)}>
+      {/* FAB MODAL */}
+      <Modal
+        visible={fabOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFabOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          {/* Overlay close */}
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setFabOpen(false)}
+          />
+
+          {/* Actions */}
           <View style={styles.actionSheet}>
             <Text style={styles.actionTitle}>Quick Actions</Text>
 
@@ -210,7 +249,11 @@ export default function Home() {
                   router.push("/Transactions/AddExpense");
                 }}
               >
-                <Ionicons name="remove-circle-outline" size={26} color="#fff" />
+                <Ionicons
+                  name="remove-circle-outline"
+                  size={26}
+                  color="#fff"
+                />
                 <Text style={styles.actionText}>Add Expense</Text>
               </TouchableOpacity>
 
@@ -221,16 +264,16 @@ export default function Home() {
                   router.push("/Transactions/AddIncome");
                 }}
               >
-                <Ionicons name="add-circle-outline" size={26} color="#fff" />
+                <Ionicons
+                  name="add-circle-outline"
+                  size={26}
+                  color="#fff"
+                />
                 <Text style={styles.actionText}>Add Income</Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity onPress={() => setFabOpen(false)} style={{ marginTop: 12 }}>
-              <Text style={styles.close}>Close</Text>
-            </TouchableOpacity>
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       <BottomNav active="home" />
@@ -238,11 +281,10 @@ export default function Home() {
   );
 }
 
-/* ---------------------- STYLES ---------------------- */
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F6FBF9" },
-
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   header: {
@@ -253,11 +295,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
   },
 
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 18,
-  },
+  topBar: { flexDirection: "row", alignItems: "center", marginBottom: 18 },
 
   avatar: {
     width: 48,
@@ -288,16 +326,6 @@ const styles = StyleSheet.create({
   miniRow: { flexDirection: "row", marginTop: 8 },
   smallLight: { color: "#E8FFFA", fontSize: 14 },
 
-  viewBtn: {
-    marginTop: 14,
-    alignSelf: "flex-start",
-    backgroundColor: "#145A52",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  viewBtnText: { color: "#fff", fontWeight: "700" },
-
   recentBox: {
     marginTop: -10,
     padding: 18,
@@ -308,7 +336,6 @@ const styles = StyleSheet.create({
   },
 
   title: { fontSize: 20, fontWeight: "800", marginBottom: 12 },
-
   emptyText: { color: "#777", fontSize: 14 },
 
   row: {
@@ -321,7 +348,6 @@ const styles = StyleSheet.create({
   },
 
   left: { flexDirection: "row", alignItems: "center" },
-
   txTitle: { fontSize: 16, fontWeight: "700", color: "#18493F" },
   time: { fontSize: 12, color: "#6F7E78" },
 
@@ -338,6 +364,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 7,
+    zIndex: 1000,
   },
 
   modalOverlay: {
@@ -372,6 +399,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
   },
-
-  close: { color: "#196F63", fontWeight: "700", fontSize: 16 },
 });

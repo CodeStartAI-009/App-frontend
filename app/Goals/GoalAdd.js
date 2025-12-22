@@ -11,31 +11,40 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
+
 import { getSingleGoal, addGoalSaving } from "../../services/goalService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatMoney } from "../../utils/money";
 
 export default function GoalAdd() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
+  const user = useUserAuthStore((s) => s.user);
+  const currency = user?.currency || "INR";
+
   const [goal, setGoal] = useState(null);
   const [amount, setAmount] = useState("");
 
+  /* ---------------- LOAD GOAL ---------------- */
   useEffect(() => {
     loadGoal();
-  }, []);
+  }, [id]);
 
   const loadGoal = async () => {
     try {
       const res = await getSingleGoal(id);
       setGoal(res.data.goal);
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Failed to load goal");
     }
   };
 
+  /* ---------------- ADD SAVING ---------------- */
   const handleAddSaving = async () => {
-    if (!amount || Number(amount) <= 0)
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
       return Alert.alert("Invalid Input", "Enter a valid amount");
+    }
 
     try {
       const res = await addGoalSaving(id, Number(amount));
@@ -45,22 +54,29 @@ export default function GoalAdd() {
         res.data.completed ? "🎉 Goal Completed!" : "Saving Added!"
       );
 
-      router.push(`/Goals/GoalDetail?id=${id}`);
-    } catch (err) {
+      // ✅ ALWAYS go back to GoalDetails (deterministic)
+      router.replace(`/Goals/Overview`);
+    } catch {
       Alert.alert("Error", "Failed to add saving");
     }
   };
 
-  if (!goal) return <Text style={{ padding: 20 }}>Loading...</Text>;
+  if (!goal) {
+    return <Text style={{ padding: 20 }}>Loading...</Text>;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
-      
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity
+          onPress={() =>
+            router.replace(`/Goals/Overview`)
+          }
+        >
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Add Savings</Text>
       </View>
 
@@ -72,13 +88,15 @@ export default function GoalAdd() {
 
           <View style={styles.row}>
             <Text style={styles.label}>Target Amount</Text>
-            <Text style={styles.value}>₹{goal.amount}</Text>
+            <Text style={styles.value}>
+              {formatMoney(goal.amount, currency)}
+            </Text>
           </View>
 
           <View style={styles.row}>
             <Text style={styles.label}>Saved So Far</Text>
             <Text style={[styles.value, { color: "#196F63" }]}>
-              ₹{goal.saved}
+              {formatMoney(goal.saved, currency)}
             </Text>
           </View>
         </View>
@@ -102,10 +120,9 @@ export default function GoalAdd() {
   );
 }
 
-/* ---------------- GREEN PREMIUM UI ---------------- */
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  /* HEADER */
   header: {
     paddingTop: 60,
     paddingBottom: 28,
@@ -124,13 +141,11 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  /* CONTENT CONTAINER */
   container: {
     padding: 20,
     paddingBottom: 150,
   },
 
-  /* GOAL CARD */
   goalCard: {
     backgroundColor: "#FFFFFF",
     padding: 22,
@@ -166,13 +181,13 @@ const styles = StyleSheet.create({
     color: "#18493F",
   },
 
-  /* INPUT */
   inputLabel: {
     fontSize: 15,
     fontWeight: "600",
     color: "#47645A",
     marginTop: 12,
   },
+
   input: {
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -183,7 +198,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  /* BUTTON */
   btn: {
     backgroundColor: "#196F63",
     paddingVertical: 16,
@@ -192,6 +206,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
     elevation: 4,
   },
+
   btnText: {
     color: "#fff",
     fontSize: 18,

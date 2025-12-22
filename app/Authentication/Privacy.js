@@ -8,139 +8,61 @@ export default function Privacy() {
 
   return (
     <View style={styles.screen}>
-
-      {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace("/Authentication/Signup")}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#111" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Privacy Policy</Text>
       </View>
 
-      {/* CONTENT */}
       <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Unispend – Privacy Policy</Text>
+        <Text style={styles.text}>Effective Date: 01 January 2025</Text>
 
-        <Text style={styles.title}>Unispend Privacy Policy</Text>
-        <Text style={styles.text}>Effective Date: [Insert Date]</Text>
-        <Text style={styles.text}>Last Updated: [Insert Date]</Text>
-
-        {/* Section 1 */}
         <Text style={styles.sectionTitle}>1. Information We Collect</Text>
-
-        <Text style={styles.subTitle}>A. Personal Information</Text>
         <Text style={styles.text}>
-          • Name{"\n"}
-          • Email{"\n"}
-          • Password (hashed){"\n"}
-          • Optional: Phone number{"\n"}
-          • Optional: Avatar image{"\n"}
+          We collect personal information such as name, email, phone number (optional),
+          and user-entered financial data including expenses, income, goals, and balances.
         </Text>
 
-        <Text style={styles.subTitle}>B. Financial Information</Text>
+        <Text style={styles.sectionTitle}>2. How Data Is Used</Text>
         <Text style={styles.text}>
-          • Expenses and incomes{"\n"}
-          • Spending categories{"\n"}
-          • Savings goals{"\n"}
-          • Monthly summaries{"\n"}
-          • Bank balance (user-entered){"\n"}
-          • UPI ID / bank number (securely hashed){"\n"}
+          Data is used to provide core app functionality, account security, analytics,
+          notifications, and optional insights.
         </Text>
 
-        <Text style={styles.subTitle}>C. Technical Data</Text>
+        <Text style={styles.sectionTitle}>3. Sensitive Data</Text>
         <Text style={styles.text}>
-          • Device type and OS{"\n"}
-          • Crash logs{"\n"}
-          • Usage patterns{"\n"}
-          • IP addresses (server logs){"\n"}
-          • Approximate location via Google AdMob{"\n"}
+          Sensitive identifiers such as bank or UPI details are stored only in hashed or
+          masked form. We do not store raw credentials.
         </Text>
 
-        {/* Section 2 */}
-        <Text style={styles.sectionTitle}>2. How We Use Your Information</Text>
-        <Text style={styles.text}>
-          Your data is used to operate and enhance Unispend, including:
-        </Text>
-        <Text style={styles.text}>
-          • Authentication & account security{"\n"}
-          • Processing transactions{"\n"}
-          • Providing AI-based insights{"\n"}
-          • Displaying ads (AdMob){"\n"}
-          • Fraud prevention{"\n"}
-          • Notifications{"\n"}
-        </Text>
-
-        {/* Section 3 */}
-        <Text style={styles.sectionTitle}>3. Legal Basis for Processing</Text>
-        <Text style={styles.text}>
-          We process data based on: consent, contractual necessity, legitimate interest,
-          and legal compliance.
-        </Text>
-
-        {/* Section 4 */}
         <Text style={styles.sectionTitle}>4. Data Sharing</Text>
         <Text style={styles.text}>
-          Unispend does NOT sell your data. Limited data may be shared with:
-        </Text>
-        <Text style={styles.text}>
-          • Google AdMob (ads){"\n"}
-          • Email/OTP service providers{"\n"}
-          • Crash reporting tools{"\n"}
-          • AI processing services{"\n"}
+          We do not sell personal data. Limited data may be shared with trusted third-party
+          services (analytics, notifications, ads) solely to operate the App.
         </Text>
 
-        {/* Section 5 */}
         <Text style={styles.sectionTitle}>5. Data Security</Text>
         <Text style={styles.text}>
-          We use encryption, hashing, and secure communication to protect your data and
-          prevent unauthorized access.
+          We apply industry-standard security practices including encryption and access
+          control to protect user data.
         </Text>
 
-        {/* Section 6 */}
-        <Text style={styles.sectionTitle}>6. Data Retention</Text>
+        <Text style={styles.sectionTitle}>6. Data Retention & Deletion</Text>
         <Text style={styles.text}>
-          Your data is retained while your account is active. After deletion, your financial
-          and personal data are permanently erased, except minimal legal backups.
+          Users may request account deletion. Upon deletion, personal and financial data
+          is permanently removed except where legally required.
         </Text>
 
-        {/* Section 7 */}
-        <Text style={styles.sectionTitle}>7. User Rights</Text>
+        <Text style={styles.sectionTitle}>7. Children’s Privacy</Text>
         <Text style={styles.text}>
-          You may request:
-        </Text>
-        <Text style={styles.text}>
-          • Data access{"\n"}
-          • Correction of data{"\n"}
-          • Account deletion{"\n"}
-          • Restriction of processing{"\n"}
-          • Withdrawal of consent{"\n"}
+          The App is not intended for children under 13. If such data is detected, it will
+          be deleted.
         </Text>
 
-        {/* Section 8 */}
-        <Text style={styles.sectionTitle}>8. Children’s Privacy</Text>
-        <Text style={styles.text}>
-          Unispend is not intended for users under age 13. Such data will be deleted if
-          discovered.
-        </Text>
-
-        {/* Section 9 */}
-        <Text style={styles.sectionTitle}>9. International Transfers</Text>
-        <Text style={styles.text}>
-          Your data may be stored or processed internationally. Safeguards are applied to
-          ensure compliance with privacy laws.
-        </Text>
-
-        {/* Section 10 */}
-        <Text style={styles.sectionTitle}>10. Updates to This Policy</Text>
-        <Text style={styles.text}>
-          We may update this Privacy Policy periodically. Continued use of the App signifies
-          acceptance of changes.
-        </Text>
-
-        {/* Section 11 */}
-        <Text style={styles.sectionTitle}>11. Contact Information</Text>
-        <Text style={styles.text}>
-          For privacy inquiries:{"\n"}support@unispend.app
-        </Text>
+        <Text style={styles.sectionTitle}>8. Contact</Text>
+        <Text style={styles.text}>Email: unispend001@gmail.com</Text>
 
         <View style={{ height: 40 }} />
       </ScrollView>

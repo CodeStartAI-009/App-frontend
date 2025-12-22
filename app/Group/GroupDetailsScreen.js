@@ -10,10 +10,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { getGroupDetails } from "../../services/splitService";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatMoney } from "../../utils/money";
 
 export default function GroupDetailsScreen() {
   const { groupId } = useLocalSearchParams();
   const router = useRouter();
+
+  const user = useUserAuthStore((s) => s.user);
+  const currency = user?.currency || "INR";
 
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +64,10 @@ export default function GroupDetailsScreen() {
     );
   }
 
-  const total = group.participants.reduce((sum, p) => sum + p.amountToPay, 0);
+  const total = group.participants.reduce(
+    (sum, p) => sum + Number(p.amountToPay),
+    0
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
@@ -75,8 +83,7 @@ export default function GroupDetailsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-        
-        {/* GROUP TITLE CARD */}
+        {/* GROUP CARD */}
         <View style={styles.groupCard}>
           <Text style={styles.title}>{group.title}</Text>
 
@@ -100,7 +107,9 @@ export default function GroupDetailsScreen() {
           <View key={p.userId._id} style={styles.participantBox}>
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>
-                {p.userId.name ? p.userId.name[0] : p.userId.email[0]}
+                {p.userId.name
+                  ? p.userId.name[0]
+                  : p.userId.email[0]}
               </Text>
             </View>
 
@@ -113,14 +122,18 @@ export default function GroupDetailsScreen() {
               </Text>
             </View>
 
-            <Text style={styles.amount}>₹{p.amountToPay}</Text>
+            <Text style={styles.amount}>
+              {formatMoney(p.amountToPay, currency)}
+            </Text>
           </View>
         ))}
 
-        {/* TOTAL CARD */}
+        {/* TOTAL */}
         <View style={styles.totalCard}>
           <Text style={styles.totalLabel}>Total to Receive</Text>
-          <Text style={styles.totalValue}>₹{total}</Text>
+          <Text style={styles.totalValue}>
+            {formatMoney(total, currency)}
+          </Text>
         </View>
       </ScrollView>
     </View>

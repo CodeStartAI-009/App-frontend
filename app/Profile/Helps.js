@@ -1,4 +1,3 @@
-// app/Profile/Help.js
 import React from "react";
 import {
   View,
@@ -15,19 +14,19 @@ import { useRouter } from "expo-router";
 export default function Help() {
   const router = useRouter();
 
-  const openEmail = () => Linking.openURL("mailto:support@yourapp.com");
+  const openEmail = () =>
+    Linking.openURL("mailto:unispend001@gmail.com");
+
   const openWhatsApp = () =>
-    Linking.openURL("https://wa.me/919876543210?text=Hi, I need help!");
+    Linking.openURL("https://wa.me/918179617143?text=Hi, I need help!");
 
   return (
     <View style={styles.page}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-
         <Text style={styles.headerText}>Help & Support</Text>
       </View>
 
@@ -35,31 +34,30 @@ export default function Help() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-
-        {/* QUICK HELP SECTION */}
+        {/* QUICK HELP */}
         <Text style={styles.sectionTitle}>Quick Help</Text>
 
         <View style={styles.faqCard}>
           {[
             {
               q: "How to add a transaction?",
-              a: "Go to the Home page → tap “+” → choose Income or Expense.",
+              a: "Go to Home → tap “+” → choose Income or Expense.",
             },
             {
-              q: "Why can't I see my bank account/UPI?",
-              a: "For safety, we hide sensitive details. Edit them in Profile → Edit Bank/UPI.",
+              q: "Why can't I see my bank account or UPI?",
+              a: "Sensitive details are hidden for security. Edit them from Profile → Edit Bank/UPI.",
             },
             {
-              q: "How do I change password?",
+              q: "How do I change my password?",
               a: "Go to Profile → Account Settings → Change Password.",
             },
             {
-              q: "What is Monthly Income for?",
-              a: "It helps calculate insights and savings for your dashboard.",
+              q: "What is Monthly Income used for?",
+              a: "It helps calculate insights and savings projections.",
             },
             {
-              q: "Why is password needed to edit email or phone?",
-              a: "This prevents unauthorized changes to your account.",
+              q: "Why is password required to edit email or phone?",
+              a: "To prevent unauthorized access to your account.",
             },
           ].map((item, i) => (
             <View key={i} style={styles.faqItem}>
@@ -76,7 +74,7 @@ export default function Help() {
           <Ionicons name="mail-outline" size={24} color="#196F63" />
           <View style={{ flex: 1 }}>
             <Text style={styles.supportTitle}>Email Support</Text>
-            <Text style={styles.supportSubtitle}>support@yourapp.com</Text>
+            <Text style={styles.supportSubtitle}>unispend001@gmail.com</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#999" />
         </TouchableOpacity>
@@ -90,23 +88,26 @@ export default function Help() {
           <Ionicons name="chevron-forward" size={20} color="#999" />
         </TouchableOpacity>
 
-        {/* ABOUT SECTION */}
-        <Text style={styles.sectionTitle}>About</Text>
+        {/* ABOUT / LEGAL */}
+        <Text style={styles.sectionTitle}>Legal</Text>
 
         <View style={styles.aboutCard}>
           <Text style={styles.aboutText}>App Version: 1.0.0</Text>
 
-          <TouchableOpacity onPress={() => Linking.openURL("https://yourapp.com/privacy")}>
+          <TouchableOpacity
+            onPress={() => router.push("/Authentication/Privacy")}
+          >
             <Text style={styles.link}>Privacy Policy</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => Linking.openURL("https://yourapp.com/terms")}>
+          <TouchableOpacity
+            onPress={() => router.push("/Authentication/Terms")}
+          >
             <Text style={styles.link}>Terms & Conditions</Text>
           </TouchableOpacity>
         </View>
 
         <View style={{ height: 130 }} />
-
       </ScrollView>
 
       <BottomNav active="profile" />
@@ -114,7 +115,7 @@ export default function Help() {
   );
 }
 
-/* --------------------------- PREMIUM STYLES ---------------------------- */
+/* --------------------------- STYLES ---------------------------- */
 
 const styles = StyleSheet.create({
   page: {
@@ -122,7 +123,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7FBFA",
   },
 
-  /* HEADER */
   header: {
     paddingTop: 60,
     paddingBottom: 28,
@@ -134,7 +134,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 14,
     elevation: 4,
-    shadowColor: "#00000040",
   },
 
   backBtn: {
@@ -154,7 +153,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
 
-  /* SECTION TITLE */
   sectionTitle: {
     fontSize: 18,
     fontWeight: "800",
@@ -163,15 +161,12 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
 
-  /* FAQ */
   faqCard: {
     backgroundColor: "#FFFFFF",
     padding: 20,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "#D8EDE6",
-    elevation: 2,
-    shadowColor: "#00000020",
     marginBottom: 20,
   },
 
@@ -192,7 +187,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  /* SUPPORT BUTTONS */
   supportTile: {
     flexDirection: "row",
     alignItems: "center",
@@ -201,8 +195,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: "#D8EDE6",
-    elevation: 1,
-    shadowColor: "#00000010",
     marginBottom: 14,
   },
 
@@ -218,16 +210,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  /* ABOUT SECTION */
   aboutCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
     borderColor: "#D8EDE6",
-    elevation: 1,
-    shadowColor: "#00000010",
-    marginBottom: 20,
   },
 
   aboutText: {

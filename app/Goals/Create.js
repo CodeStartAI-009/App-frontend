@@ -13,6 +13,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import BottomNav from "../components/BottomNav";
 import { createGoal } from "../../services/goalService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
 
 // Interstitial Ads
 import {
@@ -22,17 +24,21 @@ import {
 
 export default function CreateGoal() {
   const router = useRouter();
+
+  const user = useUserAuthStore((s) => s.user);
+
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-
   const [adLoaded, setAdLoaded] = useState(false);
+
+  const currencySymbol = formatCurrencyLabel(user?.currency || "INR");
 
   // Load interstitial ad
   useEffect(() => {
     loadInterstitial(setAdLoaded);
   }, []);
 
-  // CLEAR FORM EVERY TIME USER ENTERS THIS SCREEN
+  // Clear form on focus
   useFocusEffect(
     useCallback(() => {
       setTitle("");
@@ -44,45 +50,42 @@ export default function CreateGoal() {
     if (!title || !amount)
       return Alert.alert("Missing Fields", "Title and amount are required.");
 
+    if (isNaN(amount))
+      return Alert.alert("Invalid Amount", "Enter a valid number.");
+
     try {
       const res = await createGoal({
         title,
-        amount: Number(amount),
+        amount: Number(amount), // ALWAYS number
       });
 
       if (res.data.ok) {
         Alert.alert("Success", "Goal created successfully!");
 
-        // Show ad
         if (adLoaded) showInterstitial();
-
-        // Prepare next ad
         loadInterstitial(setAdLoaded);
 
         router.push("/Goals/Overview");
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       Alert.alert("Error", "Failed to create goal");
     }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
-      
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
-
         <Text style={styles.headerText}>Create New Goal</Text>
       </View>
 
       {/* FORM */}
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.card}>
-          
           <Text style={styles.label}>Goal Title</Text>
           <TextInput
             style={styles.input}
@@ -92,7 +95,9 @@ export default function CreateGoal() {
             onChangeText={setTitle}
           />
 
-          <Text style={styles.label}>Target Amount (₹)</Text>
+          <Text style={styles.label}>
+            Target Amount ({currencySymbol})
+          </Text>
           <TextInput
             style={styles.input}
             placeholder="Ex: 60000"
@@ -105,7 +110,6 @@ export default function CreateGoal() {
           <TouchableOpacity style={styles.btn} onPress={saveGoal}>
             <Text style={styles.btnText}>Create Goal</Text>
           </TouchableOpacity>
-
         </View>
       </ScrollView>
 
@@ -114,7 +118,7 @@ export default function CreateGoal() {
   );
 }
 
-/* ---------------- GREEN PREMIUM UI ---------------- */
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   header: {

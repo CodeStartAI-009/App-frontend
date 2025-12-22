@@ -13,6 +13,8 @@ import {
 import { LineChart } from "react-native-chart-kit";
 import { getActivity } from "../../services/expenseService";
 import { useFocusEffect } from "expo-router";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -22,6 +24,9 @@ const MONTHS = [
 ];
 
 export default function Monthly() {
+  const user = useUserAuthStore((s) => s.user);
+  const currencySymbol = formatCurrencyLabel(user?.currency || "INR");
+
   const currentMonth = MONTHS[new Date().getMonth()];
   const [transactions, setTransactions] = useState([]);
   const [month, setMonth] = useState(currentMonth);
@@ -44,11 +49,7 @@ export default function Monthly() {
       const all = res?.data?.activity || [];
 
       const filtered = all.filter((t) => {
-        const d =
-          t.date ? new Date(t.date) :
-          t.createdAt ? new Date(t.createdAt) :
-          null;
-
+        const d = t.createdAt ? new Date(t.createdAt) : null;
         if (!d) return false;
         return MONTHS[d.getMonth()] === month;
       });
@@ -56,23 +57,21 @@ export default function Monthly() {
       const normalized = filtered.map((t) => ({
         ...t,
         amount: Number(t.amount) || 0,
-        type: t.type || (Number(t.amount) >= 0 ? "income" : "expense"),
-        dateObj: t.date
-          ? new Date(t.date)
-          : t.createdAt
-          ? new Date(t.createdAt)
-          : null,
+        type: t.type, // trust backend
+        dateObj: t.createdAt ? new Date(t.createdAt) : null,
       }));
 
       setTransactions(normalized);
 
       const buckets = [0, 0, 0, 0, 0, 0];
+
       normalized.forEach((tx) => {
         if (!tx.dateObj) return;
-        const day = tx.dateObj.getDate();
-        let index = Math.min(Math.floor((day - 1) / 5), 5);
 
+        const day = tx.dateObj.getDate();
+        const index = Math.min(Math.floor((day - 1) / 5), 5);
         const change = tx.type === "income" ? tx.amount : -tx.amount;
+
         buckets[index] += change;
       });
 
@@ -98,8 +97,6 @@ export default function Monthly() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
-      
-      {/* HEADER */}
       <Text style={styles.header}>Monthly Breakdown</Text>
 
       {/* MONTH SELECTOR */}
@@ -149,21 +146,27 @@ export default function Monthly() {
             <View style={styles.summaryBlock}>
               <Text style={styles.label}>Income</Text>
               <Text style={[styles.value, { color: "#198754" }]}>
-                ₹{totalIncome.toLocaleString()}
+                {currencySymbol}{totalIncome.toLocaleString()}
               </Text>
             </View>
 
             <View style={styles.summaryBlock}>
               <Text style={styles.label}>Expense</Text>
               <Text style={[styles.value, { color: "#D9534F" }]}>
-                ₹{totalExpense.toLocaleString()}
+                {currencySymbol}{totalExpense.toLocaleString()}
               </Text>
             </View>
 
             <View style={styles.summaryBlock}>
               <Text style={styles.label}>Net</Text>
-              <Text style={[styles.value, { color: net >= 0 ? "#196F63" : "#D9534F" }]}>
-                {net >= 0 ? "+" : "-"}₹{Math.abs(net).toLocaleString()}
+              <Text
+                style={[
+                  styles.value,
+                  { color: net >= 0 ? "#196F63" : "#D9534F" },
+                ]}
+              >
+                {net >= 0 ? "+" : "-"}
+                {currencySymbol}{Math.abs(net).toLocaleString()}
               </Text>
             </View>
           </View>
@@ -179,7 +182,7 @@ export default function Monthly() {
               }}
               width={SCREEN_WIDTH - 40}
               height={230}
-              yAxisLabel="₹"
+              yAxisLabel={currencySymbol}
               withInnerLines={false}
               withOuterLines={false}
               chartConfig={{
@@ -203,10 +206,12 @@ export default function Monthly() {
                 <View>
                   <Text style={styles.txTitle}>{tx.title}</Text>
                   <Text style={styles.txDate}>
-                    {tx.dateObj.toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                    })}
+                    {tx.dateObj
+                      ? tx.dateObj.toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                        })
+                      : "-"}
                   </Text>
                 </View>
 
@@ -216,7 +221,8 @@ export default function Monthly() {
                     { color: tx.type === "income" ? "#198754" : "#D9534F" },
                   ]}
                 >
-                  {tx.type === "income" ? "+" : "-"}₹{tx.amount.toLocaleString()}
+                  {tx.type === "income" ? "+" : "-"}
+                  {currencySymbol}{tx.amount.toLocaleString()}
                 </Text>
               </View>
             ))
@@ -227,21 +233,19 @@ export default function Monthly() {
   );
 }
 
-/* -------------------- UI-IMPROVED STYLES -------------------- */
+/* -------------------- STYLES (UNCHANGED) -------------------- */
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: "#FFFFFF",
   },
-
   header: {
     fontSize: 28,
     fontWeight: "900",
     color: "#18493F",
     marginBottom: 20,
   },
-
   monthSelector: {
     backgroundColor: "#F1F8F6",
     paddingVertical: 14,
@@ -252,20 +256,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     elevation: 2,
   },
-
   monthSelectorText: {
     fontSize: 18,
     fontWeight: "700",
     color: "#18493F",
   },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.35)",
     justifyContent: "center",
     paddingHorizontal: 30,
   },
-
   modalBox: {
     backgroundColor: "#FFFFFF",
     padding: 20,
@@ -278,20 +279,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: "#18493F",
   },
-
-  monthOption: {
-    paddingVertical: 10,
-  },
-  monthOptionText: {
-    fontSize: 17,
-    color: "#18493F",
-  },
-
-  selectedMonth: {
-    fontWeight: "800",
-    color: "#196F63",
-  },
-
+  monthOption: { paddingVertical: 10 },
+  monthOptionText: { fontSize: 17, color: "#18493F" },
+  selectedMonth: { fontWeight: "800", color: "#196F63" },
   summaryCard: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -303,22 +293,9 @@ const styles = StyleSheet.create({
     marginBottom: 22,
     elevation: 2,
   },
-
-  summaryBlock: {
-    width: "33%",
-    alignItems: "center",
-  },
-
-  label: {
-    fontSize: 13,
-    color: "#6F7E78",
-  },
-  value: {
-    fontSize: 20,
-    fontWeight: "800",
-    marginTop: 4,
-  },
-
+  summaryBlock: { width: "33%", alignItems: "center" },
+  label: { fontSize: 13, color: "#6F7E78" },
+  value: { fontSize: 20, fontWeight: "800", marginTop: 4 },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "800",
@@ -326,7 +303,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     marginTop: 10,
   },
-
   chartWrapper: {
     backgroundColor: "#FFFFFF",
     paddingVertical: 12,
@@ -336,7 +312,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     elevation: 1,
   },
-
   txCard: {
     backgroundColor: "#F8FFFD",
     borderRadius: 14,
@@ -349,11 +324,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     elevation: 1,
   },
-
   txTitle: { fontSize: 16, fontWeight: "700", color: "#18493F" },
   txDate: { fontSize: 12, color: "#6F7E78", marginTop: 4 },
   txAmount: { fontSize: 18, fontWeight: "900" },
-
   noData: {
     textAlign: "center",
     color: "#777",

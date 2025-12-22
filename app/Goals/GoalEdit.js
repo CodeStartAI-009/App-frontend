@@ -14,10 +14,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import BottomNav from "../components/BottomNav";
 
 import { getSingleGoal, updateGoal } from "../../services/goalService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
 
 export default function EditGoal() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+
+  const user = useUserAuthStore((s) => s.user);
+  const currency = user?.currency || "INR";
+  const currencySymbol = formatCurrencyLabel(currency);
 
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
@@ -44,6 +50,9 @@ export default function EditGoal() {
     if (!title || !amount)
       return Alert.alert("Missing Fields", "Title and amount are required.");
 
+    if (isNaN(amount) || isNaN(saved))
+      return Alert.alert("Invalid Input", "Amounts must be numbers.");
+
     try {
       await updateGoal(id, {
         title,
@@ -58,12 +67,12 @@ export default function EditGoal() {
     }
   }
 
-  const progress = (Number(saved) / Number(amount)) * 100;
+  const progress =
+    Number(amount) > 0 ? (Number(saved) / Number(amount)) * 100 : 0;
   const completed = progress >= 100;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -74,10 +83,7 @@ export default function EditGoal() {
 
       {/* CONTENT */}
       <ScrollView contentContainerStyle={styles.scroll}>
-        
-        {/* CARD */}
         <View style={styles.card}>
-          
           <Text style={styles.label}>Goal Title</Text>
           <TextInput
             style={styles.input}
@@ -87,7 +93,9 @@ export default function EditGoal() {
             placeholderTextColor="#92ADA7"
           />
 
-          <Text style={styles.label}>Target Amount (₹)</Text>
+          <Text style={styles.label}>
+            Target Amount ({currencySymbol})
+          </Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -97,7 +105,9 @@ export default function EditGoal() {
             placeholderTextColor="#92ADA7"
           />
 
-          <Text style={styles.label}>Saved Amount (₹)</Text>
+          <Text style={styles.label}>
+            Saved Amount ({currencySymbol})
+          </Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -107,20 +117,21 @@ export default function EditGoal() {
             placeholderTextColor="#92ADA7"
           />
 
-          {/* Progress Section */}
+          {/* Progress */}
           <View style={{ marginTop: 20 }}>
             <Text style={styles.progressText}>
               Progress: {progress.toFixed(1)}%
             </Text>
 
-            {/* Progress Bar */}
             <View style={styles.progressBackground}>
               <View
                 style={[
                   styles.progressFill,
-                  { 
+                  {
                     width: `${Math.min(progress, 100)}%`,
-                    backgroundColor: completed ? "#22c55e" : "#196F63",
+                    backgroundColor: completed
+                      ? "#22c55e"
+                      : "#196F63",
                   },
                 ]}
               />
@@ -128,17 +139,21 @@ export default function EditGoal() {
 
             {completed && (
               <View style={styles.completedBadge}>
-                <Ionicons name="checkmark-circle" size={24} color="#22c55e" />
-                <Text style={styles.completedText}>Goal Completed!</Text>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={24}
+                  color="#22c55e"
+                />
+                <Text style={styles.completedText}>
+                  Goal Completed!
+                </Text>
               </View>
             )}
           </View>
 
-          {/* SAVE BUTTON */}
           <TouchableOpacity style={styles.saveBtn} onPress={saveGoal}>
             <Text style={styles.saveBtnText}>Save Changes</Text>
           </TouchableOpacity>
-
         </View>
       </ScrollView>
 
@@ -147,10 +162,9 @@ export default function EditGoal() {
   );
 }
 
-/* ---------------------- BEAUTIFUL GREEN UI ---------------------- */
+/* ---------------------- GREEN UI ---------------------- */
 
 const styles = StyleSheet.create({
-  /* HEADER */
   header: {
     paddingTop: 60,
     paddingBottom: 25,
@@ -169,13 +183,11 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  /* MAIN CONTENT */
   scroll: {
     padding: 20,
     paddingBottom: 140,
   },
 
-  /* CARD */
   card: {
     backgroundColor: "#FFFFFF",
     padding: 20,
@@ -185,7 +197,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  /* LABELS */
   label: {
     fontSize: 15,
     fontWeight: "700",
@@ -193,7 +204,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  /* INPUTS */
   input: {
     backgroundColor: "#F6FBF9",
     borderWidth: 1,
@@ -205,7 +215,6 @@ const styles = StyleSheet.create({
     color: "#18493F",
   },
 
-  /* PROGRESS */
   progressText: {
     fontSize: 15,
     fontWeight: "700",
@@ -223,7 +232,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
-  /* COMPLETED BADGE */
   completedBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -242,7 +250,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  /* SAVE BUTTON */
   saveBtn: {
     backgroundColor: "#196F63",
     padding: 16,

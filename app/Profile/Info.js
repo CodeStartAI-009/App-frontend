@@ -10,21 +10,47 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
 import { useRouter } from "expo-router";
+
 import { fetchUserProfile } from "../../services/expenseService";
 import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatMoney } from "../../utils/money";
+
+/* ---------------- PAYMENT LABELS ---------------- */
+const PAYMENT_LABEL = {
+  IN: "UPI ID",
+  US: "Zelle",
+  EU: "SEPA Instant",
+  GB: "Faster Payments",
+  BR: "PIX",
+  SG: "PayNow",
+  AU: "PayID",
+  CA: "Interac",
+};
 
 export default function Details() {
   const router = useRouter();
   const logout = useUserAuthStore((s) => s.logout);
+  const authUser = useUserAuthStore((s) => s.user);
+
   const [user, setUser] = useState(null);
+
+  const currency = authUser?.currency || "INR";
+  const countryCode = authUser?.countryCode || "IN";
+
+  const paymentLabel =
+    PAYMENT_LABEL[countryCode] || "Payment ID";
 
   useEffect(() => {
     loadProfile();
   }, []);
 
   const loadProfile = async () => {
-    const res = await fetchUserProfile();
-    if (res?.data?.profile) setUser(res.data.profile);
+    try {
+      const res = await fetchUserProfile();
+      if (res?.data?.profile) setUser(res.data.profile);
+    } catch {
+      Alert.alert("Error", "Failed to load profile");
+    }
   };
 
   const handleLogout = () => {
@@ -49,6 +75,10 @@ export default function Details() {
     );
   }
 
+  /* SAFE FLAGS */
+  const hasPayment = Boolean(user.hasUPI);
+const hasBank = Boolean(user.hasBankAccount);
+
   return (
     <View style={styles.page}>
       {/* HEADER */}
@@ -65,8 +95,8 @@ export default function Details() {
           <Text style={styles.title}>User Information</Text>
 
           <View style={styles.row}>
-            <Text style={styles.label}>Username</Text>
-            <Text style={styles.value}>{user.username}</Text>
+            <Text style={styles.label}>Name</Text>
+            <Text style={styles.value}>{user.name}</Text>
           </View>
 
           <View style={styles.row}>
@@ -77,31 +107,36 @@ export default function Details() {
           <View style={styles.row}>
             <Text style={styles.label}>Phone</Text>
             <Text style={[styles.value, !user.phone && styles.placeholder]}>
-              {user.phone || "Add phone number"}
+              {user.phone || "Not added"}
             </Text>
           </View>
 
+          {/* PAYMENT METHOD */}
           <View style={styles.row}>
-            <Text style={styles.label}>UPI ID</Text>
-            <Text style={[styles.value, !user.hasUPI && styles.placeholder]}>
-              {user.hasUPI ? "Linked" : "Add UPI ID"}
+            <Text style={styles.label}>{paymentLabel}</Text>
+            <Text style={[styles.value, !hasPayment && styles.placeholder]}>
+              {hasPayment ? "Linked" : "Not linked"}
             </Text>
           </View>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Bank Account</Text>
-            <Text style={[styles.value, !user.hasBank && styles.placeholder]}>
-              {user.hasBank ? "Linked" : "Add bank account"}
-            </Text>
-          </View>
+          {/* BANK ACCOUNT (OPTIONAL) */}
+          {hasBank && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Bank Account</Text>
+              <Text style={styles.value}>Linked</Text>
+            </View>
+          )}
 
+          {/* BALANCE */}
           <View style={[styles.row, { borderBottomWidth: 0 }]}>
             <Text style={styles.label}>Current Balance</Text>
-            <Text style={styles.balanceAmount}>₹ {user.bankBalance}</Text>
+            <Text style={styles.balanceAmount}>
+              {formatMoney(user.bankBalance || 0, currency)}
+            </Text>
           </View>
         </View>
 
-        {/* LOGOUT BUTTON */}
+        {/* LOGOUT */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
@@ -112,7 +147,8 @@ export default function Details() {
   );
 }
 
-/* -------------------- STYLES -------------------- */
+/* -------------------- STYLES (UNCHANGED) -------------------- */
+
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#F7FBFA" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
@@ -136,7 +172,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
-  headerText: { color: "#fff", fontSize: 24, fontWeight: "800" },
+  headerText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "800",
+  },
 
   card: {
     backgroundColor: "#FFFFFF",
@@ -147,7 +187,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  title: { fontSize: 20, fontWeight: "800", marginBottom: 16 },
+  title: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 16,
+  },
 
   row: {
     flexDirection: "row",
@@ -157,12 +201,28 @@ const styles = StyleSheet.create({
     borderColor: "#E5F2EE",
   },
 
-  label: { fontSize: 15, fontWeight: "600", color: "#47645A" },
-  value: { fontSize: 16, fontWeight: "700", color: "#18493F" },
+  label: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#47645A",
+  },
 
-  placeholder: { color: "#9AA5A0", fontWeight: "600" },
+  value: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#18493F",
+  },
 
-  balanceAmount: { fontSize: 20, fontWeight: "900", color: "#196F63" },
+  placeholder: {
+    color: "#9AA5A0",
+    fontWeight: "600",
+  },
+
+  balanceAmount: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#196F63",
+  },
 
   logoutBtn: {
     backgroundColor: "#DC3545",
@@ -170,6 +230,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 20,
   },
+
   logoutText: {
     textAlign: "center",
     fontSize: 16,

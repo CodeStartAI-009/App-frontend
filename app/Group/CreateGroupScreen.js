@@ -12,39 +12,76 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { createSplitGroup } from "../../services/splitService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatMoney } from "../../utils/money";
 
-// ⭐ Import Interstitial Ads
+// ⭐ Ads
 import {
   loadInterstitial,
   showInterstitial,
 } from "../../utils/InterstitialAd";
 
+/* ---------------- PAYMENT LABELS ---------------- */
+const PAYMENT_LABEL = {
+  IN: "UPI ID",
+  US: "Zelle",
+  EU: "SEPA Instant",
+  GB: "Faster Payments",
+  BR: "PIX",
+  SG: "PayNow",
+  AU: "PayID",
+  CA: "Interac",
+};
+
 export default function CreateGroupScreen() {
   const router = useRouter();
 
+  const user = useUserAuthStore((s) => s.user);
+
+  const currency = user?.currency || "INR";
+  const countryCode = user?.countryCode || "IN";
+
+  const paymentLabel =
+    PAYMENT_LABEL[countryCode] || "Payment ID";
+
+  /* 🔐 PROFILE STATE */
+  const hasSavedPayment = Boolean(user?.upiHash);
+
+  /* ---------------- LOCAL STATE ---------------- */
   const [title, setTitle] = useState("");
-  const [creatorUPI, setCreatorUPI] = useState("");
   const [participants, setParticipants] = useState([]);
 
   const [tempUser, setTempUser] = useState("");
   const [tempAmount, setTempAmount] = useState("");
 
+  // Only used if not already saved
+  const [paymentInput, setPaymentInput] = useState("");
+
   const [adLoaded, setAdLoaded] = useState(false);
 
-  // ⭐ Load the ad when screen opens
+  /* ---------------- LOAD ADS ---------------- */
   useEffect(() => {
     loadInterstitial(setAdLoaded);
   }, []);
 
+  /* ---------------- ADD PARTICIPANT ---------------- */
   function addParticipant() {
     if (!tempUser.trim() || !tempAmount.trim())
       return Alert.alert("Error", "Please enter user and amount");
 
-    if (participants.find((p) => p.identifier === tempUser.trim().toLowerCase()))
-      return Alert.alert("Error", "User already added");
+    if (Number(tempAmount) <= 0)
+      return Alert.alert("Error", "Amount must be greater than zero");
 
-    setParticipants([
-      ...participants,
+    if (
+      participants.find(
+        (p) => p.identifier === tempUser.trim().toLowerCase()
+      )
+    ) {
+      return Alert.alert("Error", "User already added");
+    }
+
+    setParticipants((prev) => [
+      ...prev,
       {
         identifier: tempUser.trim().toLowerCase(),
         amountToPay: Number(tempAmount),
@@ -55,27 +92,41 @@ export default function CreateGroupScreen() {
     setTempAmount("");
   }
 
+  /* ---------------- CREATE GROUP ---------------- */
   async function handleCreate() {
-    if (!title.trim()) return Alert.alert("Error", "Enter group title");
-    if (!creatorUPI.trim()) return Alert.alert("Error", "Enter your UPI ID");
+    if (!title.trim())
+      return Alert.alert("Error", "Enter group title");
+
+    // If user has no saved payment, require input
+    if (!hasSavedPayment && !paymentInput.trim()) {
+      return Alert.alert(
+        "Payment Required",
+        `Please enter your ${paymentLabel}`
+      );
+    }
+
     if (participants.length === 0)
       return Alert.alert("Error", "Add at least one participant");
 
     try {
-      const res = await createSplitGroup({ title, creatorUPI, participants });
+      const res = await createSplitGroup({
+        title,
+        creatorUPI: hasSavedPayment ? null : paymentInput.trim(),
+        participants,
+      });
 
       if (res?.data?.ok) {
         Alert.alert("Success", "Group created!");
 
-        // ⭐ Show ad after creating split group
         if (adLoaded) showInterstitial();
-
-        // load next ad
         loadInterstitial(setAdLoaded);
 
         router.back();
       } else {
-        Alert.alert("Error", res?.data?.error || "Failed to create group");
+        Alert.alert(
+          "Error",
+          res?.data?.error || "Failed to create group"
+        );
       }
     } catch (err) {
       Alert.alert("Error", "Server error");
@@ -84,7 +135,6 @@ export default function CreateGroupScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
-      
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -108,16 +158,34 @@ export default function CreateGroupScreen() {
             placeholderTextColor="#94A3B8"
           />
 
-          <Text style={styles.label}>Your UPI ID</Text>
-          <TextInput
-            style={styles.input}
-            value={creatorUPI}
-            onChangeText={setCreatorUPI}
-            placeholder="yourupi@bank"
-            autoCapitalize="none"
-            placeholderTextColor="#94A3B8"
-          />
+          {/* PAYMENT METHOD */}
+          <Text style={styles.label}>
+            Payment Method ({paymentLabel})
+          </Text>
 
+          {hasSavedPayment ? (
+            <View style={styles.readonlyBox}>
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color="#16A34A"
+              />
+              <Text style={styles.readonlyText}>
+                Using your saved {paymentLabel}
+              </Text>
+            </View>
+          ) : (
+            <TextInput
+              style={styles.input}
+              value={paymentInput}
+              onChangeText={setPaymentInput}
+              placeholder={`Enter your ${paymentLabel}`}
+              autoCapitalize="none"
+              placeholderTextColor="#94A3B8"
+            />
+          )}
+
+          {/* ADD PARTICIPANT */}
           <Text style={styles.label}>Add Participant</Text>
 
           <TextInput
@@ -144,7 +212,7 @@ export default function CreateGroupScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* PARTICIPANTS LIST */}
+        {/* PARTICIPANTS */}
         {participants.length > 0 && (
           <View style={[styles.card, { marginTop: 22 }]}>
             <Text style={styles.label}>Participants</Text>
@@ -152,23 +220,33 @@ export default function CreateGroupScreen() {
             {participants.map((p, i) => (
               <View key={i} style={styles.participantRow}>
                 <View>
-                  <Text style={styles.participantName}>{p.identifier}</Text>
-                  <Text style={styles.participantAmount}>₹{p.amountToPay}</Text>
+                  <Text style={styles.participantName}>
+                    {p.identifier}
+                  </Text>
+                  <Text style={styles.participantAmount}>
+                    {formatMoney(p.amountToPay, currency)}
+                  </Text>
                 </View>
 
                 <TouchableOpacity
                   onPress={() =>
-                    setParticipants(participants.filter((_, idx) => idx !== i))
+                    setParticipants((prev) =>
+                      prev.filter((_, idx) => idx !== i)
+                    )
                   }
                 >
-                  <Ionicons name="trash-outline" size={22} color="#EF4444" />
+                  <Ionicons
+                    name="trash-outline"
+                    size={22}
+                    color="#EF4444"
+                  />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
         )}
 
-        {/* CREATE BUTTON */}
+        {/* CREATE */}
         <TouchableOpacity style={styles.createBtn} onPress={handleCreate}>
           <Text style={styles.createBtnText}>Create Group</Text>
         </TouchableOpacity>
@@ -177,9 +255,9 @@ export default function CreateGroupScreen() {
   );
 }
 
-/* ---------------- PREMIUM GREEN THEME UI ---------------- */
+/* ---------------- STYLES ---------------- */
+
 const styles = StyleSheet.create({
-  /* HEADER */
   header: {
     paddingTop: 60,
     paddingBottom: 24,
@@ -198,7 +276,6 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  /* CARD */
   card: {
     backgroundColor: "#FFFFFF",
     padding: 18,
@@ -209,7 +286,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  /* LABEL */
   label: {
     fontSize: 15,
     fontWeight: "700",
@@ -217,7 +293,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  /* INPUT */
   input: {
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -229,7 +304,20 @@ const styles = StyleSheet.create({
     color: "#0F172A",
   },
 
-  /* ADD PARTICIPANT BUTTON */
+  readonlyBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 10,
+    backgroundColor: "#ECFDF5",
+    padding: 12,
+    borderRadius: 12,
+  },
+  readonlyText: {
+    color: "#166534",
+    fontWeight: "700",
+  },
+
   addBtn: {
     backgroundColor: "#196F63",
     paddingVertical: 12,
@@ -246,7 +334,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  /* PARTICIPANT ITEM */
   participantRow: {
     backgroundColor: "#F6FBF9",
     padding: 14,
@@ -269,7 +356,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  /* CREATE BUTTON */
   createBtn: {
     backgroundColor: "#196F63",
     padding: 16,

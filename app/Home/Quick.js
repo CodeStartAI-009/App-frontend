@@ -14,6 +14,8 @@ import { getSummary } from "../../services/expenseService";
 import { useRouter, useFocusEffect } from "expo-router";
 import BottomNav from "../components/BottomNav";
 import { LinearGradient } from "expo-linear-gradient";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatMoney, formatCurrencyLabel } from "../../utils/money";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -30,11 +32,14 @@ const COLORS = [
 
 export default function Quick() {
   const router = useRouter();
+  const { user } = useUserAuthStore();
+
+  const currencyCode = user?.currency || "INR";
+  const currencySymbol = formatCurrencyLabel(currencyCode);
 
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState(null);
 
-  // Refresh summary whenever the screen is opened
   useFocusEffect(
     useCallback(() => {
       loadSummary();
@@ -53,33 +58,39 @@ export default function Quick() {
     }
   };
 
-  if (loading || !summary)
+  if (loading || !summary) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#196F63" />
       </View>
     );
+  }
 
-  const { totalExpense, totalIncome, categories } = summary;
+  const { totalExpense = 0, totalIncome = 0, categories = {} } = summary;
   const saving = totalIncome - totalExpense;
 
-  const pieData =
-    Object.entries(categories).map(([name, amt], idx) => ({
-      name,
-      population: amt,
-      color: COLORS[idx % COLORS.length],
-      legendFontColor: "#334155",
-      legendFontSize: 13,
-    })) || [];
+  const pieData = Object.entries(categories).length
+    ? Object.entries(categories).map(([name, amt], idx) => ({
+        name,
+        population: amt,
+        color: COLORS[idx % COLORS.length],
+        legendFontColor: "#334155",
+        legendFontSize: 13,
+      }))
+    : [
+        {
+          name: "No Data",
+          population: 1,
+          color: "#CBD5E1",
+          legendFontColor: "#555",
+          legendFontSize: 12,
+        },
+      ];
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
-      
       {/* HEADER */}
-      <LinearGradient
-        colors={["#196F63", "#0E5C53"]}
-        style={styles.header}
-      >
+      <LinearGradient colors={["#196F63", "#0E5C53"]} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
@@ -87,20 +98,19 @@ export default function Quick() {
       </LinearGradient>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
-        
         {/* SUMMARY CARD */}
         <View style={styles.glassCard}>
           <View style={styles.rowBetween}>
             <Text style={styles.section}>Expense</Text>
             <Text style={[styles.value, { color: "#D9534F" }]}>
-              ₹{totalExpense}
+              {formatMoney(totalExpense, currencyCode)}
             </Text>
           </View>
 
           <View style={styles.rowBetween}>
             <Text style={styles.section}>Income</Text>
             <Text style={[styles.value, { color: "#196F63" }]}>
-              ₹{totalIncome}
+              {formatMoney(totalIncome, currencyCode)}
             </Text>
           </View>
 
@@ -112,8 +122,9 @@ export default function Quick() {
                 { color: saving >= 0 ? "#22C55E" : "#D9534F" },
               ]}
             >
-              {saving >= 0 ? "₹" : "-₹"}
-              {Math.abs(saving)}
+              {saving < 0 && "-"}
+              {currencySymbol}
+              {Math.abs(saving).toLocaleString()}
             </Text>
           </View>
         </View>
@@ -122,31 +133,18 @@ export default function Quick() {
         <Text style={styles.chartTitle}>Category Breakdown</Text>
 
         <PieChart
-          data={
-            pieData.length
-              ? pieData
-              : [
-                  {
-                    name: "No Data",
-                    population: 1,
-                    color: "#CBD5E1",
-                    legendFontColor: "#555",
-                    legendFontSize: 12,
-                  },
-                ]
-          }
+          data={pieData}
           width={SCREEN_WIDTH - 10}
           height={250}
           accessor="population"
           backgroundColor="transparent"
-          paddingLeft={"20"}
-          hasLegend={true}
+          paddingLeft="20"
+          hasLegend
           chartConfig={{
             color: () => "#000",
           }}
           absolute
         />
-
       </ScrollView>
 
       <BottomNav active="home" />

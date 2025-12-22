@@ -1,55 +1,64 @@
-import "expo-dev-client";
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import * as SplashScreen from "expo-splash-screen";
+
 import { useUserAuthStore } from "../store/useAuthStore";
 import { socket } from "../utils/socket";
+
+import {
+  registerForPushNotificationsAsync,
+  saveTokenToServer,
+  showLocalNotification,
+} from "../utils/pushNotifications";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const restoreSession = useUserAuthStore((s) => s.restoreSession);
   const hydrated = useUserAuthStore((s) => s.hydrated);
   const user = useUserAuthStore((s) => s.user);
 
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
     restoreSession();
+    setReady(true);
+    SplashScreen.hideAsync();
   }, []);
 
+  /* 🔔 PUSH TOKEN */
   useEffect(() => {
     if (!hydrated || !user) return;
 
-    if (!socket.connected) socket.connect();
-
-    if (!socket.hasRegistered) {
-      socket.emit("register", user._id);
-      socket.hasRegistered = true;
-    }
-
-    const handleNotification = (data) => {
-      alert(`${data.title}\n${data.message}`);
-    };
-
-    socket.on("notification", handleNotification);
-
-    return () => socket.off("notification", handleNotification);
+    (async () => {
+      const token = await registerForPushNotificationsAsync();
+      if (token) await saveTokenToServer(token);
+    })();
   }, [hydrated, user?._id]);
 
-  if (!hydrated) return null;
+  /* 🔔 SOCKET → SYSTEM NOTIFICATION */
+  useEffect(() => {
+    if (!hydrated || !user) return;
+
+    socket.connect();
+    socket.emit("register", user._id);
+
+    socket.on("notification", async (data) => {
+      await showLocalNotification(data.title, data.message);
+    });
+
+    return () => {
+      socket.off("notification");
+      socket.disconnect();
+    };
+  }, [hydrated, user?._id]);
+
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {!user ? (
-        // AUTH FLOW STACK GROUP (Splash, Onboarding, Login)
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Authentication/Splash" />
-          <Stack.Screen name="Authentication/Onboarding1" />
-          <Stack.Screen name="Authentication/Login" />
-        </Stack>
-      ) : (
-        // APP FLOW STACK GROUP (Home + others)
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Home/Home" />
-        </Stack>
-      )}
+      <Stack screenOptions={{ headerShown: false }} />
     </GestureHandlerRootView>
   );
 }

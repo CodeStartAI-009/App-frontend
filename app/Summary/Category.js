@@ -1,3 +1,4 @@
+// Category.js
 import React, { useState, useCallback } from "react";
 import {
   View,
@@ -6,14 +7,19 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
-import { getSummary } from "../../services/expenseService";
 import { useFocusEffect } from "expo-router";
 
+import { getSummary } from "../../services/expenseService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
+
 export default function Category() {
+  const user = useUserAuthStore((s) => s.user);
+  const currencySymbol = formatCurrencyLabel(user?.currency || "INR");
+
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState({});
 
-  // Load data whenever screen becomes active
   useFocusEffect(
     useCallback(() => {
       load();
@@ -23,11 +29,11 @@ export default function Category() {
   const load = async () => {
     try {
       setLoading(true);
-      const res = await getSummary();
-      const data = res?.data || {};
-      setCategories(data.categories || {});
-    } catch (e) {
-      console.log("Category Load Error:", e);
+
+      const res = await getSummary(); // ✅ cached internally
+      setCategories(res?.data?.categories || {});
+    } catch (err) {
+      console.log("Category load error:", err);
       setCategories({});
     } finally {
       setLoading(false);
@@ -46,80 +52,55 @@ export default function Category() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      
-      {/* Header */}
-      <View style={styles.headerBlock}>
-        <Text style={styles.title}>Spending by Category</Text>
-        <Text style={styles.subtitle}>This Month</Text>
-      </View>
+      <Text style={styles.title}>Spending by Category</Text>
 
-      {/* No Data */}
       {items.length === 0 && (
         <Text style={styles.noData}>
-          No category data available this month.
+          No category data available.
         </Text>
       )}
 
-      {/* Category Cards */}
-      {items.map(([name, amount], index) => (
-        <View key={index} style={styles.card}>
-          <View style={styles.colorStrip} />
-
-          <View style={{ marginLeft: 12 }}>
-            <Text style={styles.name}>{name}</Text>
-            <Text style={styles.amount}>
-              ₹{Number(amount).toLocaleString()}
-            </Text>
-          </View>
+      {items.map(([name, value]) => (
+        <View key={name} style={styles.card}>
+          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.amount}>
+            {currencySymbol}
+            {Number(value || 0).toLocaleString()}
+          </Text>
         </View>
       ))}
 
-      <View style={{ height: 90 }} />
+      <View style={{ height: 80 }} />
     </ScrollView>
   );
 }
 
-/* -------------------- STYLES -------------------- */
-
 const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: "#fff" },
+  container: {
+    padding: 20,
+    backgroundColor: "#FFFFFF",
+  },
 
-  headerBlock: { marginBottom: 20 },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   title: {
     fontSize: 26,
     fontWeight: "800",
+    marginBottom: 20,
     color: "#18493F",
   },
 
-  subtitle: {
-    fontSize: 14,
-    color: "#6F7E78",
-    marginTop: 4,
-  },
-
   card: {
-    flexDirection: "row",
-    backgroundColor: "#F8FFFD",
-    padding: 18,
+    padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#D8EDE6",
-    marginBottom: 14,
-    alignItems: "center",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-
-  colorStrip: {
-    width: 6,
-    height: "100%",
-    backgroundColor: "#196F63",
-    borderRadius: 6,
+    borderColor: "#DCEFEA",
+    backgroundColor: "#F8FFFD",
+    marginBottom: 12,
   },
 
   name: {
@@ -131,8 +112,8 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 18,
     fontWeight: "800",
-    marginTop: 4,
     color: "#196F63",
+    marginTop: 4,
   },
 
   noData: {
@@ -140,12 +121,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
     color: "#7A8680",
     fontSize: 15,
-    fontWeight: "500",
-  },
-
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    fontWeight: "600",
   },
 });

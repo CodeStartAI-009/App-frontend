@@ -1,4 +1,3 @@
-// app/Transactions/Detail.js
 import React, { useState, useCallback } from "react";
 import {
   View,
@@ -10,15 +9,30 @@ import {
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getSingleTransaction } from "../../services/expenseService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
+
+/* -------- helper -------- */
+const formatAmount = (value, currency) => {
+  const symbol = formatCurrencyLabel(currency);
+  const n = Number(value || 0);
+  return `${symbol}${n.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
+};
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
 
+  const user = useUserAuthStore((s) => s.user);
+  const currency = user?.currency || "INR";
+
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // REFRESH WHEN SCREEN COMES INTO FOCUS
+  /* REFRESH WHEN SCREEN FOCUSES */
   useFocusEffect(
     useCallback(() => {
       load();
@@ -64,7 +78,8 @@ export default function DetailScreen() {
         <Text style={styles.title}>{item.title}</Text>
 
         <Text style={[styles.amount, { color }]}>
-          {isIncome ? "+" : "-"}₹{Number(item.amount).toLocaleString()}
+          {isIncome ? "+" : "-"}
+          {formatAmount(item.amount, currency)}
         </Text>
 
         <View style={styles.divider} />
@@ -74,7 +89,9 @@ export default function DetailScreen() {
           <Ionicons name="pricetag-outline" size={20} color="#196F63" />
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.label}>Category</Text>
-            <Text style={styles.value}>{item.category || "Uncategorized"}</Text>
+            <Text style={styles.value}>
+              {item.category || "Uncategorized"}
+            </Text>
           </View>
         </View>
 
@@ -87,7 +104,9 @@ export default function DetailScreen() {
           />
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.label}>Type</Text>
-            <Text style={[styles.value, { color }]}>{item.type}</Text>
+            <Text style={[styles.value, { color }]}>
+              {isIncome ? "Income" : "Expense"}
+            </Text>
           </View>
         </View>
 
@@ -97,7 +116,7 @@ export default function DetailScreen() {
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.label}>Date</Text>
             <Text style={styles.value}>
-              {new Date(item.createdAt).toLocaleString("en-IN")}
+              {new Date(item.createdAt).toLocaleString()}
             </Text>
           </View>
         </View>
@@ -109,8 +128,16 @@ export default function DetailScreen() {
 /* -------------------- STYLES -------------------- */
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
 
   headerWrapper: {
     paddingTop: 55,
@@ -122,7 +149,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  backBtn: { padding: 6, marginRight: 12 },
+
+  backBtn: {
+    padding: 6,
+    marginRight: 12,
+  },
+
   headerText: {
     fontSize: 24,
     fontWeight: "800",
@@ -170,6 +202,7 @@ const styles = StyleSheet.create({
     color: "#6F7E78",
     fontWeight: "600",
   },
+
   value: {
     fontSize: 17,
     fontWeight: "700",

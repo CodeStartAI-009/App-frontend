@@ -2,22 +2,25 @@
   "expo": {
     "name": "UniSpend",
     "slug": "frontend",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
+
     "icon": "./assets/images/image.png",
     "scheme": "frontend",
+
+    "jsEngine": "hermes",
     "newArchEnabled": true,
 
     "ios": {
-      "bundleIdentifier": "com.yourcompany.unispend",
+      "bundleIdentifier": "com.codestart.unispend",
       "supportsTablet": true
     },
 
     "android": {
-      "package": "com.yourcompany.unispend",
+      "package": "com.codestart.unispend",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/image.png",
-        "backgroundImage": "./assets/images/image.png"
+        "backgroundColor": "#ffffff"
       }
     },
 
@@ -34,7 +37,6 @@
       ],
       "expo-font",
       "expo-web-browser",
-
       [
         "react-native-google-mobile-ads",
         {
@@ -45,9 +47,12 @@
     ],
 
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "8b7d9fad-748d-43c0-b7c3-6f94014b35b4"
+        "projectId": "aec385a6-8f71-4fe9-9dd9-e09cc3930dda"
       }
-    }
+    },
+
+    "owner": "2300090189"
   }
 }

@@ -1,4 +1,3 @@
-// app/.../RecentActivity.js
 import React, { useState, useCallback } from "react";
 import {
   View,
@@ -8,17 +7,26 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { getRecentActivity } from "../../services/expenseService";
 import { useFocusEffect } from "expo-router";
 
+import { getRecentActivity } from "../../services/expenseService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
+
 export default function RecentActivity() {
+  const user = useUserAuthStore((s) => s.user);
+  const homeDirty = useUserAuthStore((s) => s.homeDirty);
+
+  const currencyCode = user?.currency || "INR";
+  const currencySymbol = formatCurrencyLabel(currencyCode);
+
   const [loading, setLoading] = useState(true);
   const [activity, setActivity] = useState([]);
 
   const load = async () => {
     try {
       setLoading(true);
-      const res = await getRecentActivity();
+      const res = await getRecentActivity(true); // 🔥 FORCE REFRESH
       setActivity(res.data.recent?.slice(0, 10) || []);
     } catch (e) {
       console.log("Recent Load Error:", e);
@@ -27,16 +35,15 @@ export default function RecentActivity() {
     }
   };
 
-  // Refresh on screen focus
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [])
+    }, [homeDirty])
   );
 
   if (loading) {
     return (
-      <View style={styles.loadingBox}>
+      <View style={styles.center}>
         <ActivityIndicator size="small" color="#196F63" />
       </View>
     );
@@ -44,8 +51,8 @@ export default function RecentActivity() {
 
   if (!activity.length) {
     return (
-      <View style={styles.emptyBox}>
-        <Text style={styles.emptyText}>No recent activity</Text>
+      <View style={styles.center}>
+        <Text style={styles.empty}>No recent activity</Text>
       </View>
     );
   }
@@ -63,28 +70,16 @@ export default function RecentActivity() {
 
           return (
             <View style={styles.row}>
-              <View
-                style={[
-                  styles.iconCircle,
-                  { backgroundColor: isIncome ? "#E8FFF2" : "#FFE8E8" },
-                ]}
-              >
-                <Ionicons
-                  name={isIncome ? "arrow-up-circle" : "arrow-down-circle"}
-                  size={22}
-                  color={isIncome ? "#16A34A" : "#DC2626"}
-                />
-              </View>
+              <Ionicons
+                name={isIncome ? "arrow-up-circle" : "arrow-down-circle"}
+                size={24}
+                color={isIncome ? "#16A34A" : "#DC2626"}
+              />
 
               <View style={styles.middle}>
                 <Text style={styles.name}>{item.title}</Text>
                 <Text style={styles.time}>
-                  {new Date(item.createdAt).toLocaleString("en-IN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    day: "2-digit",
-                    month: "short",
-                  })}
+                  {new Date(item.createdAt).toLocaleString()}
                 </Text>
               </View>
 
@@ -94,7 +89,9 @@ export default function RecentActivity() {
                   { color: isIncome ? "#16A34A" : "#DC2626" },
                 ]}
               >
-                {isIncome ? "+" : "-"}₹{item.amount}
+                {isIncome ? "+" : "-"}
+                {currencySymbol}
+                {item.amount}
               </Text>
             </View>
           );
@@ -104,71 +101,23 @@ export default function RecentActivity() {
   );
 }
 
-/* ---------------- IMPROVED UI STYLES ---------------- */
-
 const styles = StyleSheet.create({
   box: {
-    marginTop: 20,
-    padding: 18,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E5F2ED",
-    elevation: 2,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 16,
   },
-
-  title: {
-    fontSize: 18,
-    fontWeight: "800",
-    marginBottom: 16,
-    color: "#18493F",
-  },
-
+  title: { fontSize: 18, fontWeight: "800", marginBottom: 12 },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8FFFD",
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#EAF3EF",
+    paddingVertical: 10,
   },
-
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  middle: {
-    flex: 1,
-    marginLeft: 12,
-  },
-
-  name: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#18493F",
-  },
-
-  time: {
-    fontSize: 12,
-    color: "#6F7E78",
-    marginTop: 2,
-  },
-
-  amount: {
-    fontSize: 17,
-    fontWeight: "800",
-  },
-
-  loadingBox: { padding: 16, alignItems: "center" },
-
-  emptyBox: { padding: 16, alignItems: "center" },
-
-  emptyText: { color: "#6F7E78", fontStyle: "italic" },
+  middle: { flex: 1, marginLeft: 12 },
+  name: { fontWeight: "700" },
+  time: { fontSize: 12, color: "#6B7280" },
+  amount: { fontWeight: "800" },
+  center: { padding: 20, alignItems: "center" },
+  empty: { color: "#6B7280" },
 });

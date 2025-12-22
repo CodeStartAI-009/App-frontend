@@ -1,4 +1,3 @@
-// app/Profile/EditIncome.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -18,69 +17,86 @@ import {
   updateFinance,
 } from "../../services/expenseService";
 
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
+
 export default function EditIncome() {
   const router = useRouter();
+  const { user } = useUserAuthStore();
+
+  const currency = user?.currency || "INR";
+  const currencySymbol = formatCurrencyLabel(currency);
 
   const [income, setIncome] = useState("");
   const [balance, setBalance] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    load();
+  }, []);
 
   const load = async () => {
     try {
       const res = await fetchUserProfile();
       const p = res.data.profile;
 
-      setIncome(String(p.monthlyIncome || 0));
-      setBalance(String(p.bankBalance || 0));
-    } catch (err) {
+      setIncome(String(Number(p.monthlyIncome || 0)));
+      setBalance(String(Number(p.bankBalance || 0)));
+    } catch {
       Alert.alert("Error", "Failed to load profile");
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
   const saveFinance = async () => {
-    if (!income || !balance)
+    const cleanIncome = income.trim();
+    const cleanBalance = balance.trim();
+
+    if (!cleanIncome || !cleanBalance) {
       return Alert.alert("Error", "Both fields are required");
+    }
+
+    if (isNaN(cleanIncome) || isNaN(cleanBalance)) {
+      return Alert.alert("Error", "Enter valid numeric values");
+    }
 
     try {
+      setLoading(true);
+
       const res = await updateFinance({
-        monthlyIncome: Number(income),
-        bankBalance: Number(balance),
+        monthlyIncome: Number(cleanIncome),
+        bankBalance: Number(cleanBalance),
       });
 
       if (res.data.ok) {
-        Alert.alert("Success", "Income & Balance updated");
+        Alert.alert("Success", "Income & balance updated");
         router.back();
       } else {
         Alert.alert("Error", "Failed to update details");
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Server error while updating finance");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.page}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-
         <Text style={styles.headerText}>Edit Income & Balance</Text>
       </View>
 
       {/* CONTENT */}
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
-
-          <Text style={styles.label}>Monthly Income (₹)</Text>
+          {/* MONTHLY INCOME */}
+          <Text style={styles.label}>
+            Monthly Income ({currencySymbol})
+          </Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -90,7 +106,10 @@ export default function EditIncome() {
             placeholderTextColor="#9CA3AF"
           />
 
-          <Text style={styles.label}>Current Balance (₹)</Text>
+          {/* CURRENT BALANCE */}
+          <Text style={styles.label}>
+            Current Balance ({currencySymbol})
+          </Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -100,9 +119,15 @@ export default function EditIncome() {
             placeholderTextColor="#9CA3AF"
           />
 
-          {/* Save Button */}
-          <TouchableOpacity style={styles.btn} onPress={saveFinance}>
-            <Text style={styles.btnText}>Save Changes</Text>
+          {/* SAVE */}
+          <TouchableOpacity
+            style={[styles.btn, loading && { opacity: 0.6 }]}
+            onPress={saveFinance}
+            disabled={loading}
+          >
+            <Text style={styles.btnText}>
+              {loading ? "Saving..." : "Save Changes"}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -130,8 +155,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    elevation: 3,
-    shadowColor: "#00000035",
   },
 
   backBtn: {
@@ -157,8 +180,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "#D8EDE6",
-    elevation: 2,
-    shadowColor: "#00000020",
   },
 
   label: {
@@ -185,8 +206,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     marginTop: 30,
-    elevation: 3,
-    shadowColor: "#00000030",
   },
 
   btnText: {

@@ -10,15 +10,24 @@ import {
 import { LineChart } from "react-native-chart-kit";
 import { getTrendBreakdown } from "../../services/expenseService";
 import { useFocusEffect } from "expo-router";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
 
 const { width } = Dimensions.get("window");
 
+const MONTHS = [
+  "Jan","Feb","Mar","Apr","May","Jun",
+  "Jul","Aug","Sep","Oct","Nov","Dec",
+];
+
 export default function Trends() {
+  const user = useUserAuthStore((s) => s.user);
+  const symbol = formatCurrencyLabel(user?.currency || "INR");
+
   const [loading, setLoading] = useState(true);
   const [trend, setTrend] = useState([]);
   const [topCategory, setTopCategory] = useState("None");
 
-  // Auto refresh on screen focus
   useFocusEffect(
     useCallback(() => {
       load();
@@ -41,16 +50,19 @@ export default function Trends() {
 
       setTrend(normalized);
 
-      // Compute top category
+      // Compute top category safely
       const categoryTotals = {};
       normalized.forEach((m) => {
-        Object.entries(m.categories).forEach(([cat, val]) => {
-          categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(val);
+        Object.entries(m.categories || {}).forEach(([cat, val]) => {
+          categoryTotals[cat] =
+            (categoryTotals[cat] || 0) + (Number(val) || 0);
         });
       });
 
       if (Object.keys(categoryTotals).length > 0) {
-        const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+        const sorted = Object.entries(categoryTotals).sort(
+          (a, b) => b[1] - a[1]
+        );
         setTopCategory(sorted[0][0]);
       } else {
         setTopCategory("None");
@@ -64,19 +76,30 @@ export default function Trends() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#196F63" />
       </View>
     );
+  }
 
-  const labels = trend.map((m) => m.month.split("-")[1]) || [];
-  const values = trend.map((m) => m.totalExpense) || [];
+  const labels =
+    trend.length > 0
+      ? trend.map((m) => {
+          if (!m.month) return "-";
+          const [, mm] = m.month.split("-");
+          return MONTHS[(Number(mm) || 1) - 1];
+        })
+      : ["-"];
+
+  const values =
+    trend.length > 0
+      ? trend.map((m) => Number(m.totalExpense) || 0)
+      : [0];
 
   return (
     <ScrollView style={styles.container}>
-      
       {/* HEADER TITLE */}
       <Text style={styles.title}>Monthly Spending Trends</Text>
 
@@ -92,12 +115,12 @@ export default function Trends() {
 
         <LineChart
           data={{
-            labels: labels.length ? labels : ["-"],
-            datasets: [{ data: values.length ? values : [0] }],
+            labels,
+            datasets: [{ data: values }],
           }}
           width={width - 40}
           height={260}
-          yAxisLabel="₹"
+          yAxisLabel={symbol}
           withDots={true}
           withInnerLines={false}
           withOuterLines={false}
@@ -114,12 +137,11 @@ export default function Trends() {
       </View>
 
       <View style={{ height: 80 }} />
-
     </ScrollView>
   );
 }
 
-/* ------------------------ IMPROVED UI STYLES ------------------------ */
+/* ---------------- STYLES (UNCHANGED) ---------------- */
 
 const styles = StyleSheet.create({
   container: {

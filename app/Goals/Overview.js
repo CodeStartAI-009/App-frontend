@@ -13,15 +13,21 @@ import { useRouter, useFocusEffect } from "expo-router";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 
 import { getGoals, deleteGoal } from "../../services/goalService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatMoney } from "../../utils/money";
 
 export default function Overview() {
   const router = useRouter();
   const [goals, setGoals] = useState([]);
 
+  const user = useUserAuthStore((s) => s.user);
+  const currency = user?.currency || "INR";
+
+  /* ---------------- LOAD GOALS ---------------- */
   const loadGoals = async () => {
     try {
       const res = await getGoals();
-      let list = res.data.goals;
+      let list = res.data.goals || [];
 
       list = list.map((g) => ({
         ...g,
@@ -29,20 +35,20 @@ export default function Overview() {
       }));
 
       list.sort((a, b) => (a.completed ? 1 : -1));
-
       setGoals(list);
     } catch (e) {
       console.log("GOAL LOAD ERROR", e);
     }
   };
 
-  // REFRESH GOALS WHENEVER THIS SCREEN IS FOCUSED
+  /* ---------------- REFRESH ON FOCUS ---------------- */
   useFocusEffect(
     useCallback(() => {
       loadGoals();
     }, [])
   );
 
+  /* ---------------- SWIPE ACTIONS ---------------- */
   const renderLeftActions = (goal) => (
     <TouchableOpacity
       style={styles.swipeEdit}
@@ -68,14 +74,19 @@ export default function Overview() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
-      
-      {/* HEADER */}
+      {/* HEADER WITH BACK ARROW */}
       <View style={styles.headerRow}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+        >
+          <Ionicons name="arrow-back" size={26} color="#fff" />
+        </TouchableOpacity>
+
         <Text style={styles.headerText}>My Goals</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-
         {/* CREATE BUTTON */}
         <TouchableOpacity
           style={styles.createBtn}
@@ -97,7 +108,9 @@ export default function Overview() {
             >
               <TouchableOpacity
                 style={[styles.goalCard, g.completed && styles.goalCompleted]}
-                onPress={() => router.push(`/Goals/GoalDetail?id=${g._id}`)}
+                onPress={() =>
+                  router.push(`/Goals/GoalDetail?id=${g._id}`)
+                }
               >
                 <View style={styles.titleRow}>
                   <Text style={styles.goalTitle}>{g.title}</Text>
@@ -112,13 +125,15 @@ export default function Overview() {
 
                 <View style={styles.row}>
                   <Text style={styles.label}>Target:</Text>
-                  <Text style={styles.value}>₹{g.amount}</Text>
+                  <Text style={styles.value}>
+                    {formatMoney(g.amount, currency)}
+                  </Text>
                 </View>
 
                 <View style={styles.row}>
                   <Text style={styles.label}>Saved:</Text>
                   <Text style={[styles.value, { color: "#196F63" }]}>
-                    ₹{g.saved}
+                    {formatMoney(g.saved, currency)}
                   </Text>
                 </View>
 
@@ -127,15 +142,22 @@ export default function Overview() {
                     style={[
                       styles.progressFill,
                       {
-                        width: `${Math.min((g.saved / g.amount) * 100, 100)}%`,
-                        backgroundColor: g.completed ? "#22c55e" : "#196F63",
+                        width: `${Math.min(
+                          (g.saved / g.amount) * 100,
+                          100
+                        )}%`,
+                        backgroundColor: g.completed
+                          ? "#22c55e"
+                          : "#196F63",
                       },
                     ]}
                   />
                 </View>
 
                 {g.completed && (
-                  <Text style={styles.completedText}>Goal Completed 🎉</Text>
+                  <Text style={styles.completedText}>
+                    Goal Completed 🎉
+                  </Text>
                 )}
               </TouchableOpacity>
             </Swipeable>
@@ -160,7 +182,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#196F63",
     borderBottomLeftRadius: 25,
     borderBottomRightRadius: 25,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
+
+  backBtn: {
+    padding: 6,
+  },
+
   headerText: {
     color: "#fff",
     fontSize: 28,
@@ -193,9 +223,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E6F3EE",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
   },
 
   goalCompleted: {
@@ -221,11 +248,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: 3,
   },
+
   label: {
     fontSize: 15,
     color: "#4B6F68",
     fontWeight: "600",
   },
+
   value: {
     fontSize: 15,
     color: "#18493F",
@@ -238,6 +267,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 14,
   },
+
   progressFill: {
     height: 8,
     borderRadius: 10,
@@ -256,13 +286,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 80,
   },
+
   swipeDelete: {
     backgroundColor: "#EF4444",
     justifyContent: "center",
     alignItems: "center",
     width: 80,
   },
-  swipeText: { color: "#fff", fontSize: 12, marginTop: 4 },
+
+  swipeText: {
+    color: "#fff",
+    fontSize: 12,
+    marginTop: 4,
+  },
 
   noGoalsText: {
     textAlign: "center",

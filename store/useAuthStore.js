@@ -1,15 +1,65 @@
-// store/useUserAuthStore.js
+// store/useAuthStore.js
 import { create } from "zustand";
 import * as Auth from "../services/authService";
 import { saveToken, getToken, deleteToken } from "../utils/storage";
 
-export const useUserAuthStore = create((set) => ({
+export const useUserAuthStore = create((set, get) => ({
+  /* ===================== AUTH ===================== */
   user: null,
   token: null,
   hydrated: false,
   loading: false,
 
-  /* ---------------- SIGNUP ---------------- */
+  /* ===================== CACHES ===================== */
+  summaryCache: null,
+  activityCache: null,
+  homeCache: null,
+
+  /**
+   * 🔑 SOURCE OF TRUTH
+   * If true → Home MUST refetch from API
+   */
+  homeDirty: true,
+
+  /* ===================== CACHE SETTERS ===================== */
+  setSummaryCache: (data) => set({ summaryCache: data }),
+  setActivityCache: (data) => set({ activityCache: data }),
+
+  setHomeCache: (data) =>
+    set({
+      homeCache: data,
+      homeDirty: false, // ✅ reset ONLY after successful fetch
+    }),
+
+  /**
+   * Call this AFTER:
+   * - add expense
+   * - add income
+   * - update/delete transaction
+   * - finance update
+   */
+  markHomeDirty: () =>
+    set({
+      homeDirty: true,
+      homeCache: null, // ❗ IMPORTANT: remove stale snapshot
+    }),
+
+  clearCaches: () =>
+    set({
+      summaryCache: null,
+      activityCache: null,
+      homeCache: null,
+      homeDirty: true,
+    }),
+
+  /* ===================== USER STATE ===================== */
+  setUser: (updater) =>
+    set((state) => ({
+      user:
+        typeof updater === "function" ? updater(state.user) : updater,
+    })),
+
+  /* ===================== SIGNUP ===================== */
   signupUser: async ({ name, email, password, agreedToTerms }) => {
     try {
       set({ loading: true });
@@ -22,7 +72,6 @@ export const useUserAuthStore = create((set) => ({
       });
 
       const token = res.data.token;
-
       globalThis.authToken = token;
       await saveToken("auth_token", token);
 
@@ -30,6 +79,8 @@ export const useUserAuthStore = create((set) => ({
         user: res.data.user,
         token,
         loading: false,
+        homeDirty: true,
+        homeCache: null,
       });
 
       return { ok: true };
@@ -42,7 +93,7 @@ export const useUserAuthStore = create((set) => ({
     }
   },
 
-  /* ---------------- LOGIN ---------------- */
+  /* ===================== LOGIN ===================== */
   loginUser: async ({ emailOrPhone, password }) => {
     try {
       set({ loading: true });
@@ -57,6 +108,8 @@ export const useUserAuthStore = create((set) => ({
         user: res.data.user,
         token,
         loading: false,
+        homeDirty: true,
+        homeCache: null,
       });
 
       return { ok: true };
@@ -69,7 +122,7 @@ export const useUserAuthStore = create((set) => ({
     }
   },
 
-  /* ---------------- UPDATE PROFILE ---------------- */
+  /* ===================== PROFILE UPDATE ===================== */
   updateProfile: async (data) => {
     try {
       set({ loading: true });
@@ -79,6 +132,8 @@ export const useUserAuthStore = create((set) => ({
       set({
         user: res.data.user,
         loading: false,
+        homeDirty: true, // balance / currency may change
+        homeCache: null,
       });
 
       return { ok: true };
@@ -91,19 +146,20 @@ export const useUserAuthStore = create((set) => ({
     }
   },
 
-  /* ---------------- RESTORE SESSION ---------------- */
+  /* ===================== SESSION RESTORE ===================== */
   restoreSession: async () => {
     try {
       const token = await getToken("auth_token");
 
       if (token) {
         globalThis.authToken = token;
-
         const res = await Auth.getProfile();
 
         set({
           user: res.data.user,
           token,
+          homeDirty: true,
+          homeCache: null,
         });
       }
 
@@ -114,7 +170,7 @@ export const useUserAuthStore = create((set) => ({
     }
   },
 
-  /* ---------------- LOGOUT ---------------- */
+  /* ===================== LOGOUT ===================== */
   logout: async () => {
     await deleteToken("auth_token");
     globalThis.authToken = null;
@@ -122,6 +178,10 @@ export const useUserAuthStore = create((set) => ({
     set({
       user: null,
       token: null,
+      summaryCache: null,
+      activityCache: null,
+      homeCache: null,
+      homeDirty: true,
     });
   },
 }));

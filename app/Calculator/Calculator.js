@@ -9,41 +9,111 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
 import { useRouter, useFocusEffect } from "expo-router";
+import { formatCurrencyLabel } from "../../utils/money";
+
+/* --------------------------------------------
+   CHANGE THIS TO REAL USER CURRENCY SOURCE
+   e.g. from user profile / context / async storage
+--------------------------------------------- */
+const USER_CURRENCY = "USD"; // INR, USD, EUR, GBP, BRL, SGD, AUD, CAD
 
 export default function Calculator() {
   const router = useRouter();
+  const symbol = formatCurrencyLabel(USER_CURRENCY);
 
-  const tools = [
-    { label: "Simple Interest", icon: "calculator-outline", route: "/Calculator/SI" },
-    { label: "Compound Interest", icon: "trending-up-outline", route: "/Calculator/CI" },
-    { label: "EMI Calculator", icon: "cash-outline", route: "/Calculator/EMI" },
-    { label: "SIP Calculator", icon: "bar-chart-outline", route: "/Calculator/SIP" },
-    { label: "Lumpsum Calculator", icon: "stats-chart-outline", route: "/Calculator/LumpSum" },
-    { label: "FD / RD Calculator", icon: "wallet-outline", route: "/Calculator/FD" },
-    { label: "Tax Calculator", icon: "receipt-outline", route: "/Calculator/Tax" },
-    { label: "Inflation Impact", icon: "trending-down-outline", route: "/Calculator/Inflation" },
-    { label: "Currency Converter", icon: "swap-horizontal-outline", route: "/Calculator/Currency" },
-    { label: "Retirement Planner", icon: "person-outline", route: "/Calculator/Retirement" },
-  ];
+  /* ---------- COUNTRY-BASED TOOL LIST ---------- */
+  const getToolsByCurrency = (currency) => {
+    switch (currency) {
+      /* 🇮🇳 INDIA */
+      case "INR":
+        return [
+          { label: "Simple Interest", icon: "calculator-outline", route: "/Calculator/SI" },
+          { label: "Compound Interest", icon: "trending-up-outline", route: "/Calculator/CI" },
+          { label: "EMI Calculator", icon: "cash-outline", route: "/Calculator/EMI" },
+          { label: "SIP Calculator", icon: "bar-chart-outline", route: "/Calculator/SIP" },
+          { label: "Lumpsum Calculator", icon: "stats-chart-outline", route: "/Calculator/LumpSum" },
+          { label: "FD / RD Calculator", icon: "wallet-outline", route: "/Calculator/FD" },
+          { label: "Tax Calculator", icon: "receipt-outline", route: "/Calculator/Tax" },
+          { label: "Inflation Impact", icon: "trending-down-outline", route: "/Calculator/Inflation" },
+          { label: "Currency Converter", icon: "swap-horizontal-outline", route: "/Calculator/Currency" },
+          { label: "Retirement Planner", icon: "person-outline", route: "/Calculator/Retirement" },
+        ];
 
-  /* --------------- AUTO REFRESH WHEN SCREEN OPENS --------------- */
+      /* 🇺🇸 🇨🇦 🇦🇺 */
+      case "USD":
+      case "CAD":
+      case "AUD":
+        return [
+          { label: "Compound Interest", icon: "trending-up-outline", route: "/Calculator/CI" },
+          { label: "Loan Payment", icon: "cash-outline", route: "/Calculator/Loan" },
+          { label: "Monthly Investment", icon: "bar-chart-outline", route: "/Calculator/Investment" },
+          { label: "Lumpsum Investment", icon: "stats-chart-outline", route: "/Calculator/LumpSum" },
+          { label: "Inflation Impact", icon: "trending-down-outline", route: "/Calculator/Inflation" },
+          { label: "Currency Converter", icon: "swap-horizontal-outline", route: "/Calculator/Currency" },
+          { label: "Retirement Planner", icon: "person-outline", route: "/Calculator/Retirement" },
+        ];
+
+      /* 🇪🇺 🇬🇧 */
+      case "EUR":
+      case "GBP":
+        return [
+          { label: "Compound Interest (AER)", icon: "trending-up-outline", route: "/Calculator/CI" },
+          { label: "Monthly Repayment", icon: "cash-outline", route: "/Calculator/Loan" },
+          { label: "Lumpsum Investment", icon: "stats-chart-outline", route: "/Calculator/LumpSum" },
+          { label: "Inflation Impact", icon: "trending-down-outline", route: "/Calculator/Inflation" },
+          { label: "Currency Converter", icon: "swap-horizontal-outline", route: "/Calculator/Currency" },
+          { label: "Retirement Planner", icon: "person-outline", route: "/Calculator/Retirement" },
+        ];
+
+      /* 🇧🇷 BRAZIL */
+      case "BRL":
+        return [
+          { label: "Compound Interest", icon: "trending-up-outline", route: "/Calculator/CI" },
+          { label: "Loan Payment", icon: "cash-outline", route: "/Calculator/Loan" },
+          { label: "Inflation Impact", icon: "trending-down-outline", route: "/Calculator/Inflation" },
+          { label: "Currency Converter", icon: "swap-horizontal-outline", route: "/Calculator/Currency" },
+        ];
+
+      /* 🇸🇬 SINGAPORE */
+      case "SGD":
+        return [
+          { label: "Compound Interest", icon: "trending-up-outline", route: "/Calculator/CI" },
+          { label: "Monthly Investment", icon: "bar-chart-outline", route: "/Calculator/Investment" },
+          { label: "Lumpsum Investment", icon: "stats-chart-outline", route: "/Calculator/LumpSum" },
+          { label: "Inflation Impact", icon: "trending-down-outline", route: "/Calculator/Inflation" },
+          { label: "Currency Converter", icon: "swap-horizontal-outline", route: "/Calculator/Currency" },
+          { label: "Retirement Planner", icon: "person-outline", route: "/Calculator/Retirement" },
+        ];
+
+      /* 🌍 FALLBACK */
+      default:
+        return [
+          { label: "Compound Interest", icon: "trending-up-outline", route: "/Calculator/CI" },
+          { label: "Inflation Impact", icon: "trending-down-outline", route: "/Calculator/Inflation" },
+          { label: "Currency Converter", icon: "swap-horizontal-outline", route: "/Calculator/Currency" },
+        ];
+    }
+  };
+
+  const tools = getToolsByCurrency(USER_CURRENCY);
+
   useFocusEffect(
     useCallback(() => {
-      // Future: You can refresh global data here (currency, tax, etc)
-      // Example: refreshCalculatorCache();
+      // placeholder for future refresh
     }, [])
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      
       {/* HEADER */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={26} color="#FFFFFF" />
         </TouchableOpacity>
 
-        <Text style={styles.header}>Financial Calculators</Text>
+        <Text style={styles.header}>
+          Financial Calculator  
+        </Text>
       </View>
 
       {/* TOOL LIST */}
@@ -77,7 +147,7 @@ export default function Calculator() {
   );
 }
 
-/* ---------------------- THEMED UI STYLES ---------------------- */
+/* ---------------------- STYLES ---------------------- */
 const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
@@ -89,23 +159,9 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-
-  backBtn: {
-    padding: 6,
-    marginRight: 12,
-  },
-
-  header: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-
-  container: {
-    paddingTop: 20,
-    paddingHorizontal: 22,
-  },
-
+  backBtn: { padding: 6, marginRight: 12 },
+  header: { fontSize: 24, fontWeight: "800", color: "#FFFFFF" },
+  container: { paddingTop: 20, paddingHorizontal: 22 },
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -115,12 +171,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 1,
     borderColor: "#E6F3EE",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
     elevation: 2,
   },
-
   iconWrap: {
     width: 46,
     height: 46,
@@ -130,10 +182,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 14,
   },
-
-  label: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#18493F",
-  },
+  label: { fontSize: 18, fontWeight: "700", color: "#18493F" },
 });

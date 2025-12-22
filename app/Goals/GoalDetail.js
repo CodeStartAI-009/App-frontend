@@ -11,10 +11,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import BottomNav from "../components/BottomNav";
 import { getSingleGoal } from "../../services/goalService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatMoney } from "../../utils/money";
 
 export default function GoalDetails() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+
+  const user = useUserAuthStore((s) => s.user);
+  const currency = user?.currency || "INR";
 
   const [goal, setGoal] = useState(null);
 
@@ -62,13 +67,15 @@ export default function GoalDetails() {
 
           <View style={styles.row}>
             <Text style={styles.label}>Target Amount</Text>
-            <Text style={styles.value}>₹{goal.amount}</Text>
+            <Text style={styles.value}>
+              {formatMoney(goal.amount, currency)}
+            </Text>
           </View>
 
           <View style={styles.row}>
             <Text style={styles.label}>Saved So Far</Text>
             <Text style={[styles.value, { color: "#196F63" }]}>
-              ₹{goal.saved}
+              {formatMoney(goal.saved, currency)}
             </Text>
           </View>
 
@@ -79,7 +86,8 @@ export default function GoalDetails() {
                 styles.progressFill,
                 {
                   width: `${progress}%`,
-                  backgroundColor: progress === 100 ? "#22c55e" : "#196F63",
+                  backgroundColor:
+                    progress === 100 ? "#22c55e" : "#196F63",
                 },
               ]}
             />
@@ -148,9 +156,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#DDEFE9",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
   },
 
   cardTitle: {

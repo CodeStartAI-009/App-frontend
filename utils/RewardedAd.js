@@ -1,14 +1,15 @@
+// utils/RewardedAd.js
 import {
   RewardedInterstitialAd,
   RewardedAdEventType,
   TestIds,
 } from "react-native-google-mobile-ads";
 
-const adUnitId = __DEV__
+const AD_UNIT_ID = __DEV__
   ? TestIds.REWARDED_INTERSTITIAL
   : "ca-app-pub-8525673711213815/7369519823";
 
-let rewardedAd = RewardedInterstitialAd.createForAdRequest(adUnitId, {
+let rewardedAd = RewardedInterstitialAd.createForAdRequest(AD_UNIT_ID, {
   requestNonPersonalizedAdsOnly: true,
 });
 
@@ -19,27 +20,29 @@ export function loadRewardedInterstitial(setLoaded) {
   isLoaded = false;
   setLoaded(false);
 
-  const unsubLoaded = rewardedAd.addAdEventListener(
-    RewardedAdEventType.LOADED,
-    () => {
-      isLoaded = true;
-      setLoaded(true);
-    }
-  );
+  requestAnimationFrame(() => {
+    const unsubLoaded = rewardedAd.addAdEventListener(
+      RewardedAdEventType.LOADED,
+      () => {
+        isLoaded = true;
+        setLoaded(true);
+      }
+    );
 
-  const unsubEarn = rewardedAd.addAdEventListener(
-    RewardedAdEventType.EARNED_REWARD,
-    () => {
-      rewardCallback && rewardCallback();
-    }
-  );
+    const unsubReward = rewardedAd.addAdEventListener(
+      RewardedAdEventType.EARNED_REWARD,
+      () => {
+        rewardCallback && rewardCallback();
+      }
+    );
 
-  rewardedAd.load();
+    rewardedAd.load();
 
-  return () => {
-    unsubLoaded();
-    unsubEarn();
-  };
+    return () => {
+      unsubLoaded();
+      unsubReward();
+    };
+  });
 }
 
 export function setRewardCallback(cb) {
@@ -51,9 +54,10 @@ export function showRewardAd() {
 
   rewardedAd.show();
 
-  // After showing → create new instance
-  rewardedAd = RewardedInterstitialAd.createForAdRequest(adUnitId);
-  isLoaded = false;
+  rewardedAd = RewardedInterstitialAd.createForAdRequest(AD_UNIT_ID, {
+    requestNonPersonalizedAdsOnly: true,
+  });
 
+  isLoaded = false;
   return true;
 }

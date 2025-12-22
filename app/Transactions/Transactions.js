@@ -1,5 +1,4 @@
-// app/Transactions/TransactionsScreen.js
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,277 +7,167 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-
 import {
   Swipeable,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
-
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
-import { getActivity, deleteTransaction } from "../../services/expenseService";
+
+import {
+  getActivity,
+  deleteTransaction,
+  clearExpenseCache,
+} from "../../services/expenseService";
+
 import BottomNav from "../components/BottomNav";
 import { useRouter, useFocusEffect } from "expo-router";
+import { useUserAuthStore } from "../../store/useAuthStore";
+import { formatCurrencyLabel } from "../../utils/money";
 
 /* ---------------- ICON PICKER ---------------- */
 function getCategoryIcon(category, color) {
   switch ((category || "").toLowerCase()) {
     case "food":
-      return <MaterialIcons name="fastfood" size={26} color={color} />;
+      return <MaterialIcons name="fastfood" size={22} color={color} />;
     case "shopping":
-      return <MaterialIcons name="shopping-cart" size={26} color={color} />;
+      return <MaterialIcons name="shopping-cart" size={22} color={color} />;
     case "travel":
-      return <FontAwesome5 name="bus" size={22} color={color} />;
+      return <FontAwesome5 name="bus" size={18} color={color} />;
     case "rent":
-      return <Ionicons name="home" size={26} color={color} />;
+      return <Ionicons name="home" size={22} color={color} />;
     case "income":
-      return <Ionicons name="arrow-up-circle" size={26} color={color} />;
+      return <Ionicons name="arrow-up-circle" size={22} color={color} />;
     case "split group":
-      return <Ionicons name="git-branch-outline" size={26} color={color} />;
+      return <Ionicons name="git-branch-outline" size={22} color={color} />;
     default:
-      return <Ionicons name="albums-outline" size={22} color={color} />;
+      return <Ionicons name="albums-outline" size={20} color={color} />;
   }
 }
 
 export default function TransactionsScreen() {
   const router = useRouter();
+  const user = useUserAuthStore((s) => s.user);
+  const markHomeDirty = useUserAuthStore((s) => s.markHomeDirty);
+
+  const currency = user?.currency || "INR";
+  const currencySymbol = formatCurrencyLabel(currency);
 
   const [loading, setLoading] = useState(true);
   const [activity, setActivity] = useState([]);
 
-  const [sortMode, setSortMode] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-
-  const MONTHS = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
-  ];
-
-  const CATEGORIES = [
-    "Food","Shopping","Travel","Rent","Income","Split Group","Others"
-  ];
-
-  /* ---------------- ALWAYS REFRESH ON SCREEN FOCUS ---------------- */
+  /* ---------------- LOAD ---------------- */
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      loadActivity();
     }, [])
   );
 
-  const loadData = async () => {
+  const loadActivity = async () => {
     try {
       setLoading(true);
-      const res = await getActivity();
-      setActivity(res.data.activity || []);
+      const res = await getActivity(true);
+      setActivity(res?.data?.activity || []);
     } catch (err) {
-      console.log("Activity error:", err);
-      setActivity([]);
+      console.log("Activity load error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------------- FILTERING ---------------- */
-  const filteredData = useMemo(() => {
-    let data = [...activity];
-
-    if (selectedMonth) {
-      data = data.filter((item) => {
-        const m = new Date(item.createdAt).getMonth();
-        return MONTHS[m] === selectedMonth;
-      });
-    }
-
-    if (selectedCategory) {
-      data = data.filter(
-        (item) =>
-          item.category?.toLowerCase() === selectedCategory.toLowerCase()
-      );
-    }
-
-    return data;
-  }, [activity, selectedMonth, selectedCategory]);
-
-  /* ---------------- SPLIT GROUP CHECK ---------------- */
   const isSplit = (item) =>
     (item.category || "").toLowerCase() === "split group";
 
-  /* ---------------- ACTIONS ---------------- */
+  /* ---------------- DELETE ---------------- */
   const handleDelete = async (item) => {
     if (isSplit(item)) return;
-    try {
-      await deleteTransaction(item._id, item.type);
-      loadData(); // refresh instantly
-    } catch (e) {
-      console.log("Delete error:", e);
-    }
+
+    await deleteTransaction(item._id, item.type);
+    clearExpenseCache();
+    markHomeDirty();
+    loadActivity();
   };
-
-  const handleEdit = (item) => {
-    if (isSplit(item)) return;
-    router.push(`/Transactions/Edit?id=${item._id}&type=${item.type}`);
-  };
-
-  const handleDetail = (item) => {
-    if (isSplit(item)) return;
-    router.push(`/Transactions/Detail?id=${item._id}&type=${item.type}`);
-  };
-
-  /* ---------------- SWIPE ACTIONS ---------------- */
-  const renderRightActions = (item) =>
-    isSplit(item)
-      ? null
-      : (
-        <TouchableOpacity
-          style={styles.deleteBtn}
-          onPress={() => handleDelete(item)}
-        >
-          <Ionicons name="trash" size={24} color="#fff" />
-        </TouchableOpacity>
-      );
-
-  const renderLeftActions = (item) =>
-    isSplit(item)
-      ? null
-      : (
-        <TouchableOpacity
-          style={styles.editBtn}
-          onPress={() => handleEdit(item)}
-        >
-          <Ionicons name="create" size={24} color="#fff" />
-        </TouchableOpacity>
-      );
 
   /* ---------------- LOADING ---------------- */
-  if (loading)
+  if (loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#196F63" />
       </View>
     );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
-
         {/* HEADER */}
-        <View style={styles.headerWrapper}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={26} color="#fff" />
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerText}>Transactions</Text>
+          <Text style={styles.headerTitle}>Transactions</Text>
         </View>
 
-        {/* SPLIT GROUP BUTTON */}
+        {/* CREATE SPLIT */}
         <TouchableOpacity
           style={styles.splitBtn}
           onPress={() => router.push("/Group/GroupsListScreen")}
         >
-          <Ionicons name="git-branch-outline" size={22} color="#fff" />
+          <Ionicons name="git-branch-outline" size={20} color="#fff" />
           <Text style={styles.splitText}>Create Split</Text>
         </TouchableOpacity>
 
-        {/* FILTER BUTTON */}
-        <View style={styles.filterBar}>
-          <TouchableOpacity
-            style={styles.filterBtn}
-            onPress={() => {
-              if (sortMode === "mode") setSortMode("");
-              else {
-                setSortMode("mode");
-                setSelectedMonth("");
-                setSelectedCategory("");
-              }
-            }}
-          >
-            <Ionicons name="filter-outline" size={18} color="#18493F" />
-            <Text style={styles.filterLabel}>Filters</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* FILTER MODES */}
-        {sortMode === "mode" && (
-          <View style={styles.filterOptions}>
-            <TouchableOpacity
-              style={styles.filterOption}
-              onPress={() => setSortMode("month")}
-            >
-              <Text style={styles.filterOptionText}>Sort by Month</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.filterOption}
-              onPress={() => setSortMode("category")}
-            >
-              <Text style={styles.filterOptionText}>Sort by Category</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* MONTH SELECTOR */}
-        {sortMode === "month" && (
-          <View style={styles.selectBox}>
-            {MONTHS.map((m) => (
-              <TouchableOpacity
-                key={m}
-                style={[
-                  styles.option,
-                  selectedMonth === m && styles.activeOption,
-                ]}
-                onPress={() => setSelectedMonth(m)}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    selectedMonth === m && styles.activeOptionText,
-                  ]}
-                >
-                  {m}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* CATEGORY SELECTOR */}
-        {sortMode === "category" && (
-          <View style={styles.selectBox}>
-            {CATEGORIES.map((c) => (
-              <TouchableOpacity
-                key={c}
-                style={[
-                  styles.option,
-                  selectedCategory === c && styles.activeOption,
-                ]}
-                onPress={() => setSelectedCategory(c)}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    selectedCategory === c && styles.activeOptionText,
-                  ]}
-                >
-                  {c}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* TRANSACTIONS LIST */}
+        {/* LIST */}
         <FlatList
-          data={filteredData}
+          data={activity}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={{ paddingBottom: 130 }}
-          renderItem={({ item }) => (
-            <Swipeable
-              enabled={!isSplit(item)}
-              renderRightActions={() => renderRightActions(item)}
-              renderLeftActions={() => renderLeftActions(item)}
-            >
-              <TransactionItem item={item} onPress={handleDetail} />
-            </Swipeable>
-          )}
+          contentContainerStyle={{ paddingBottom: 140 }}
+          renderItem={({ item }) => {
+            const isIncome = item.type === "income";
+            const color = isIncome ? "#16A34A" : "#DC2626";
+
+            return (
+              <Swipeable
+                enabled={!isSplit(item)}
+                renderRightActions={() =>
+                  !isSplit(item) && (
+                    <TouchableOpacity
+                      style={styles.deleteBtn}
+                      onPress={() => handleDelete(item)}
+                    >
+                      <Ionicons name="trash" size={22} color="#fff" />
+                    </TouchableOpacity>
+                  )
+                }
+              >
+                <View style={styles.card}>
+                  <View style={styles.left}>
+                    <View
+                      style={[
+                        styles.iconWrap,
+                        { backgroundColor: isIncome ? "#E8FFF2" : "#FFECEC" },
+                      ]}
+                    >
+                      {getCategoryIcon(item.category, color)}
+                    </View>
+
+                    <View>
+                      <Text style={styles.title}>{item.title}</Text>
+                      <Text style={styles.sub}>
+                        {item.category} ·{" "}
+                        {new Date(item.createdAt).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={[styles.amount, { color }]}>
+                    {isIncome ? "+" : "-"}
+                    {currencySymbol}
+                    {Number(item.amount).toLocaleString()}
+                  </Text>
+                </View>
+              </Swipeable>
+            );
+          }}
         />
 
         <BottomNav active="tx" />
@@ -287,135 +176,83 @@ export default function TransactionsScreen() {
   );
 }
 
-/* ---------------- SINGLE ITEM ---------------- */
-function TransactionItem({ item, onPress }) {
-  const isIncome = item.type === "income";
-  const color = isIncome ? "#198754" : "#D9534F";
-
-  return (
-    <TouchableOpacity style={styles.itemCard} onPress={() => onPress(item)}>
-      <View style={styles.itemLeft}>
-        {getCategoryIcon(item.category, color)}
-
-        <View>
-          <Text style={styles.itemTitle}>{item.title}</Text>
-          <Text style={styles.itemCat}>{item.category}</Text>
-        </View>
-      </View>
-
-      <Text style={[styles.amount, { color }]}>
-        {isIncome ? "+" : "-"}₹{item.amount}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 /* ---------------- STYLES ---------------- */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#F6FBF9" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  headerWrapper: {
-    paddingTop: 55,
-    paddingBottom: 25,
+  header: {
+    paddingTop: 75,
+    paddingBottom: 24,
     paddingHorizontal: 20,
     backgroundColor: "#196F63",
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
     flexDirection: "row",
     alignItems: "center",
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
   },
-  backBtn: { padding: 6, marginRight: 12 },
-  headerText: { fontSize: 26, fontWeight: "800", color: "#FFFFFF" },
+
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#fff",
+    marginLeft: 14,
+  },
 
   splitBtn: {
-    marginTop: -15,
     marginHorizontal: 20,
+    marginTop: -14,
+    marginBottom: 16,
     backgroundColor: "#196F63",
-    padding: 14,
+    paddingVertical: 14,
     borderRadius: 16,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     elevation: 3,
   },
-  splitText: { color: "#fff", fontSize: 16, fontWeight: "700", marginLeft: 10 },
 
-  filterBar: { paddingHorizontal: 20, marginTop: 16, marginBottom: 6 },
-  filterBtn: {
-    flexDirection: "row",
-    padding: 10,
-    backgroundColor: "#F8FFFD",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#CDE7E1",
-    alignItems: "center",
-    gap: 8,
-    width: 120,
-  },
-  filterLabel: { fontWeight: "600", color: "#18493F" },
-
-  filterOptions: {
-    backgroundColor: "#F1F8F6",
-    padding: 14,
-    borderRadius: 16,
-    marginHorizontal: 20,
-    marginBottom: 10,
-  },
-  filterOption: { paddingVertical: 8 },
-  filterOptionText: { fontSize: 16, fontWeight: "700", color: "#18493F" },
-
-  selectBox: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: 20,
-    marginBottom: 10,
+  splitText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    marginLeft: 10,
   },
 
-  option: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: "#E7F5EF",
-    borderRadius: 12,
-    margin: 4,
-  },
-  activeOption: { backgroundColor: "#196F63" },
-  optionText: { fontWeight: "700", color: "#18493F" },
-  activeOptionText: { color: "#fff" },
-
-  itemCard: {
+  card: {
     marginHorizontal: 20,
     marginVertical: 6,
     padding: 16,
-    backgroundColor: "#F8FFFD",
-    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E1F1EC",
+    borderColor: "#E2F1EC",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 1,
   },
 
-  itemLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  itemTitle: { fontSize: 16, fontWeight: "700", color: "#18493F" },
-  itemCat: { fontSize: 13, color: "#6F7E78", marginTop: 2 },
+  left: { flexDirection: "row", alignItems: "center", gap: 12 },
+
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  title: { fontSize: 16, fontWeight: "700", color: "#18493F" },
+  sub: { fontSize: 12, color: "#6F7E78", marginTop: 2 },
 
   amount: { fontSize: 18, fontWeight: "800" },
 
   deleteBtn: {
     width: 80,
-    backgroundColor: "#D9534F",
+    backgroundColor: "#DC2626",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 10,
-  },
-
-  editBtn: {
-    width: 80,
-    backgroundColor: "#198754",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 10,
+    borderRadius: 12,
+    marginVertical: 6,
   },
 });

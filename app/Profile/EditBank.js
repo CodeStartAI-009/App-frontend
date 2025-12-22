@@ -12,32 +12,83 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import BottomNav from "../components/BottomNav";
 import { secureUpdate } from "../../services/expenseService";
+import { useUserAuthStore } from "../../store/useAuthStore";
+
+/* ---------------- PAYMENT LABELS ---------------- */
+const PAYMENT_LABEL = {
+  IN: "UPI ID",
+  US: "Zelle",
+  EU: "SEPA Instant",
+  GB: "Faster Payments",
+  BR: "PIX",
+  SG: "PayNow",
+  AU: "PayID",
+  CA: "Interac",
+};
+
+/* Countries that do NOT require bank account input */
+const NO_BANK_REQUIRED = [
+  "IN",
+  "US",
+  "EU",
+  "GB",
+  "BR",
+  "SG",
+  "AU",
+  "CA",
+];
 
 export default function EditBank() {
   const router = useRouter();
+  const user = useUserAuthStore((s) => s.user);
 
-  const [upi, setUpi] = useState("");
+  const countryCode = user?.countryCode || "IN";
+  const paymentLabel =
+    PAYMENT_LABEL[countryCode] || "Payment ID";
+
+  const showBankInput = !NO_BANK_REQUIRED.includes(countryCode);
+
+  const [paymentId, setPaymentId] = useState("");
   const [bankNumber, setBankNumber] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /* ---------------- SAVE ---------------- */
   const handleSave = async () => {
-    if (!upi && !bankNumber) {
-      return Alert.alert("Nothing to Update", "Enter UPI or Bank Account Number.");
+    if (!paymentId && !bankNumber) {
+      return Alert.alert(
+        "Nothing to Update",
+        `Enter ${paymentLabel}${showBankInput ? " or bank account number" : ""}.`
+      );
     }
+
     if (!password) {
-      return Alert.alert("Password Required", "Enter password to update sensitive info.");
+      return Alert.alert(
+        "Password Required",
+        "Enter password to update sensitive information."
+      );
     }
 
     try {
       setLoading(true);
-      const res = await secureUpdate({ upi, bankNumber, password });
+
+      const res = await secureUpdate({
+        upi: paymentId,       // 🔐 always stored as upiHash
+        bankNumber: showBankInput ? bankNumber : undefined,
+        password,
+      });
 
       if (res.data.ok) {
-        Alert.alert("Success", "UPI / Bank Account updated successfully!");
+        Alert.alert(
+          "Success",
+          `${paymentLabel} updated successfully!`
+        );
         router.back();
       } else {
-        Alert.alert("Error", res.data.error || "Failed to update details.");
+        Alert.alert(
+          "Error",
+          res.data.error || "Failed to update details."
+        );
       }
     } catch (error) {
       Alert.alert("Error", "Wrong password or server error.");
@@ -53,31 +104,41 @@ export default function EditBank() {
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Edit Bank / UPI</Text>
+        <Text style={styles.headerText}>
+          Edit {paymentLabel}
+        </Text>
       </View>
 
       {/* CONTENT */}
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
-          <Text style={styles.label}>UPI ID</Text>
+          {/* PAYMENT ID */}
+          <Text style={styles.label}>{paymentLabel}</Text>
           <TextInput
             style={styles.input}
-            placeholder="example@upi"
+            placeholder={`Enter your ${paymentLabel}`}
             placeholderTextColor="#9CA3AF"
-            value={upi}
-            onChangeText={setUpi}
+            value={paymentId}
+            onChangeText={setPaymentId}
+            autoCapitalize="none"
           />
 
-          <Text style={styles.label}>Bank Account Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter bank account number"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            value={bankNumber}
-            onChangeText={setBankNumber}
-          />
+          {/* BANK ACCOUNT (ONLY IF REQUIRED) */}
+          {showBankInput && (
+            <>
+              <Text style={styles.label}>Bank Account Number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter bank account number"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="numeric"
+                value={bankNumber}
+                onChangeText={setBankNumber}
+              />
+            </>
+          )}
 
+          {/* PASSWORD */}
           <Text style={styles.label}>Enter Password (Required)</Text>
           <TextInput
             style={styles.input}
@@ -88,6 +149,7 @@ export default function EditBank() {
             onChangeText={setPassword}
           />
 
+          {/* SAVE */}
           <TouchableOpacity
             style={[styles.saveBtn, loading && styles.disabledBtn]}
             onPress={handleSave}
@@ -118,7 +180,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     elevation: 3,
-    shadowColor: "#00000030",
   },
 
   backBtn: {
@@ -146,7 +207,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D9EEE7",
     elevation: 2,
-    shadowColor: "#00000020",
   },
 
   label: {
@@ -174,7 +234,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 28,
     elevation: 3,
-    shadowColor: "#00000030",
   },
 
   disabledBtn: {

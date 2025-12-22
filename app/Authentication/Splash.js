@@ -1,4 +1,4 @@
-// app/Splash.js
+// app/Authentication/Splash.js
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { useRouter } from "expo-router";
@@ -11,43 +11,37 @@ export default function Splash() {
   const hydrated = useUserAuthStore((s) => s.hydrated);
   const user = useUserAuthStore((s) => s.user);
 
+  /* Fade animation */
   useEffect(() => {
-    // Fade animation
     Animated.timing(fade, {
       toValue: 1,
-      duration: 700,
+      duration: 500,
       useNativeDriver: true,
     }).start();
   }, []);
 
+  /* Navigate as soon as state is known */
   useEffect(() => {
-    // Wait until restoreSession finishes
     if (!hydrated) return;
 
-    const t = setTimeout(() => {
-      if (user) {
-        // USER ALREADY LOGGED IN → GO HOME
-        router.replace("/Home/Home");
-      } else {
-        // FIRST TIME USER OR LOGGED OUT → GO TO ONBOARDING
-        router.replace("/Authentication/Onboarding1");
-      }
-    }, 1500); // splash delay
-
-    return () => clearTimeout(t);
+    if (user) {
+      router.replace("/Home/Home");
+    } else {
+      router.replace("/Authentication/Onboarding1");
+    }
   }, [hydrated, user]);
 
   return (
-    <View style={s.container}>
-      <Animated.Text style={[s.logo, { opacity: fade }]}>
+    <View style={styles.container}>
+      <Animated.Text style={[styles.logo, { opacity: fade }]}>
         UniSpend
       </Animated.Text>
-      <Text style={s.tag}>Smart money for smart Future.</Text>
+      <Text style={styles.tag}>Smart money for smart future.</Text>
     </View>
   );
 }
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#4c6ef5",

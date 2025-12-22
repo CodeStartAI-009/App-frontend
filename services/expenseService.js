@@ -1,64 +1,143 @@
 // services/expenseService.js
-import api from "./api";   // Your configured axios instance
+import api from "./api";
 
-/***********************
- *  ADD TRANSACTIONS
- ************************/
-export const addExpense = (data) => api.post("/expense/add", data);
-export const addIncome = (data) => api.post("/income/add", data);
+/* =====================================================
+   IN-MEMORY CACHES (SESSION ONLY)
+   NOTE: Cleared on app restart or manual invalidation
+===================================================== */
+let cachedSummaryRes = null;
+let cachedMonthlyRes = null;
+let cachedRecentRes = null;
+let cachedActivityRes = null;
+let cachedProfileRes = null;
 
-/***********************
- *  SUMMARY ROUTES
- ************************/
+/* =====================================================
+   INTERNAL: CLEAR ALL CACHES
+===================================================== */
+export const clearExpenseCache = () => {
+  cachedSummaryRes = null;
+  cachedMonthlyRes = null;
+  cachedRecentRes = null;
+  cachedActivityRes = null;
+  cachedProfileRes = null;
+};
 
-export const getSummary = () => api.get("/summary");
-export const getTrendBreakdown = () => api.get("/summary/trends");
-export const getMonthlySummary = () => api.get("/summary/monthly");
+/* =====================================================
+   ADD TRANSACTIONS
+   → ALWAYS INVALIDATE ALL RELATED CACHES
+===================================================== */
+export const addExpense = async (data) => {
+  const res = await api.post("/expense/add", data);
+  clearExpenseCache();
+  return res;
+};
 
-/***********************
- *  ACTIVITY / RECENT
- ************************/
+export const addIncome = async (data) => {
+  const res = await api.post("/income/add", data);
+  clearExpenseCache();
+  return res;
+};
 
-export const getRecentActivity = () => api.get("/transactions/recent");
-export const getActivity = () => api.get("/transactions/balance");
+/* =====================================================
+   SUMMARY ROUTES
+===================================================== */
+export const getSummary = async (force = false) => {
+  if (!force && cachedSummaryRes) return cachedSummaryRes;
 
-/***********************
- *  DELETE + SINGLE
- ************************/
+  const res = await api.get("/summary");
+  cachedSummaryRes = res;
+  return res;
+};
 
-export const deleteTransaction = (id, type) =>
-  api.delete(`/transactions/delete/${type}/${id}`);
+export const getTrendBreakdown = async () => {
+  // Trends should always be fresh
+  return api.get("/summary/trends");
+};
 
-export const getSingleTransaction = (id) =>
-  api.get(`/transactions/single/${id}`);
-// UPDATE transaction (expense or income)
-export const updateTransaction = (id, data) =>
-  api.put(`/transactions/update/${id}`, data);
+export const getMonthlySummary = async (force = false) => {
+  if (!force && cachedMonthlyRes) return cachedMonthlyRes;
 
-/***********************
- *  USER PROFILE
- ************************/
+  const res = await api.get("/summary/monthly");
+  cachedMonthlyRes = res;
+  return res;
+};
 
-// Fetch profile (name, username, email, phone, hasUPI, hasBank, balance, monthlyIncome)
-export const fetchUserProfile = () => api.get("/user/profile");
+/* =====================================================
+   RECENT / ACTIVITY
+===================================================== */
+export const getRecentActivity = async (force = false) => {
+  if (!force && cachedRecentRes) return cachedRecentRes;
 
-// Update NON-sensitive profile fields (name, username, phone, upi, bankNumber)
-export const updateUserProfile = (data) => api.put("/user/update", data);
+  const res = await api.get("/transactions/recent");
+  cachedRecentRes = res;
+  return res;
+};
 
-/***********************
- *  USER FINANCE (NO PASSWORD)
- ************************/
+/**
+ * Backward-compatible activity endpoint
+ * Used by Transactions screen
+ */
+export const getActivity = async (force = false) => {
+  if (!force && cachedActivityRes) return cachedActivityRes;
 
-// Update bankBalance or monthlyIncome — does NOT need password
-export const updateFinance = (data) => api.put("/user/update-finance", data);
+  const res = await api.get("/transactions/balance");
+  cachedActivityRes = res;
+  return res;
+};
 
-/***********************
- *  SENSITIVE UPDATES (PASSWORD REQUIRED)
- ************************/
+/* =====================================================
+   TRANSACTION OPERATIONS
+===================================================== */
+export const deleteTransaction = async (id, type) => {
+  const res = await api.delete(`/transactions/delete/${type}/${id}`);
+  clearExpenseCache();
+  return res;
+};
 
-// Update email, phone, UPI, bank account — NEEDS password
-export const secureUpdate = (data) => api.put("/user/secure-update", data);
-export const changeEmail = (data) => api.put("/user/change-email", data);
-export const changePhone = (data) => api.put("/user/change-phone", data);
-// Change password — NEEDS current password
-export const changePassword = (data) => api.put("/user/change-password", data);
+export const getSingleTransaction = async (id) => {
+  return api.get(`/transactions/single/${id}`);
+};
+
+export const updateTransaction = async (id, data) => {
+  const res = await api.put(`/transactions/update/${id}`, data);
+  clearExpenseCache();
+  return res;
+};
+
+/* =====================================================
+   USER PROFILE (AFFECTS BALANCE)
+===================================================== */
+export const fetchUserProfile = async (force = false) => {
+  if (!force && cachedProfileRes) return cachedProfileRes;
+
+  const res = await api.get("/user/profile");
+  cachedProfileRes = res;
+  return res;
+};
+
+export const updateUserProfile = async (data) => {
+  const res = await api.put("/user/update", data);
+  clearExpenseCache();
+  return res;
+};
+
+export const updateFinance = async (data) => {
+  const res = await api.put("/user/update-finance", data);
+  clearExpenseCache();
+  return res;
+};
+
+export const secureUpdate = async (data) => {
+  const res = await api.put("/user/secure-update", data);
+  clearExpenseCache();
+  return res;
+};
+
+export const changeEmail = (data) =>
+  api.put("/user/change-email", data);
+
+export const changePhone = (data) =>
+  api.put("/user/change-phone", data);
+
+export const changePassword = (data) =>
+  api.put("/user/change-password", data);

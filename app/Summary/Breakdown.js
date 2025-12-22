@@ -1,10 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
 import Monthly from "./Monthly";
@@ -18,7 +13,6 @@ export default function BreakdownScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-
       {/* HEADER */}
       <View style={styles.headerWrapper}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -27,52 +21,24 @@ export default function BreakdownScreen() {
         <Text style={styles.headerText}>Breakdown</Text>
       </View>
 
-      {/* SEGMENTED TABS */}
+      {/* TABS */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabBtn, tab === "monthly" && styles.activeTab]}
-          onPress={() => setTab("monthly")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              tab === "monthly" && styles.activeTabText
-            ]}
+        {["monthly", "category", "trends"].map((t) => (
+          <TouchableOpacity
+            key={t}
+            style={[styles.tabBtn, tab === t && styles.activeTab]}
+            onPress={() => setTab(t)}
           >
-            Monthly
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabBtn, tab === "category" && styles.activeTab]}
-          onPress={() => setTab("category")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              tab === "category" && styles.activeTabText
-            ]}
-          >
-            Category
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabBtn, tab === "trends" && styles.activeTab]}
-          onPress={() => setTab("trends")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              tab === "trends" && styles.activeTabText
-            ]}
-          >
-            Trends
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[styles.tabText, tab === t && styles.activeTabText]}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* ⭐ AI BUTTON */}
+      {/* AI BUTTON */}
       <View style={styles.aiWrapper}>
         <TouchableOpacity
           style={styles.aiButton}
@@ -95,10 +61,7 @@ export default function BreakdownScreen() {
   );
 }
 
-/* -------------------------------- STYLES -------------------------------- */
-
 const styles = StyleSheet.create({
-  /* HEADER */
   headerWrapper: {
     paddingTop: 55,
     paddingBottom: 25,
@@ -110,13 +73,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   backBtn: { padding: 6, marginRight: 12 },
-  headerText: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
+  headerText: { fontSize: 26, fontWeight: "800", color: "#fff" },
 
-  /* TABS DESIGN (Floating segmented style) */
   tabContainer: {
     flexDirection: "row",
     marginTop: -20,
@@ -124,8 +82,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#E7F5EF",
     borderRadius: 30,
     padding: 5,
-    justifyContent: "space-between",
-    elevation: 3,
   },
   tabBtn: {
     flex: 1,
@@ -133,24 +89,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
   },
-  activeTab: {
-    backgroundColor: "#196F63",
-    elevation: 3,
-  },
-  tabText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#18493F",
-  },
-  activeTabText: {
-    color: "#FFFFFF",
-  },
+  activeTab: { backgroundColor: "#196F63" },
+  tabText: { fontSize: 15, fontWeight: "700", color: "#18493F" },
+  activeTabText: { color: "#fff" },
 
-  /* AI BUTTON */
-  aiWrapper: {
-    alignItems: "center",
-    marginTop: 14,
-  },
+  aiWrapper: { alignItems: "center", marginTop: 14 },
   aiButton: {
     flexDirection: "row",
     backgroundColor: "#196F63",
@@ -159,15 +102,6 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     gap: 8,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.13,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
   },
-  aiButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  aiButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

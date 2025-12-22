@@ -1,4 +1,3 @@
-// app/Group/GroupListScreen.js
 import React, { useState, useCallback } from "react";
 import {
   View,
@@ -36,14 +35,13 @@ export default function GroupListScreen() {
       const p = await getMyParticipantGroups();
       setCreated(c.data.groups || []);
       setParticipating(p.data.groups || []);
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Failed to load groups");
     } finally {
       setLoading(false);
     }
   }
 
-  // REFRESH LIST WHEN SCREEN IS FOCUSED
   useFocusEffect(
     useCallback(() => {
       loadData();
@@ -51,7 +49,7 @@ export default function GroupListScreen() {
   );
 
   async function completeGroup(groupId) {
-    Alert.alert("Complete Group?", "This marks the entire group as completed.", [
+    Alert.alert("Complete Group?", "This marks the group as completed.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Yes",
@@ -59,7 +57,7 @@ export default function GroupListScreen() {
           try {
             const res = await markGroupComplete(groupId);
             if (res.data.ok) {
-              Alert.alert("Success", "Group marked as completed");
+              Alert.alert("Success", "Group completed");
               loadData();
             }
           } catch {
@@ -71,7 +69,10 @@ export default function GroupListScreen() {
   }
 
   const RightActions = ({ id }) => (
-    <TouchableOpacity onPress={() => completeGroup(id)} style={styles.swipeComplete}>
+    <TouchableOpacity
+      onPress={() => completeGroup(id)}
+      style={styles.swipeComplete}
+    >
       <Ionicons name="checkmark-done-outline" size={26} color="#fff" />
       <Text style={styles.swipeText}>Complete</Text>
     </TouchableOpacity>
@@ -79,7 +80,9 @@ export default function GroupListScreen() {
 
   const LeftActions = ({ id }) => (
     <TouchableOpacity
-      onPress={() => router.push(`/Group/EditGroupScreen?groupId=${id}`)}
+      onPress={() =>
+        router.push(`/Group/EditGroupScreen?groupId=${id}`)
+      }
       style={styles.swipeEdit}
     >
       <Ionicons name="create-outline" size={26} color="#fff" />
@@ -90,10 +93,12 @@ export default function GroupListScreen() {
   function renderOwnerItem({ item }) {
     const card = (
       <TouchableOpacity
-        onPress={() => router.push(`/Group/GroupDetailsScreen?groupId=${item._id}`)}
+        onPress={() =>
+          router.push(`/Group/GroupDetailsScreen?groupId=${item._id}`)
+        }
         style={styles.card}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <View style={styles.cardLeft}>
           <View style={styles.cardIcon}>
             <Ionicons name="people-outline" size={22} color="#196F63" />
           </View>
@@ -125,10 +130,12 @@ export default function GroupListScreen() {
   function renderMemberItem({ item }) {
     return (
       <TouchableOpacity
-        onPress={() => router.push(`/Group/GroupDetailsScreen?groupId=${item._id}`)}
+        onPress={() =>
+          router.push(`/Group/GroupDetailsScreen?groupId=${item._id}`)
+        }
         style={styles.card}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <View style={styles.cardLeft}>
           <View style={styles.cardIcon}>
             <Ionicons name="person-outline" size={22} color="#196F63" />
           </View>
@@ -160,6 +167,13 @@ export default function GroupListScreen() {
     <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
       {/* HEADER */}
       <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+        >
+          <Ionicons name="arrow-back" size={26} color="#fff" />
+        </TouchableOpacity>
+
         <Text style={styles.headerText}>Split Groups</Text>
       </View>
 
@@ -169,7 +183,12 @@ export default function GroupListScreen() {
           style={[styles.tabBtn, activeTab === "created" && styles.activeTab]}
           onPress={() => setActiveTab("created")}
         >
-          <Text style={[styles.tabText, activeTab === "created" && styles.activeTabText]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "created" && styles.activeTabText,
+            ]}
+          >
             Created
           </Text>
         </TouchableOpacity>
@@ -178,7 +197,12 @@ export default function GroupListScreen() {
           style={[styles.tabBtn, activeTab === "member" && styles.activeTab]}
           onPress={() => setActiveTab("member")}
         >
-          <Text style={[styles.tabText, activeTab === "member" && styles.activeTabText]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "member" && styles.activeTabText,
+            ]}
+          >
             Member
           </Text>
         </TouchableOpacity>
@@ -187,7 +211,9 @@ export default function GroupListScreen() {
       {/* LIST */}
       <FlatList
         data={activeList}
-        renderItem={activeTab === "created" ? renderOwnerItem : renderMemberItem}
+        renderItem={
+          activeTab === "created" ? renderOwnerItem : renderMemberItem
+        }
         keyExtractor={(item) => item._id}
         ListEmptyComponent={
           <View style={{ marginTop: 40, alignItems: "center" }}>
@@ -210,7 +236,7 @@ export default function GroupListScreen() {
   );
 }
 
-/* -------------------------- STYLES -------------------------- */
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
@@ -223,7 +249,15 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     elevation: 6,
+    flexDirection: "row",
+    alignItems: "center",
   },
+
+  backBtn: {
+    marginRight: 12,
+    padding: 4,
+  },
+
   headerText: {
     color: "#fff",
     fontSize: 28,
@@ -238,24 +272,19 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 4,
   },
+
   tabBtn: {
     flex: 1,
     paddingVertical: 10,
     alignItems: "center",
     borderRadius: 12,
   },
-  tabText: {
-    color: "#18493F",
-    fontWeight: "700",
-  },
-  activeTab: {
-    backgroundColor: "#196F63",
-    elevation: 3,
-  },
-  activeTabText: {
-    color: "#fff",
-    fontWeight: "800",
-  },
+
+  tabText: { color: "#18493F", fontWeight: "700" },
+
+  activeTab: { backgroundColor: "#196F63", elevation: 3 },
+
+  activeTabText: { color: "#fff", fontWeight: "800" },
 
   card: {
     backgroundColor: "#FFFFFF",
@@ -269,6 +298,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     elevation: 2,
+  },
+
+  cardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
 
   cardIcon: {
@@ -302,6 +337,7 @@ const styles = StyleSheet.create({
     width: 100,
     borderRadius: 14,
   },
+
   swipeEdit: {
     backgroundColor: "#F59E0B",
     justifyContent: "center",
@@ -309,15 +345,12 @@ const styles = StyleSheet.create({
     width: 100,
     borderRadius: 14,
   },
-  swipeText: {
-    color: "#fff",
-    fontWeight: "700",
-    marginTop: 4,
-  },
+
+  swipeText: { color: "#fff", fontWeight: "700", marginTop: 4 },
 
   fab: {
     position: "absolute",
-    bottom: 90,
+    bottom: 130,
     right: 25,
     width: 62,
     height: 62,
