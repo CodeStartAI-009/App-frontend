@@ -1,5 +1,5 @@
 // app/Group/CreateGroupScreen.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+
 import { createSplitGroup } from "../../services/splitService";
 import { useUserAuthStore } from "../../store/useAuthStore";
 import { formatMoney } from "../../utils/money";
+import { trackEvent } from "../../utils/analytics";
 
 // ⭐ Ads
 import {
@@ -35,58 +37,61 @@ const PAYMENT_LABEL = {
 
 export default function CreateGroupScreen() {
   const router = useRouter();
-
   const user = useUserAuthStore((s) => s.user);
 
   const currency = user?.currency || "INR";
   const countryCode = user?.countryCode || "IN";
+  const paymentLabel = PAYMENT_LABEL[countryCode] || "Payment ID";
 
-  const paymentLabel =
-    PAYMENT_LABEL[countryCode] || "Payment ID";
-
-  /* 🔐 PROFILE STATE */
   const hasSavedPayment = Boolean(user?.upiHash);
 
-  /* ---------------- LOCAL STATE ---------------- */
   const [title, setTitle] = useState("");
   const [participants, setParticipants] = useState([]);
 
   const [tempUser, setTempUser] = useState("");
   const [tempAmount, setTempAmount] = useState("");
 
-  // Only used if not already saved
   const [paymentInput, setPaymentInput] = useState("");
-
   const [adLoaded, setAdLoaded] = useState(false);
+
+  const viewedRef = useRef(false);
 
   /* ---------------- LOAD ADS ---------------- */
   useEffect(() => {
     loadInterstitial(setAdLoaded);
   }, []);
 
+  /* ---------------- SCREEN VIEW ---------------- */
+  useEffect(() => {
+    if (!viewedRef.current) {
+      trackEvent("group_create_screen_viewed");
+      viewedRef.current = true;
+    }
+  }, []);
+
   /* ---------------- ADD PARTICIPANT ---------------- */
   function addParticipant() {
-    if (!tempUser.trim() || !tempAmount.trim())
+    const identifier = tempUser.trim().toLowerCase();
+    const amount = Number(tempAmount);
+
+    if (!identifier || !tempAmount) {
       return Alert.alert("Error", "Please enter user and amount");
+    }
 
-    if (Number(tempAmount) <= 0)
+    if (isNaN(amount) || amount <= 0) {
       return Alert.alert("Error", "Amount must be greater than zero");
+    }
 
-    if (
-      participants.find(
-        (p) => p.identifier === tempUser.trim().toLowerCase()
-      )
-    ) {
+    if (participants.find((p) => p.identifier === identifier)) {
       return Alert.alert("Error", "User already added");
     }
 
     setParticipants((prev) => [
       ...prev,
-      {
-        identifier: tempUser.trim().toLowerCase(),
-        amountToPay: Number(tempAmount),
-      },
+      { identifier, amountToPay: amount },
     ]);
+
+    trackEvent("group_participant_added");
 
     setTempUser("");
     setTempAmount("");
@@ -94,10 +99,12 @@ export default function CreateGroupScreen() {
 
   /* ---------------- CREATE GROUP ---------------- */
   async function handleCreate() {
-    if (!title.trim())
-      return Alert.alert("Error", "Enter group title");
+    const trimmedTitle = title.trim();
 
-    // If user has no saved payment, require input
+    if (!trimmedTitle) {
+      return Alert.alert("Error", "Enter group title");
+    }
+
     if (!hasSavedPayment && !paymentInput.trim()) {
       return Alert.alert(
         "Payment Required",
@@ -105,30 +112,32 @@ export default function CreateGroupScreen() {
       );
     }
 
-    if (participants.length === 0)
+    if (participants.length === 0) {
       return Alert.alert("Error", "Add at least one participant");
+    }
 
     try {
       const res = await createSplitGroup({
-        title,
+        title: trimmedTitle,
         creatorUPI: hasSavedPayment ? null : paymentInput.trim(),
         participants,
       });
 
       if (res?.data?.ok) {
-        Alert.alert("Success", "Group created!");
+        trackEvent("group_created", {
+          participants: participants.length,
+        });
 
         if (adLoaded) showInterstitial();
         loadInterstitial(setAdLoaded);
 
         router.back();
       } else {
-        Alert.alert(
-          "Error",
-          res?.data?.error || "Failed to create group"
-        );
+        trackEvent("group_create_failed");
+        Alert.alert("Error", res?.data?.error || "Failed to create group");
       }
     } catch (err) {
+      trackEvent("group_create_failed");
       Alert.alert("Error", "Server error");
     }
   }
@@ -165,11 +174,7 @@ export default function CreateGroupScreen() {
 
           {hasSavedPayment ? (
             <View style={styles.readonlyBox}>
-              <Ionicons
-                name="checkmark-circle"
-                size={18}
-                color="#16A34A"
-              />
+              <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
               <Text style={styles.readonlyText}>
                 Using your saved {paymentLabel}
               </Text>
@@ -220,20 +225,19 @@ export default function CreateGroupScreen() {
             {participants.map((p, i) => (
               <View key={i} style={styles.participantRow}>
                 <View>
-                  <Text style={styles.participantName}>
-                    {p.identifier}
-                  </Text>
+                  <Text style={styles.participantName}>{p.identifier}</Text>
                   <Text style={styles.participantAmount}>
                     {formatMoney(p.amountToPay, currency)}
                   </Text>
                 </View>
 
                 <TouchableOpacity
-                  onPress={() =>
+                  onPress={() => {
                     setParticipants((prev) =>
                       prev.filter((_, idx) => idx !== i)
-                    )
-                  }
+                    );
+                    trackEvent("group_participant_removed");
+                  }}
                 >
                   <Ionicons
                     name="trash-outline"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNav from "../components/BottomNav";
@@ -6,10 +6,26 @@ import Monthly from "./Monthly";
 import Category from "./Category";
 import Trends from "./Trends";
 import { useRouter } from "expo-router";
+import { trackEvent } from "../../utils/analytics";
 
 export default function BreakdownScreen() {
   const router = useRouter();
   const [tab, setTab] = useState("monthly");
+
+  // 🔒 prevent duplicate view tracking
+  const viewedRef = useRef(false);
+
+  if (!viewedRef.current) {
+    trackEvent("summary_screen_viewed");
+    viewedRef.current = true;
+  }
+
+  const changeTab = (nextTab) => {
+    if (nextTab === tab) return;
+
+    setTab(nextTab);
+    trackEvent("summary_tab_changed", { tab: nextTab });
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
@@ -27,7 +43,7 @@ export default function BreakdownScreen() {
           <TouchableOpacity
             key={t}
             style={[styles.tabBtn, tab === t && styles.activeTab]}
-            onPress={() => setTab(t)}
+            onPress={() => changeTab(t)}
           >
             <Text
               style={[styles.tabText, tab === t && styles.activeTabText]}
@@ -42,7 +58,10 @@ export default function BreakdownScreen() {
       <View style={styles.aiWrapper}>
         <TouchableOpacity
           style={styles.aiButton}
-          onPress={() => router.push("/ai-insights/chat-screen")}
+          onPress={() => {
+            trackEvent("ai_chat_opened", { source: "summary" });
+            router.push("/ai-insights/chat-screen");
+          }}
         >
           <Ionicons name="sparkles" size={22} color="#fff" />
           <Text style={styles.aiButtonText}>Chat With AI</Text>
@@ -61,6 +80,8 @@ export default function BreakdownScreen() {
   );
 }
 
+/* ---------------- STYLES ---------------- */
+
 const styles = StyleSheet.create({
   headerWrapper: {
     paddingTop: 55,
@@ -72,7 +93,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+
   backBtn: { padding: 6, marginRight: 12 },
+
   headerText: { fontSize: 26, fontWeight: "800", color: "#fff" },
 
   tabContainer: {
@@ -83,17 +106,26 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     padding: 5,
   },
+
   tabBtn: {
     flex: 1,
     paddingVertical: 10,
     borderRadius: 24,
     alignItems: "center",
   },
+
   activeTab: { backgroundColor: "#196F63" },
-  tabText: { fontSize: 15, fontWeight: "700", color: "#18493F" },
+
+  tabText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#18493F",
+  },
+
   activeTabText: { color: "#fff" },
 
   aiWrapper: { alignItems: "center", marginTop: 14 },
+
   aiButton: {
     flexDirection: "row",
     backgroundColor: "#196F63",
@@ -103,5 +135,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  aiButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+
+  aiButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 });

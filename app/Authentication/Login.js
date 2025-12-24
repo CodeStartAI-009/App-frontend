@@ -10,9 +10,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+
 import { useUserAuthStore } from "../../store/useAuthStore";
-import { registerForPushNotifications } from "../../utils/notifications";  // <-- ADD
-import api from "../../services/api"; // <-- ADD
+import { registerForPushNotifications } from "../../utils/notifications";
+import api from "../../services/api";
+
+const ADMIN_EMAIL = "vxs1909@gmail.com";
 
 export default function Login() {
   const router = useRouter();
@@ -28,8 +31,10 @@ export default function Login() {
       return;
     }
 
+    const identifier = emailOrPhone.trim().toLowerCase();
+
     const res = await loginUser({
-      emailOrPhone: emailOrPhone.trim(),
+      emailOrPhone: identifier,
       password,
     });
 
@@ -39,19 +44,28 @@ export default function Login() {
     }
 
     /* ---------------------------------------------------
-        🔥 Register Push Notification Token After Login
+        🔔 Register Push Notification Token (NON-BLOCKING)
     --------------------------------------------------- */
     try {
       const token = await registerForPushNotifications();
-
       if (token) {
         await api.post("/notifications/save-token", { token });
-        console.log("Expo push token saved ✔");
       }
     } catch (err) {
-      console.log("❌ Failed to save push token", err);
+      console.log("Push token save failed:", err?.message);
     }
 
+    /* ---------------------------------------------------
+        🛡 ADMIN ROUTING (HARDCODED)
+    --------------------------------------------------- */
+    if (identifier === ADMIN_EMAIL) {
+      router.replace("/Admin/AnalyticsDashboard");
+      return;
+    }
+
+    /* ---------------------------------------------------
+        👤 NORMAL USER ROUTING
+    --------------------------------------------------- */
     router.replace("/Home/Home");
   };
 
@@ -69,6 +83,7 @@ export default function Login() {
           placeholder="Email or Mobile"
           value={emailOrPhone}
           onChangeText={setEmailOrPhone}
+          autoCapitalize="none"
         />
       </View>
 
@@ -114,7 +129,7 @@ export default function Login() {
   );
 }
 
-/* ---------------- IMPROVED UI STYLES ---------------- */
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   container: {
@@ -147,10 +162,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
     elevation: 2,
   },
 
@@ -175,10 +186,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
     elevation: 3,
   },
 

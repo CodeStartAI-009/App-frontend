@@ -1,5 +1,5 @@
 // app/Goals/CreateGoal.js
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
+
 import BottomNav from "../components/BottomNav";
 import { createGoal } from "../../services/goalService";
 import { useUserAuthStore } from "../../store/useAuthStore";
 import { formatCurrencyLabel } from "../../utils/money";
+import { trackEvent } from "../../utils/analytics";
 
 // Interstitial Ads
 import {
@@ -26,49 +28,69 @@ export default function CreateGoal() {
   const router = useRouter();
 
   const user = useUserAuthStore((s) => s.user);
+  const markHomeDirty = useUserAuthStore((s) => s.markHomeDirty);
 
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [adLoaded, setAdLoaded] = useState(false);
 
+  const viewedRef = useRef(false);
+
   const currencySymbol = formatCurrencyLabel(user?.currency || "INR");
 
-  // Load interstitial ad
+  /* ---------------- LOAD AD ---------------- */
   useEffect(() => {
     loadInterstitial(setAdLoaded);
   }, []);
 
-  // Clear form on focus
+  /* ---------------- SCREEN VIEW ---------------- */
   useFocusEffect(
     useCallback(() => {
+      if (!viewedRef.current) {
+        trackEvent("goal_create_screen_viewed");
+        viewedRef.current = true;
+      }
+
+      // reset form every time
       setTitle("");
       setAmount("");
     }, [])
   );
 
+  /* ---------------- SAVE GOAL ---------------- */
   const saveGoal = async () => {
-    if (!title || !amount)
-      return Alert.alert("Missing Fields", "Title and amount are required.");
+    const trimmedTitle = title.trim();
+    const numericAmount = Number(amount);
 
-    if (isNaN(amount))
-      return Alert.alert("Invalid Amount", "Enter a valid number.");
+    if (!trimmedTitle || !amount) {
+      return Alert.alert("Missing Fields", "Title and amount are required.");
+    }
+
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      return Alert.alert("Invalid Amount", "Enter a valid positive number.");
+    }
 
     try {
       const res = await createGoal({
-        title,
-        amount: Number(amount), // ALWAYS number
+        title: trimmedTitle,
+        amount: numericAmount,
       });
 
       if (res.data.ok) {
-        Alert.alert("Success", "Goal created successfully!");
+        trackEvent("goal_created", {
+          amount: numericAmount,
+        });
+
+        markHomeDirty();
 
         if (adLoaded) showInterstitial();
         loadInterstitial(setAdLoaded);
 
-        router.push("/Goals/Overview");
+        router.replace("/Goals/Overview");
       }
     } catch (err) {
-      console.error(err);
+      trackEvent("goal_create_failed");
+      console.error("GOAL CREATE ERROR:", err);
       Alert.alert("Error", "Failed to create goal");
     }
   };

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import {
   Swipeable,
@@ -23,6 +24,7 @@ import BottomNav from "../components/BottomNav";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useUserAuthStore } from "../../store/useAuthStore";
 import { formatCurrencyLabel } from "../../utils/money";
+import { trackEvent } from "../../utils/analytics";
 
 /* ---------------- ICON PICKER ---------------- */
 function getCategoryIcon(category, color) {
@@ -39,6 +41,8 @@ function getCategoryIcon(category, color) {
       return <Ionicons name="arrow-up-circle" size={22} color={color} />;
     case "split group":
       return <Ionicons name="git-branch-outline" size={22} color={color} />;
+    case "goal saving":
+      return <Ionicons name="trophy-outline" size={22} color={color} />;
     default:
       return <Ionicons name="albums-outline" size={20} color={color} />;
   }
@@ -54,10 +58,12 @@ export default function TransactionsScreen() {
 
   const [loading, setLoading] = useState(true);
   const [activity, setActivity] = useState([]);
+  const deletingRef = useRef(false);
 
   /* ---------------- LOAD ---------------- */
   useFocusEffect(
     useCallback(() => {
+      trackEvent("transaction_list_viewed");
       loadActivity();
     }, [])
   );
@@ -74,17 +80,48 @@ export default function TransactionsScreen() {
     }
   };
 
-  const isSplit = (item) =>
-    (item.category || "").toLowerCase() === "split group";
+  const isProtected = (item) => {
+    const cat = (item.category || "").toLowerCase();
+    return cat === "split group" || cat === "goal saving";
+  };
 
   /* ---------------- DELETE ---------------- */
   const handleDelete = async (item) => {
-    if (isSplit(item)) return;
+    if (isProtected(item)) return;
 
-    await deleteTransaction(item._id, item.type);
-    clearExpenseCache();
-    markHomeDirty();
-    loadActivity();
+    if (deletingRef.current) return;
+    deletingRef.current = true;
+
+    Alert.alert(
+      "Delete Transaction",
+      "This action cannot be undone. Continue?",
+      [
+        { text: "Cancel", style: "cancel", onPress: () => (deletingRef.current = false) },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteTransaction(item._id, item.type);
+
+              trackEvent("transaction_deleted", {
+                type: item.type,
+                category: item.category,
+                amount: item.amount,
+              });
+
+              clearExpenseCache();
+              markHomeDirty();
+              loadActivity();
+            } catch (err) {
+              Alert.alert("Error", "Failed to delete transaction");
+            } finally {
+              deletingRef.current = false;
+            }
+          },
+        },
+      ]
+    );
   };
 
   /* ---------------- LOADING ---------------- */
@@ -127,9 +164,9 @@ export default function TransactionsScreen() {
 
             return (
               <Swipeable
-                enabled={!isSplit(item)}
+                enabled={!isProtected(item)}
                 renderRightActions={() =>
-                  !isSplit(item) && (
+                  !isProtected(item) && (
                     <TouchableOpacity
                       style={styles.deleteBtn}
                       onPress={() => handleDelete(item)}
@@ -144,7 +181,11 @@ export default function TransactionsScreen() {
                     <View
                       style={[
                         styles.iconWrap,
-                        { backgroundColor: isIncome ? "#E8FFF2" : "#FFECEC" },
+                        {
+                          backgroundColor: isIncome
+                            ? "#E8FFF2"
+                            : "#FFECEC",
+                        },
                       ]}
                     >
                       {getCategoryIcon(item.category, color)}

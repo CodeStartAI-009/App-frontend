@@ -10,6 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useUserAuthStore } from "../../store/useAuthStore";
+import { trackEvent } from "../../utils/analytics"; // ✅ ADD
 
 export default function Signup() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  const [agreed, setAgreed] = useState(false); // AGREEMENT CHECKBOX
+  const [agreed, setAgreed] = useState(false);
 
   /* ---------------------------------------------
       HANDLE SIGNUP
@@ -43,11 +44,11 @@ export default function Signup() {
     if (!agreed) {
       return Alert.alert(
         "Agreement Required",
-        "You must agree to the Terms & Conditions and Privacy Policy to continue."
+        "You must agree to the Terms & Conditions and Privacy Policy."
       );
     }
 
-    // SEND AGREEMENT TO BACKEND
+    // ---------------- SIGNUP ----------------
     const res = await signupUser({
       name,
       email,
@@ -59,8 +60,14 @@ export default function Signup() {
       return Alert.alert("Signup Failed", res.error || "Try again later");
     }
 
-    // AUTO LOGIN AFTER SIGNUP
-    const loginRes = await loginUser({ emailOrPhone: email, password });
+    // ✅ ANALYTICS — SIGNUP COMPLETED (FUNNEL ENTRY)
+    trackEvent("user_signup");
+
+    // ---------------- AUTO LOGIN ----------------
+    const loginRes = await loginUser({
+      emailOrPhone: email,
+      password,
+    });
 
     if (!loginRes.ok) {
       return Alert.alert("Error", "Account created, but login failed");
@@ -107,7 +114,6 @@ export default function Signup() {
           value={password}
           onChangeText={setPassword}
         />
-
         <TouchableOpacity onPress={() => setShowPwd(!showPwd)}>
           <Ionicons
             name={showPwd ? "eye-off-outline" : "eye-outline"}
@@ -169,8 +175,12 @@ export default function Signup() {
       </TouchableOpacity>
 
       {/* LOGIN REDIRECT */}
-      <TouchableOpacity onPress={() => router.replace("/Authentication/Login")}>
-        <Text style={styles.loginLink}>Already have an account? Login</Text>
+      <TouchableOpacity
+        onPress={() => router.replace("/Authentication/Login")}
+      >
+        <Text style={styles.loginLink}>
+          Already have an account? Login
+        </Text>
       </TouchableOpacity>
     </View>
   );

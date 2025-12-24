@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -19,35 +19,37 @@ import {
 } from "../../services/expenseService";
 import { formatMoney, formatCurrencyLabel } from "../../utils/money";
 import BottomNav from "../components/BottomNav";
+import { trackEvent } from "../../utils/analytics";
 
 export default function Home() {
   const router = useRouter();
-
-  const { user, hydrated, homeCache, homeDirty, setHomeCache } =
-    useUserAuthStore();
+  const { user, hydrated, setHomeCache } = useUserAuthStore();
 
   const currencyCode = user?.currency || "INR";
   const currencySymbol = formatCurrencyLabel(currencyCode);
 
-  const [balance, setBalance] = useState(
-    homeCache?.balance || { total: 0, income: 0, expenses: 0 }
-  );
-  const [recent, setRecent] = useState(homeCache?.recent || []);
-  const [loadingBalance, setLoadingBalance] = useState(!homeCache);
-  const [loadingRecent, setLoadingRecent] = useState(!homeCache);
+  const [balance, setBalance] = useState({
+    total: 0,
+    income: 0,
+    expenses: 0,
+  });
+  const [recent, setRecent] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [fabOpen, setFabOpen] = useState(false);
 
-  /* ---------------- LOAD HOME DATA ---------------- */
-  const loadHomeData = async (force = false) => {
-    if (homeCache && !force) return;
+  // 🔒 Prevent duplicate analytics on same focus
+  const screenTrackedRef = useRef(false);
 
-    setLoadingBalance(true);
-    setLoadingRecent(true);
+  /* =====================================================
+     LOAD HOME DATA
+  ===================================================== */
+  const loadHomeData = async () => {
+    setLoading(true);
 
     try {
       const [summaryRes, recentRes] = await Promise.all([
-        getMonthlySummary(force),
-        getRecentActivity(force),
+        getMonthlySummary(true),
+        getRecentActivity(true),
       ]);
 
       const summary = summaryRes.data;
@@ -79,21 +81,31 @@ export default function Home() {
     } catch (err) {
       console.log("HOME LOAD ERROR:", err);
     } finally {
-      setLoadingBalance(false);
-      setLoadingRecent(false);
+      setLoading(false);
     }
   };
 
-  /* ---------------- LOAD ON FOCUS ---------------- */
+  /* =====================================================
+     SCREEN FOCUS
+  ===================================================== */
   useFocusEffect(
     useCallback(() => {
       if (!hydrated || !user) return;
-      loadHomeData(homeDirty);
-    }, [hydrated, user?._id, homeDirty])
+
+      if (!screenTrackedRef.current) {
+        trackEvent("home_screen_viewed");
+        screenTrackedRef.current = true;
+      }
+
+      loadHomeData();
+
+      return () => {
+        screenTrackedRef.current = false;
+      };
+    }, [hydrated, user?._id])
   );
 
-  /* ---------------- GREETING ---------------- */
-  const topGreeting = useMemo(() => {
+  const greeting = useMemo(() => {
     const hr = new Date().getHours();
     if (hr < 12) return "Good morning";
     if (hr < 18) return "Good afternoon";
@@ -113,19 +125,32 @@ export default function Home() {
       {/* HEADER */}
       <LinearGradient colors={["#196F63", "#145A52"]} style={styles.header}>
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => router.push("/Profile/Profile")}>
-            <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+          <TouchableOpacity
+            onPress={() => {
+              trackEvent("profile_opened");
+              router.push("/Profile/Profile");
+            }}
+          >
+            <Image
+              source={{
+                uri: user.avatarUrl || "https://placehold.co/100x100",
+              }}
+              style={styles.avatar}
+            />
           </TouchableOpacity>
 
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.greeting}>
-              {topGreeting},{" "}
+              {greeting},{" "}
               <Text style={{ fontWeight: "800" }}>{user.name}</Text>
             </Text>
           </View>
 
           <TouchableOpacity
-            onPress={() => router.push("/Profile/Notification")}
+            onPress={() => {
+              trackEvent("notification_opened");
+              router.push("/Profile/Notification");
+            }}
           >
             <Ionicons name="notifications-outline" size={26} color="#fff" />
           </TouchableOpacity>
@@ -134,26 +159,18 @@ export default function Home() {
         {/* BALANCE */}
         <View style={styles.glassCard}>
           <Text style={styles.balanceLabel}>Total Balance</Text>
-
           <Text style={styles.balanceValue}>
-            {loadingBalance
-              ? "— — —"
-              : formatMoney(balance.total, currencyCode)}
+            {loading ? "— — —" : formatMoney(balance.total, currencyCode)}
           </Text>
 
           <View style={styles.miniRow}>
             <Text style={styles.smallLight}>
               Income:{" "}
-              {loadingBalance
-                ? "—"
-                : formatMoney(balance.income, currencyCode)}
+              {loading ? "—" : formatMoney(balance.income, currencyCode)}
             </Text>
-
             <Text style={[styles.smallLight, { marginLeft: 14 }]}>
               Expenses:{" "}
-              {loadingBalance
-                ? "—"
-                : formatMoney(balance.expenses, currencyCode)}
+              {loading ? "—" : formatMoney(balance.expenses, currencyCode)}
             </Text>
           </View>
         </View>
@@ -163,15 +180,14 @@ export default function Home() {
       <View style={styles.recentBox}>
         <Text style={styles.title}>Recent Activity</Text>
 
-        {loadingRecent ? (
-          <Text style={styles.emptyText}>Loading activity…</Text>
+        {loading ? (
+          <Text style={styles.emptyText}>Loading…</Text>
         ) : !recent.length ? (
           <Text style={styles.emptyText}>No transactions yet</Text>
         ) : (
           <FlatList
             data={recent}
             keyExtractor={(item) => item._id}
-            showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <View style={styles.row}>
                 <View style={styles.left}>
@@ -181,7 +197,7 @@ export default function Home() {
                         ? "arrow-up-circle"
                         : "arrow-down-circle"
                     }
-                    size={26}
+                    size={24}
                     color={item.type === "income" ? "#22c55e" : "#ef4444"}
                   />
                   <View style={{ marginLeft: 12 }}>
@@ -197,9 +213,7 @@ export default function Home() {
                     styles.amount,
                     {
                       color:
-                        item.type === "income"
-                          ? "#22c55e"
-                          : "#ef4444",
+                        item.type === "income" ? "#22c55e" : "#ef4444",
                     },
                   ]}
                 >
@@ -215,29 +229,22 @@ export default function Home() {
 
       {/* FAB */}
       <TouchableOpacity
-        activeOpacity={0.8}
         style={styles.fab}
-        onPress={() => setFabOpen(true)}
+        onPress={() => {
+          trackEvent("fab_opened");
+          setFabOpen(true);
+        }}
       >
         <Ionicons name="add" size={32} color="#fff" />
       </TouchableOpacity>
 
       {/* FAB MODAL */}
-      <Modal
-        visible={fabOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setFabOpen(false)}
-      >
-        <View style={styles.modalOverlay}>
-          {/* Overlay close */}
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={() => setFabOpen(false)}
-          />
-
-          {/* Actions */}
+      <Modal visible={fabOpen} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setFabOpen(false)}
+        >
           <View style={styles.actionSheet}>
             <Text style={styles.actionTitle}>Quick Actions</Text>
 
@@ -245,35 +252,27 @@ export default function Home() {
               <TouchableOpacity
                 style={styles.actionBtn}
                 onPress={() => {
+                  trackEvent("quick_add_expense_clicked");
                   setFabOpen(false);
                   router.push("/Transactions/AddExpense");
                 }}
               >
-                <Ionicons
-                  name="remove-circle-outline"
-                  size={26}
-                  color="#fff"
-                />
                 <Text style={styles.actionText}>Add Expense</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.actionBtn}
                 onPress={() => {
+                  trackEvent("quick_add_income_clicked");
                   setFabOpen(false);
                   router.push("/Transactions/AddIncome");
                 }}
               >
-                <Ionicons
-                  name="add-circle-outline"
-                  size={26}
-                  color="#fff"
-                />
                 <Text style={styles.actionText}>Add Income</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
 
       <BottomNav active="home" />
@@ -288,15 +287,14 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   header: {
-    paddingHorizontal: 18,
     paddingTop: 55,
     paddingBottom: 40,
+    paddingHorizontal: 18,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
 
   topBar: { flexDirection: "row", alignItems: "center", marginBottom: 18 },
-
   avatar: {
     width: 48,
     height: 48,
@@ -311,20 +309,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.18)",
     padding: 18,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.28)",
   },
 
   balanceLabel: { color: "#E8FFFA", fontSize: 14 },
-  balanceValue: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: "#fff",
-    marginTop: 4,
-  },
-
+  balanceValue: { fontSize: 32, fontWeight: "800", color: "#fff" },
   miniRow: { flexDirection: "row", marginTop: 8 },
-  smallLight: { color: "#E8FFFA", fontSize: 14 },
+  smallLight: { color: "#E8FFFA" },
 
   recentBox: {
     marginTop: -10,
@@ -332,26 +322,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginHorizontal: 16,
     borderRadius: 18,
-    elevation: 3,
   },
 
   title: { fontSize: 20, fontWeight: "800", marginBottom: 12 },
-  emptyText: { color: "#777", fontSize: 14 },
+  emptyText: { color: "#777" },
 
   row: {
     flexDirection: "row",
-    paddingVertical: 12,
     justifyContent: "space-between",
-    alignItems: "center",
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderColor: "#ECF4F2",
   },
 
   left: { flexDirection: "row", alignItems: "center" },
-  txTitle: { fontSize: 16, fontWeight: "700", color: "#18493F" },
+  txTitle: { fontWeight: "700", color: "#18493F" },
   time: { fontSize: 12, color: "#6F7E78" },
-
-  amount: { fontSize: 17, fontWeight: "800" },
+  amount: { fontWeight: "800" },
 
   fab: {
     position: "absolute",
@@ -363,8 +350,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#196F63",
     justifyContent: "center",
     alignItems: "center",
-    elevation: 7,
-    zIndex: 1000,
   },
 
   modalOverlay: {
@@ -381,22 +366,17 @@ const styles = StyleSheet.create({
   },
 
   actionTitle: { fontSize: 20, fontWeight: "800", marginBottom: 14 },
-
-  actionRow: { flexDirection: "row", justifyContent: "space-between" },
+  actionRow: { flexDirection: "row" },
 
   actionBtn: {
+    flex: 1,
     backgroundColor: "#196F63",
-    paddingVertical: 14,
+    padding: 15,
     borderRadius: 14,
     marginHorizontal: 6,
-    flex: 1,
     alignItems: "center",
+    marginBottom:40
   },
 
-  actionText: {
-    color: "#fff",
-    marginTop: 8,
-    fontSize: 15,
-    fontWeight: "700",
-  },
+  actionText: { color: "#fff", fontWeight: "700" },
 });

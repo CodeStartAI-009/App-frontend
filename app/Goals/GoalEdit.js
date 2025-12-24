@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import BottomNav from "../components/BottomNav";
 
+import BottomNav from "../components/BottomNav";
 import { getSingleGoal, updateGoal } from "../../services/goalService";
 import { useUserAuthStore } from "../../store/useAuthStore";
 import { formatCurrencyLabel } from "../../utils/money";
@@ -25,10 +25,12 @@ export default function EditGoal() {
   const currency = user?.currency || "INR";
   const currencySymbol = formatCurrencyLabel(currency);
 
+  const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [saved, setSaved] = useState("");
 
+  /* ---------------- LOAD GOAL ---------------- */
   useEffect(() => {
     loadGoal();
   }, []);
@@ -43,39 +45,67 @@ export default function EditGoal() {
       setSaved(String(g.saved));
     } catch (err) {
       Alert.alert("Error", "Failed to load goal");
+      router.replace("/Goals/GoalsList");
+    } finally {
+      setLoading(false);
     }
   }
 
+  /* ---------------- SAVE GOAL ---------------- */
   async function saveGoal() {
-    if (!title || !amount)
-      return Alert.alert("Missing Fields", "Title and amount are required.");
+    if (!title.trim() || !amount.trim()) {
+      return Alert.alert(
+        "Missing Fields",
+        "Goal title and target amount are required."
+      );
+    }
 
-    if (isNaN(amount) || isNaN(saved))
-      return Alert.alert("Invalid Input", "Amounts must be numbers.");
+    if (isNaN(amount) || isNaN(saved)) {
+      return Alert.alert("Invalid Input", "Amounts must be valid numbers.");
+    }
 
     try {
       await updateGoal(id, {
-        title,
+        title: title.trim(),
         amount: Number(amount),
         saved: Number(saved),
       });
 
-      Alert.alert("Success", "Goal updated successfully!");
-      router.back();
+      Alert.alert("Success", "Goal updated successfully!", [
+        {
+          text: "OK",
+          onPress: () => {
+            // ✅ CRITICAL FIX
+            router.replace(`/Goals/Overview?id=${id}`);
+          },
+        },
+      ]);
     } catch (err) {
       Alert.alert("Error", "Could not update goal");
     }
   }
 
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  /* ---------------- PROGRESS ---------------- */
   const progress =
     Number(amount) > 0 ? (Number(saved) / Number(amount)) * 100 : 0;
+
   const completed = progress >= 100;
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F6FBF9" }}>
+    <View style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity
+          onPress={() => router.replace(`/Goals/Overview`)}
+        >
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Goal</Text>
@@ -84,6 +114,7 @@ export default function EditGoal() {
       {/* CONTENT */}
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
+          {/* TITLE */}
           <Text style={styles.label}>Goal Title</Text>
           <TextInput
             style={styles.input}
@@ -93,6 +124,7 @@ export default function EditGoal() {
             placeholderTextColor="#92ADA7"
           />
 
+          {/* TARGET */}
           <Text style={styles.label}>
             Target Amount ({currencySymbol})
           </Text>
@@ -105,52 +137,10 @@ export default function EditGoal() {
             placeholderTextColor="#92ADA7"
           />
 
-          <Text style={styles.label}>
-            Saved Amount ({currencySymbol})
-          </Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={saved}
-            onChangeText={setSaved}
-            placeholder="Enter saved amount"
-            placeholderTextColor="#92ADA7"
-          />
+          {/* SAVED */}
+           
 
-          {/* Progress */}
-          <View style={{ marginTop: 20 }}>
-            <Text style={styles.progressText}>
-              Progress: {progress.toFixed(1)}%
-            </Text>
-
-            <View style={styles.progressBackground}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.min(progress, 100)}%`,
-                    backgroundColor: completed
-                      ? "#22c55e"
-                      : "#196F63",
-                  },
-                ]}
-              />
-            </View>
-
-            {completed && (
-              <View style={styles.completedBadge}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={24}
-                  color="#22c55e"
-                />
-                <Text style={styles.completedText}>
-                  Goal Completed!
-                </Text>
-              </View>
-            )}
-          </View>
-
+          {/* SAVE */}
           <TouchableOpacity style={styles.saveBtn} onPress={saveGoal}>
             <Text style={styles.saveBtnText}>Save Changes</Text>
           </TouchableOpacity>
@@ -162,9 +152,12 @@ export default function EditGoal() {
   );
 }
 
-/* ---------------------- GREEN UI ---------------------- */
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#F6FBF9" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
   header: {
     paddingTop: 60,
     paddingBottom: 25,
@@ -175,8 +168,8 @@ const styles = StyleSheet.create({
     gap: 14,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    elevation: 6,
   },
+
   headerTitle: {
     fontSize: 26,
     fontWeight: "800",
@@ -221,12 +214,14 @@ const styles = StyleSheet.create({
     color: "#18493F",
     marginBottom: 8,
   },
+
   progressBackground: {
     height: 10,
     backgroundColor: "#DCEFE6",
     borderRadius: 10,
     overflow: "hidden",
   },
+
   progressFill: {
     height: 10,
     borderRadius: 10,
@@ -244,6 +239,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#C5F0D3",
   },
+
   completedText: {
     fontSize: 15,
     color: "#15803d",
@@ -256,8 +252,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     marginTop: 25,
-    elevation: 3,
   },
+
   saveBtnText: {
     fontSize: 18,
     color: "#fff",

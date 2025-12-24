@@ -11,8 +11,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { addIncome } from "../../services/expenseService";
 import { useUserAuthStore } from "../../store/useAuthStore";
+import { trackEvent } from "../../utils/analytics";
 
 // Interstitial Ads
 import { loadInterstitial, showInterstitial } from "../../utils/InterstitialAd";
@@ -33,6 +35,7 @@ export default function AddIncome() {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Salary");
+  const [customCategory, setCustomCategory] = useState("");
   const [adLoaded, setAdLoaded] = useState(false);
 
   useEffect(() => {
@@ -40,21 +43,38 @@ export default function AddIncome() {
   }, []);
 
   const saveIncome = async () => {
-    if (!title.trim() || Number(amount) <= 0) {
-      return Alert.alert("Invalid input");
+    if (!title.trim()) {
+      return Alert.alert("Error", "Title is required");
     }
+
+    if (!amount.trim() || Number(amount) <= 0) {
+      return Alert.alert("Invalid amount", "Enter a valid amount");
+    }
+
+    if (category === "Other" && !customCategory.trim()) {
+      return Alert.alert("Category required", "Please specify the category");
+    }
+
+    const finalCategory =
+      category === "Other" ? customCategory.trim() : category;
 
     try {
       const res = await addIncome({
         title: title.trim(),
         amount: Number(amount),
-        category,
+        category: finalCategory,
       });
 
       if (res.data.ok) {
-        // 🔥 CRITICAL LINE
+        // 🔥 mark cache dirty
         markHomeDirty();
 
+        // 🔥 analytics
+        trackEvent("income_added", {
+          category: finalCategory,
+        });
+
+        // 🔥 ad logic (unchanged)
         let count = Number(await AsyncStorage.getItem("income_count")) || 0;
         count += 1;
         await AsyncStorage.setItem("income_count", String(count));
@@ -80,14 +100,16 @@ export default function AddIncome() {
       <Text style={styles.header}>Add Income</Text>
 
       <View style={styles.card}>
+        {/* TITLE */}
         <Text style={styles.label}>Title</Text>
         <TextInput
           style={styles.input}
           value={title}
           onChangeText={setTitle}
-          placeholder="e.g. Salary"
+          placeholder="e.g. Salary, Client payment"
         />
 
+        {/* AMOUNT */}
         <Text style={styles.label}>Amount</Text>
         <TextInput
           style={styles.input}
@@ -98,12 +120,17 @@ export default function AddIncome() {
         />
 
         <View style={styles.infoNote}>
-          <Ionicons name="information-circle-outline" size={18} color="#196F63" />
+          <Ionicons
+            name="information-circle-outline"
+            size={18}
+            color="#196F63"
+          />
           <Text style={styles.infoText}>
             Enter the income amount received.
           </Text>
         </View>
 
+        {/* CATEGORY */}
         <Text style={styles.label}>Category</Text>
         <View style={styles.categoryGrid}>
           {CATEGORIES.map((c) => (
@@ -127,6 +154,20 @@ export default function AddIncome() {
           ))}
         </View>
 
+        {/* OTHER CATEGORY INPUT */}
+        {category === "Other" && (
+          <>
+            <Text style={styles.label}>Specify Category</Text>
+            <TextInput
+              style={styles.input}
+              value={customCategory}
+              onChangeText={setCustomCategory}
+              placeholder="e.g. Interest, Refund, Side income"
+            />
+          </>
+        )}
+
+        {/* SAVE */}
         <TouchableOpacity style={styles.saveBtn} onPress={saveIncome}>
           <Text style={styles.saveText}>Save Income</Text>
         </TouchableOpacity>
@@ -140,6 +181,7 @@ export default function AddIncome() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", paddingTop: 50 },
   header: { fontSize: 28, fontWeight: "900", marginLeft: 20 },
+
   card: {
     backgroundColor: "#F8FFFD",
     padding: 20,
@@ -148,7 +190,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#DCEFEA",
   },
+
   label: { marginTop: 12, fontSize: 16, fontWeight: "700" },
+
   input: {
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -157,6 +201,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 6,
   },
+
   infoNote: {
     flexDirection: "row",
     marginTop: 10,
@@ -164,8 +209,15 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
   },
+
   infoText: { fontSize: 13, marginLeft: 6 },
-  categoryGrid: { flexDirection: "row", flexWrap: "wrap", marginTop: 12 },
+
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 12,
+  },
+
   catItem: {
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -173,9 +225,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     margin: 4,
   },
+
   catActive: { backgroundColor: "#196F63" },
   catText: { fontWeight: "600" },
   catTextActive: { color: "#fff" },
+
   saveBtn: {
     backgroundColor: "#196F63",
     padding: 14,
@@ -183,5 +237,6 @@ const styles = StyleSheet.create({
     marginTop: 26,
     alignItems: "center",
   },
+
   saveText: { color: "#fff", fontSize: 18, fontWeight: "700" },
 });

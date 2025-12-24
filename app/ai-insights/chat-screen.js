@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 
 import { getCoins, sendChat, watchAd } from "../../services/aiService";
+import { trackEvent } from "../../utils/analytics";
 
 import {
   loadRewardedInterstitial,
@@ -29,32 +30,14 @@ import {
 ===================================================== */
 function normalizeAIText(text = "") {
   return text
-    // remove fenced code blocks
-    .replace(/```[\s\S]*?```/g, (m) =>
-      m.replace(/```/g, "").trim()
-    )
-
-    // inline code
+    .replace(/```[\s\S]*?```/g, (m) => m.replace(/```/g, "").trim())
     .replace(/`([^`]+)`/g, "$1")
-
-    // bold **text**
     .replace(/\*\*(.*?)\*\*/g, "$1")
-
-    // italic *text*
     .replace(/\*(.*?)\*/g, "$1")
-
-    // headings ### ##
     .replace(/^#{1,6}\s*/gm, "")
-
-    // bullets
     .replace(/^\s*[-*+]\s+/gm, "• ")
-
-    // numbered lists
     .replace(/^\s*\d+\.\s+/gm, "• ")
-
-    // extra spacing
     .replace(/\n{3,}/g, "\n\n")
-
     .trim();
 }
 
@@ -74,16 +57,23 @@ export default function ChatScreen() {
   const listRef = useRef(null);
   const nextId = useRef(0);
   const glowAnim = useRef(new Animated.Value(1)).current;
+  const viewedRef = useRef(false);
 
-  /* ---------------- LOAD COINS ---------------- */
+  /* ---------------- SCREEN VIEW ---------------- */
   useFocusEffect(
     useCallback(() => {
+      if (!viewedRef.current) {
+        trackEvent("ai_chat_screen_viewed");
+        viewedRef.current = true;
+      }
       loadCoins();
     }, [])
   );
 
+  /* ---------------- ADS SETUP ---------------- */
   useEffect(() => {
     setRewardCallback(() => {
+      trackEvent("ai_ad_watched_for_coins");
       watchAd().finally(loadCoins);
     });
 
@@ -130,7 +120,7 @@ export default function ChatScreen() {
     }
   }
 
-  /* ---------------- TYPEWRITER EFFECT ---------------- */
+  /* ---------------- TYPEWRITER ---------------- */
   const animateAssistantResponse = useCallback(async (text) => {
     const id = String(nextId.current++);
     setMessages((prev) => [...prev, { id, role: "assistant", text: "" }]);
@@ -156,6 +146,7 @@ export default function ChatScreen() {
     if (!text || sending) return;
 
     if (coins < 5) {
+      trackEvent("ai_chat_blocked_no_coins");
       setAdModalVisible(true);
       return;
     }
@@ -169,9 +160,10 @@ export default function ChatScreen() {
       { id: String(nextId.current++), role: "user", text },
     ]);
 
+    trackEvent("ai_chat_used", { length: text.length });
+
     try {
       const res = await sendChat({ prompt: text });
-
       setCoins(res?.data?.coins ?? coins);
 
       const cleanText = normalizeAIText(
@@ -287,9 +279,7 @@ export default function ChatScreen() {
   );
 }
 
-/* =====================================================
-   🎨 STYLES — CHATGPT-LIKE + YOUR GREEN THEME
-===================================================== */
+/* ---------------- STYLES ---------------- */
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
